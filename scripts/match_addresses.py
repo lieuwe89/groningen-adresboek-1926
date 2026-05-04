@@ -70,6 +70,7 @@ STREET_FIXUPS = [
     (r"\bmr\.?\b", "meester"),
     (r"\bdr\.?\b", "doctor"),
     (r"\bprof\.?\b", "professor"),
+    (r"\bhelper\s+kerkstraat\b", "kerkstraat"),  # BAG "Helper Kerkstraat" = 1926 book "Kerkstraat"
     (r"\bkon\.?\b", "koningin"),
     (r"\bkoning\.?\b", "koningin"),
     (r"\bsav\.?\b", "savornin"),
@@ -198,12 +199,29 @@ def main() -> None:
     # Build lookup: (street_normalised, huisnummer, huisletter) -> pand_id
     # Multiple street aliases may be expanded so the same VBO appears under
     # several keys. Use first-wins semantics if collisions occur.
+    # Only index VBOs within the old gemeente Groningen postcode range (9700-9749).
+    # Haren (9750-9759) and Ten Boer (9788-9789) merged in 2019 but their streets
+    # were not in the 1926 address book; their BAG data falls within the bbox and
+    # would produce wrong matches without this filter.
+    def _in_old_groningen(postcode: str | None) -> bool:
+        if not postcode or len(postcode) < 4:
+            return True  # no postcode info — don't exclude
+        try:
+            pc4 = int(postcode[:4])
+        except ValueError:
+            return True
+        return 9700 <= pc4 <= 9744  # 9745-9748 = Hoogkerk (merged 1969, not in 1926 book)
+
     vbo_index: dict[tuple[str, int, str], str] = {}
     n_vbos = 0
+    n_vbos_skipped = 0
     for feat in bag["features"]:
         pand_id = feat["properties"]["pand_id"]
         for a in feat["properties"]["addresses"]:
             n_vbos += 1
+            if not _in_old_groningen(a.get("postcode")):
+                n_vbos_skipped += 1
+                continue
             num = a.get("huisnummer")
             if num is None:
                 continue
@@ -211,7 +229,8 @@ def main() -> None:
             for street in expanded_streets(a.get("openbare_ruimte")):
                 key = (street, int(num), letter)
                 vbo_index.setdefault(key, pand_id)
-    log.info(f"  Indexed {len(vbo_index)} VBO keys from {n_vbos} VBOs")
+    log.info(f"  Indexed {len(vbo_index)} VBO keys from {n_vbos} VBOs "
+             f"({n_vbos_skipped} skipped — outside 9700-9744 range)")
 
     log.info("Loading book entries...")
     conn = sqlite3.connect(DB)

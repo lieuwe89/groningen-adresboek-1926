@@ -27,6 +27,8 @@ PDOK_URL = "https://api.pdok.nl/bzk/locatieserver/search/v3_1/free"
 HAS_NUMBER = re.compile(r"\d")
 # Directional qualifiers that prefix street names in the 1926 book but confuse PDOK
 _DIR_PREFIX = re.compile(r"^(noord(?:elijke|zijde)|zuid(?:elijke|zijde)|oost(?:elijke|zijde)|west(?:elijke|zijde))\s+")
+# "Kerkstraat" in 1926 Groningen = Helper Kerkstraat (Helpman); must not affect "A-Kerkstraat" etc.
+_BARE_KERKSTRAAT = re.compile(r"(?<![a-z-])kerkstraat")
 
 # Historical → current name corrections applied to the PDOK query only (not the key).
 # Phrases before single words so longer patterns are substituted first.
@@ -55,6 +57,7 @@ def normalize_query(address: str) -> str:
     q = _DIR_PREFIX.sub("", address)
     for old, new in STREET_ALIASES:
         q = q.replace(old, new)
+    q = _BARE_KERKSTRAAT.sub("helper kerkstraat", q)
     return q
 
 
@@ -88,7 +91,7 @@ def pdok_geocode(address: str) -> dict:
     query = normalize_query(f"{address}, Groningen")
     params = urllib.parse.urlencode({
         "q": query,
-        "fq": "gemeentenaam:Groningen",
+        "fq": "woonplaatsnaam:Groningen",
         "rows": "1",
         "fl": "weergavenaam,centroide_ll,score,type",
     })
@@ -148,6 +151,16 @@ def main() -> None:
         help="Reset all 'Gemeente Groningen' fallback entries to no_match before running"
              " (combine with --retry-failed to re-geocode them with updated aliases)",
     )
+    parser.add_argument(
+        "--reset-haren", action="store_true",
+        help="Reset entries whose matched address contains 'Haren' (wrongly geocoded "
+             "to the former Haren municipality). Combine with --retry-failed.",
+    )
+    parser.add_argument(
+        "--reset-hoogkerk", action="store_true",
+        help="Reset entries whose matched address contains 'Hoogkerk' (wrongly geocoded "
+             "to Hoogkerk, which merged into Groningen in 1969). Combine with --retry-failed.",
+    )
     args = parser.parse_args()
 
     with INPUT.open(encoding="utf-8") as f:
@@ -166,6 +179,32 @@ def main() -> None:
             if result.get("matched") == "Gemeente Groningen":
                 results[addr] = {"status": "no_match", "query": result.get("query", "")}
         log.info("Reset %d 'Gemeente Groningen' entries to no_match", reset_count)
+        save_results(results)
+
+    if args.reset_haren:
+        reset_count = sum(
+            1 for r in results.values()
+            if "haren" in (r.get("matched") or "").lower()
+        )
+        for addr, result in list(results.items()):
+            if "haren" in (result.get("matched") or "").lower():
+                results[addr] = {"status": "no_match", "query": result.get("query", "")}
+        log.info("Reset %d Haren-matched entries to no_match", reset_count)
+        save_results(results)
+
+    if args.reset_hoogkerk:
+        # Hoogkerk postcodes: 9745-9748 (merged into Groningen in 1969; not in 1926 book).
+        # After the merger PDOK returns "9745CC Groningen" (no woonplaats "Hoogkerk"),
+        # so we must detect by postcode range embedded in the matched string.
+        _hk_pc = re.compile(r"\b974[5-8][A-Z]{2}\b")
+        reset_count = sum(
+            1 for r in results.values()
+            if _hk_pc.search(r.get("matched") or "")
+        )
+        for addr, result in list(results.items()):
+            if _hk_pc.search(result.get("matched") or ""):
+                results[addr] = {"status": "no_match", "query": result.get("query", "")}
+        log.info("Reset %d Hoogkerk-postcode entries to no_match", reset_count)
         save_results(results)
 
     retry_statuses = {"no_match", "error"} if args.retry_failed else set()

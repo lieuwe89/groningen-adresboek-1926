@@ -89,7 +89,11 @@ def fetch_page(typename: str, start: int) -> dict:
 PDOK_MAX_INDEX = 50000  # PDOK WFS hard cap on startIndex
 
 
-def count_hits(typename: str, bbox: tuple[float, float, float, float]) -> int:
+def count_hits(
+    typename: str,
+    bbox: tuple[float, float, float, float],
+    cql_filter: str | None = None,
+) -> int:
     import re
     params = {
         "service": "WFS",
@@ -100,6 +104,8 @@ def count_hits(typename: str, bbox: tuple[float, float, float, float]) -> int:
         "srsName": "EPSG:4326",
         "resultType": "hits",
     }
+    if cql_filter:
+        params["CQL_FILTER"] = cql_filter
     r = requests.get(WFS, params=params, timeout=TIMEOUT)
     m = re.search(r'numberMatched="(\d+)"', r.text)
     if not m:
@@ -108,7 +114,10 @@ def count_hits(typename: str, bbox: tuple[float, float, float, float]) -> int:
 
 
 def fetch_page_bbox(
-    typename: str, bbox: tuple[float, float, float, float], start: int
+    typename: str,
+    bbox: tuple[float, float, float, float],
+    start: int,
+    cql_filter: str | None = None,
 ) -> dict:
     params = {
         "service": "WFS",
@@ -121,6 +130,8 @@ def fetch_page_bbox(
         "startIndex": start,
         "outputFormat": "application/json",
     }
+    if cql_filter:
+        params["CQL_FILTER"] = cql_filter
     last = None
     for attempt in range(MAX_RETRIES):
         try:
@@ -148,7 +159,13 @@ def quadsplit(bbox):
     ]
 
 
-def crawl(typename: str, out_path: Path, state_key: str, state: dict) -> int:
+def crawl(
+    typename: str,
+    out_path: Path,
+    state_key: str,
+    state: dict,
+    cql_filter: str | None = None,
+) -> int:
     """
     Recursively crawl `typename` within `BBOX`, splitting any sub-bbox whose
     feature count exceeds PDOK's startIndex cap. Dedupes by `identificatie`.
@@ -165,7 +182,7 @@ def crawl(typename: str, out_path: Path, state_key: str, state: dict) -> int:
 
     def walk(bbox, depth=0):
         nonlocal n_written
-        n = count_hits(typename, bbox)
+        n = count_hits(typename, bbox, cql_filter)
         prefix = "  " * (depth + 1)
         if n > PDOK_MAX_INDEX:
             log.info(f"{prefix}{typename} bbox={bbox} → {n}, splitting")
@@ -176,7 +193,7 @@ def crawl(typename: str, out_path: Path, state_key: str, state: dict) -> int:
         with out_path.open("a", encoding="utf-8") as fout:
             start = 0
             while start < n:
-                data = fetch_page_bbox(typename, bbox, start)
+                data = fetch_page_bbox(typename, bbox, start, cql_filter)
                 feats = data.get("features", [])
                 if not feats:
                     break
@@ -268,7 +285,10 @@ def main() -> None:
     state = load_state()
 
     log.info("Fetching VBOs (bag:verblijfsobject)...")
-    n_vbo = crawl("bag:verblijfsobject", VBO_PATH, "vbo_start", state)
+    # Filter to woonplaats Groningen so addresses from former municipalities
+    # (Haren, Ten Boer, Hoogkerk) that fall within the bbox are excluded.
+    n_vbo = crawl("bag:verblijfsobject", VBO_PATH, "vbo_start", state,
+                  cql_filter="woonplaatsnaam='Groningen'")
     log.info(f"VBO total: {n_vbo}")
 
     log.info("Fetching panden (bag:pand)...")

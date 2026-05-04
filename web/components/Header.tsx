@@ -41,12 +41,12 @@ export default function Header() {
           Interactieve verkenner — Naamregister &amp; Plattegrond
         </div>
         <div className="flex gap-[20px] mt-[5px] items-end">
-          <Meta label="Schaal" value="1 : 8 000" />
           <SectionJump currentStem={stem} />
           <Meta label="Blad" value="A — Z" />
         </div>
       </div>
       <div className="flex items-center gap-[14px]">
+        <InfoBtn active={pathname === "/info"} />
         <div className="flex gap-[2px]">
           <LangBtn label="NL" active />
           <LangBtn label="EN" />
@@ -125,5 +125,29 @@ function LangBtn({ label, active = false }: { label: string; active?: boolean })
     >
       {label}
     </button>
+  );
+}
+
+function InfoBtn({ active }: { active: boolean }) {
+  return (
+    <Link
+      href={active ? "/" : "/info"}
+      className="flex items-center gap-[5px] uppercase font-bold transition-colors hover:bg-bp-amber/15"
+      style={{
+        fontSize: 9,
+        letterSpacing: "0.18em",
+        border: active ? "1px solid #e8b84c" : "1px solid #7a705488",
+        color: active ? "#182d5c" : "#e8b84c",
+        background: active ? "#e8b84c" : "transparent",
+        padding: "3px 9px",
+      }}
+    >
+      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="8.5" strokeLinecap="round" />
+        <line x1="12" y1="11" x2="12" y2="16" strokeLinecap="round" />
+      </svg>
+      Info
+    </Link>
   );
 }

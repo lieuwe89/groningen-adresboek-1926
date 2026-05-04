@@ -30,6 +30,7 @@ from pipeline.config import (
     OPENROUTER_BASE_URL,
     OPENROUTER_MODEL,
     PROMPTS_DIR,
+    SCHEMAS_DIR,
     get_section_for_page,
 )
 from pipeline.ocr import OcrPage
@@ -50,6 +51,25 @@ def load_prompt(prompt_filename: str) -> str:
             raise FileNotFoundError(f"Prompt template not found: {prompt_path}")
         _prompt_cache[prompt_filename] = prompt_path.read_text(encoding="utf-8")
     return _prompt_cache[prompt_filename]
+
+
+# ── Schema loading ────────────────────────────────────────────────────────────
+
+_schema_cache: dict[str, dict] = {}
+
+
+def load_schema(section_name: str) -> dict | None:
+    """Load and cache a JSON schema for a section from the schemas directory."""
+    if section_name not in _schema_cache:
+        schema_path = SCHEMAS_DIR / f"{section_name}.json"
+        if not schema_path.exists():
+            return None
+        try:
+            _schema_cache[section_name] = json.loads(schema_path.read_text(encoding="utf-8"))
+        except Exception as e:
+            logger.warning(f"Failed to load schema for {section_name}: {e}")
+            return None
+    return _schema_cache[section_name]
 
 
 # ── Checkpoint management ─────────────────────────────────────────────────────
@@ -114,6 +134,15 @@ def init_gemini(model_override: str | None = None):
         _client = genai
         _client_model = GEMINI_MODEL
         logger.info(f"LLM (Google AI) initialized with model: {_client_model}")
+    elif LLM_PROVIDER == "vllm":
+        from openai import OpenAI
+        from pipeline.config import VLLM_API_BASE, VLLM_MODEL
+        _client = OpenAI(
+            base_url=VLLM_API_BASE,
+            api_key="vllm-token", # Placeholder
+        )
+        _client_model = model_override or VLLM_MODEL
+        logger.info(f"LLM (vLLM) initialized with model: {_client_model} at {VLLM_API_BASE}")
     else:
         raise ValueError(f"Unknown LLM_PROVIDER: {LLM_PROVIDER!r}")
 
@@ -125,39 +154,47 @@ def _encode_image_data_url(image_path: Path) -> str:
     return f"data:{mime};base64,{base64.b64encode(image_path.read_bytes()).decode('ascii')}"
 
 
-def _call_openrouter(prompt: str, image_path: Path, timeout: int = 120) -> tuple[str, dict]:
-    """Send prompt + image via OpenRouter's OpenAI-compatible chat completion API.
+def _call_openrouter(prompt: str, image_paths: Path | list[Path], timeout: int = 120, schema: dict | None = None, model_override: str | None = None) -> tuple[str, dict]:
+    """Send prompt + image(s) via OpenRouter."""
+    if isinstance(image_paths, Path):
+        image_paths = [image_paths]
+        
+    content = [{"type": "text", "text": prompt}]
+    for img in image_paths:
+        content.append({
+            "type": "image_url",
+            "image_url": {"url": _encode_image_data_url(img)},
+        })
 
-    Returns (response_text, usage_dict). Usage has prompt_tokens,
-    completion_tokens, total_tokens. May be empty if the provider didn't return usage.
-    """
-    response = _client.chat.completions.create(
-        model=_client_model,
-        timeout=timeout,
-        temperature=0.1,
-        max_tokens=65536,
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": _encode_image_data_url(image_path)},
-                    },
-                ],
-            }
-        ],
-        extra_headers={
+    active_model = model_override or _client_model
+    kwargs = {
+        "model": active_model,
+        "timeout": timeout,
+        "temperature": 0.1,
+        "max_tokens": 65536,
+        "messages": [{"role": "user", "content": content}],
+        "extra_headers": {
             "HTTP-Referer": "https://github.com/groningen-adresboek-1926",
             "X-Title": "Groningen Adresboek 1926 Pipeline",
         },
-    )
+    }
+    
+    if schema:
+        kwargs["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "extraction",
+                "strict": True,
+                "schema": schema
+            }
+        }
+
+    response = _client.chat.completions.create(**kwargs)
     usage = {}
     if getattr(response, "usage", None):
         u = response.usage
         usage = {
-            "model": _client_model,
+            "model": active_model,
             "prompt_tokens": getattr(u, "prompt_tokens", None),
             "completion_tokens": getattr(u, "completion_tokens", None),
             "total_tokens": getattr(u, "total_tokens", None),
@@ -165,25 +202,81 @@ def _call_openrouter(prompt: str, image_path: Path, timeout: int = 120) -> tuple
     return (response.choices[0].message.content or ""), usage
 
 
-def _call_google(prompt: str, image_path: Path, timeout: int = 120) -> tuple[str, dict]:
-    """Send prompt + image via the Google AI Studio SDK."""
+def _call_vllm(prompt: str, image_paths: Path | list[Path], timeout: int = 120, schema: dict | None = None, model_override: str | None = None) -> tuple[str, dict]:
+    """Send prompt + image(s) via local vLLM."""
+    if isinstance(image_paths, Path):
+        image_paths = [image_paths]
+        
+    content = [{"type": "text", "text": prompt}]
+    for img in image_paths:
+        content.append({
+            "type": "image_url",
+            "image_url": {"url": _encode_image_data_url(img)},
+        })
+
+    active_model = model_override or _client_model
+    kwargs = {
+        "model": active_model,
+        "timeout": timeout,
+        "temperature": 0.1,
+        "max_tokens": 32768,
+        "messages": [{"role": "user", "content": content}],
+    }
+    
+    if schema:
+        kwargs["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "extraction",
+                "strict": True,
+                "schema": schema
+            }
+        }
+
+    response = _client.chat.completions.create(**kwargs)
+    usage = {}
+    if getattr(response, "usage", None):
+        u = response.usage
+        usage = {
+            "model": active_model,
+            "prompt_tokens": getattr(u, "prompt_tokens", None),
+            "completion_tokens": getattr(u, "completion_tokens", None),
+            "total_tokens": getattr(u, "total_tokens", None),
+        }
+    return (response.choices[0].message.content or ""), usage
+
+
+def _call_google(prompt: str, image_paths: Path | list[Path], timeout: int = 120, schema: dict | None = None, model_override: str | None = None) -> tuple[str, dict]:
+    """Send prompt + image(s) via Google AI Studio."""
     from PIL import Image as PILImage
+    if isinstance(image_paths, Path):
+        image_paths = [image_paths]
+        
+    parts = [prompt] + [PILImage.open(img) for img in image_paths]
+    
+    gen_config = {
+        "temperature": 0.1,
+        "max_output_tokens": 32768,
+    }
+    
+    if schema:
+        gen_config["response_mime_type"] = "application/json"
+        gen_config["response_schema"] = schema
+
+    active_model = model_override or _client_model
     model = _client.GenerativeModel(
-        _client_model,
-        generation_config=_client.GenerationConfig(
-            temperature=0.1,
-            max_output_tokens=32768,
-        ),
+        active_model,
+        generation_config=_client.GenerationConfig(**gen_config),
     )
     response = model.generate_content(
-        [prompt, PILImage.open(image_path)],
+        parts,
         request_options={"timeout": timeout},
     )
     usage = {}
     md = getattr(response, "usage_metadata", None)
     if md:
         usage = {
-            "model": _client_model,
+            "model": active_model,
             "prompt_tokens": getattr(md, "prompt_token_count", None),
             "completion_tokens": getattr(md, "candidates_token_count", None),
             "total_tokens": getattr(md, "total_token_count", None),
@@ -191,10 +284,12 @@ def _call_google(prompt: str, image_path: Path, timeout: int = 120) -> tuple[str
     return (response.text or ""), usage
 
 
-def _call_llm(prompt: str, image_path: Path, timeout: int = 120) -> tuple[str, dict]:
+def _call_llm(prompt: str, image_paths: Path | list[Path], timeout: int = 120, schema: dict | None = None, model_override: str | None = None) -> tuple[str, dict]:
     if LLM_PROVIDER == "openrouter":
-        return _call_openrouter(prompt, image_path, timeout=timeout)
-    return _call_google(prompt, image_path, timeout=timeout)
+        return _call_openrouter(prompt, image_paths, timeout=timeout, schema=schema, model_override=model_override)
+    elif LLM_PROVIDER == "vllm":
+        return _call_vllm(prompt, image_paths, timeout=timeout, schema=schema, model_override=model_override)
+    return _call_google(prompt, image_paths, timeout=timeout, schema=schema, model_override=model_override)
 
 
 def _save_usage_sidecar(image_path: Path, usage: dict, attempt: int, section_type: str) -> None:
@@ -291,6 +386,57 @@ def _extract_json_from_response(response_text: str) -> dict:
     return json.loads(text)
 
 
+def _crop_header(image_path: Path) -> Path:
+    """Crop the top 15% of the image to help the LLM read the header."""
+    from PIL import Image as PILImage
+    img = PILImage.open(image_path)
+    width, height = img.size
+    header_height = int(height * 0.15)
+    header = img.crop((0, 0, width, header_height))
+    
+    crop_path = image_path.parent / f"{image_path.stem}_header.tmp.jpg"
+    header.save(crop_path, quality=95)
+    return crop_path
+
+
+def identify_page_section(scan_image_path: Path, ocr_page: OcrPage) -> str:
+    """
+    Use Gemini to identify the section type of a page based on its visual
+    layout and a snippet of OCR text.
+    
+    Uses both the full image and a high-res crop of the header for accuracy.
+    """
+    prompt_template = load_prompt("classify_section.txt")
+    
+    # Use first 50 words as a representative sample
+    sample_words = ocr_page.all_words[:50]
+    sample_text = " ".join(w.text for w in sample_words)
+    
+    # Pre-process images: full page + header crop
+    header_crop_path = None
+    try:
+        header_crop_path = _crop_header(scan_image_path)
+        images = [scan_image_path, header_crop_path]
+        
+        prompt = prompt_template.format(ocr_sample=sample_text)
+        # Append instruction to the prompt about the images
+        prompt += "\n\nNote: You have been provided with two images. The first is the full page. The second is a high-resolution crop of the top 15% (the header) to help you read small titles."
+
+        logger.info(f"  Identifying section for {scan_image_path.name} (with header crop)...")
+        response_text, _ = _call_llm(prompt, images, timeout=60)
+        
+        result = _extract_json_from_response(response_text)
+        section = result.get("section", "other")
+        logger.info(f"  → Identified as '{section}' (reason: {result.get('reasoning', 'none')})")
+        return section
+    except Exception as e:
+        logger.warning(f"  Section identification failed: {e}")
+        return "other"
+    finally:
+        if header_crop_path and header_crop_path.exists():
+            header_crop_path.unlink()
+
+
 def process_page_with_gemini(
     scan_image_path: Path,
     ocr_page: OcrPage,
@@ -315,11 +461,19 @@ def process_page_with_gemini(
     # Determine which prompt to use
     if section_override:
         section_type = section_override
-        prompt_file = f"{section_override}.txt"
     elif page_number is not None:
-        section_type, prompt_file = get_section_for_page(page_number)
+        section_type, _, _ = get_section_for_page(page_number)
     else:
-        section_type, prompt_file = "generic", "generic.txt"
+        section_type = "generic"
+
+    # Auto-identify if we are generic/unknown and not in the very first pages
+    if section_type in ("generic", "other", "unknown") and (page_number is None or page_number > 5):
+        section_type = identify_page_section(scan_image_path, ocr_page)
+
+    prompt_file = f"{section_type}.txt"
+    if not (PROMPTS_DIR / prompt_file).exists():
+        logger.warning(f"  Prompt file {prompt_file} missing, falling back to generic.txt")
+        prompt_file = "generic.txt"
 
     logger.info(
         f"Processing {scan_image_path.name} as '{section_type}' "
@@ -331,12 +485,17 @@ def process_page_with_gemini(
     word_list_str = ocr_page.to_numbered_word_list()
     prompt = prompt_template.format(word_list=word_list_str)
 
+    # Load explicit schema if available
+    schema = load_schema(section_type)
+    if schema:
+        logger.info(f"  Using explicit JSON schema for '{section_type}'")
+
     response_text = ""
     last_error_class = "unknown"
     last_error_message = ""
     for attempt in range(1, max_retries + 1):
         try:
-            response_text, usage = _call_llm(prompt, scan_image_path, timeout=120)
+            response_text, usage = _call_llm(prompt, scan_image_path, timeout=120, schema=schema)
 
             if not response_text:
                 last_error_class = "empty_response"
@@ -349,6 +508,11 @@ def process_page_with_gemini(
                 continue
 
             result = _extract_json_from_response(response_text)
+            
+            # Ensure the section type is preserved in the result
+            if "section" not in result:
+                result["section"] = section_type
+                
             _save_usage_sidecar(scan_image_path, usage, attempt, section_type)
             _clear_failure(scan_image_path)
             logger.info(

@@ -6,8 +6,10 @@ precise word-level bounding boxes. This is the critical bridge that gives
 us both intelligent text understanding AND pixel-accurate highlighting.
 """
 
+import hashlib
 import logging
 from difflib import SequenceMatcher
+from pathlib import Path
 
 from pipeline.ocr import OcrPage, OcrWord
 
@@ -105,20 +107,39 @@ def validate_word_ids(
 
 def resolve_bbox_for_word_ids(
     word_ids: list[str],
-    word_index: dict[str, OcrWord],
+    ocr_page: OcrPage,
     context: str = "",
 ) -> list[int] | None:
     """
     Get the merged bounding box for a list of word IDs.
     
+    Vertical bounds (y1, y2) are 'snapped' to the parent line bboxes for 
+    stability. Horizontal bounds (x1, x2) use the words themselves for precision.
+    
     Returns None if no valid word IDs are found.
     """
+    word_index = ocr_page.word_index
+    line_index = ocr_page.line_index
+    
     valid_ids, _ = validate_word_ids(word_ids, word_index, context)
     if not valid_ids:
         return None
     
-    bboxes = [word_index[wid].bbox for wid in valid_ids]
-    return merge_bboxes(bboxes)
+    words = [word_index[wid] for wid in valid_ids]
+    word_bboxes = [w.bbox for w in words]
+    
+    # Start with the union of word bboxes
+    merged = merge_bboxes(word_bboxes)
+    
+    # Snap vertical bounds to the union of lines
+    line_ids = {w.line_id for w in words if w.line_id in line_index}
+    if line_ids:
+        line_bboxes = [line_index[lid].bbox for lid in line_ids]
+        lines_merged = merge_bboxes(line_bboxes)
+        merged[1] = lines_merged[1]  # Snap y1
+        merged[3] = lines_merged[3]  # Snap y2
+    
+    return merged
 
 
 def fuzzy_find_word(
@@ -140,6 +161,34 @@ def fuzzy_find_word(
             best_match = word
     
     return best_match
+
+
+def _normalize_text(text: str | None) -> str:
+    """Normalize text for fingerprinting: lowercase, alphanumeric only."""
+    if not text:
+        return ""
+    # Keep alphanumeric characters and lowercase everything
+    return "".join(c for c in str(text).lower() if c.isalnum())
+
+
+def calculate_fingerprint(entry: dict) -> str:
+    """
+    Calculate a stable fingerprint for an entry based on its content.
+    Uses SHA1 of normalized name, address, and occupation.
+    """
+    # Use expanded fields where possible for better stability
+    name = entry.get("name") or entry.get("business_name") or ""
+    address = entry.get("address_full") or ""
+    occ = entry.get("occupation_expanded") or entry.get("occupation") or ""
+    
+    # Combine normalized strings
+    payload = "|".join([
+        _normalize_text(name),
+        _normalize_text(address),
+        _normalize_text(occ)
+    ])
+    
+    return hashlib.sha1(payload.encode("utf-8")).hexdigest()
 
 
 def align_entry(
@@ -167,13 +216,13 @@ def align_entry(
     address_word_ids = entry["address_word_ids"]
 
     entry["entry_bbox"] = resolve_bbox_for_word_ids(
-        word_ids, word_index, context=f"entry '{entry_id}'"
+        word_ids, ocr_page, context=f"entry '{entry_id}'"
     )
     entry["name_bbox"] = resolve_bbox_for_word_ids(
-        name_word_ids, word_index, context=f"name of '{entry_id}'"
+        name_word_ids, ocr_page, context=f"name of '{entry_id}'"
     )
     entry["address_bbox"] = resolve_bbox_for_word_ids(
-        address_word_ids, word_index, context=f"address of '{entry_id}'"
+        address_word_ids, ocr_page, context=f"address of '{entry_id}'"
     )
     
     # Build the searchable text from all fields
@@ -197,13 +246,20 @@ def align_entry(
     street_str = str(street).strip()
     number_str = str(number).strip()
     if street_str and number_str and street_str != number_str:
-        entry["address_full"] = f"{street_str} {number_str}"
+        # Avoid "Street 29b 29b" if the number is already in the street name
+        if street_str.endswith(number_str):
+            entry["address_full"] = street_str
+        else:
+            entry["address_full"] = f"{street_str} {number_str}"
     elif street_str:
         entry["address_full"] = street_str
     elif number_str:
         entry["address_full"] = number_str
     else:
         entry["address_full"] = None
+    
+    # Calculate fingerprint for stabilization
+    entry["fingerprint"] = calculate_fingerprint(entry)
     
     # Validate word IDs
     all_ids = word_ids + name_word_ids + address_word_ids
@@ -231,6 +287,7 @@ def align_page(
     """
     section = gemini_result.get("section", "generic")
     word_index = ocr_page.word_index
+    stem = Path(ocr_page.scan_file).stem
     
     # Add page dimensions
     gemini_result["dimensions"] = {
@@ -245,54 +302,64 @@ def align_page(
         if region_data and "word_ids" in region_data:
             region_data["word_ids"] = _coerce_word_ids(region_data["word_ids"])
             region_data["bbox"] = resolve_bbox_for_word_ids(
-                region_data["word_ids"], word_index, context=region
+                region_data["word_ids"], ocr_page, context=region
             )
     
     # Align entries based on section type
     if section == "name_register":
         entries = gemini_result.get("entries", [])
-        for entry in entries:
+        for i, entry in enumerate(entries):
+            entry["uid"] = f"{stem}:{i:04d}"
             align_entry(entry, ocr_page)
         _report_alignment_stats(entries, ocr_page.scan_file)
     
     elif section == "street_register":
+        i = 0
         for street in gemini_result.get("streets", []):
             # Resolve street heading bbox
             heading_ids = street.get("street_heading_word_ids", [])
             street["heading_bbox"] = resolve_bbox_for_word_ids(
-                heading_ids, word_index, context=f"street '{street.get('street_name')}'"
+                heading_ids, ocr_page, context=f"street '{street.get('street_name')}'"
             )
             for entry in street.get("entries", []):
                 # Street register entries inherit the street name
                 if not entry.get("address_street"):
                     entry["address_street"] = street.get("street_name")
                     entry["address_street_expanded"] = street.get("street_name_expanded")
+                entry["uid"] = f"{stem}:{i:04d}"
                 align_entry(entry, ocr_page)
+                i += 1
     
     elif section == "occupation_register":
+        i = 0
         for occ in gemini_result.get("occupations", []):
             heading_ids = occ.get("heading_word_ids", [])
             occ["heading_bbox"] = resolve_bbox_for_word_ids(
-                heading_ids, word_index,
+                heading_ids, ocr_page,
                 context=f"occupation '{occ.get('occupation_name')}'"
             )
             for entry in occ.get("entries", []):
+                entry["uid"] = f"{stem}:{i:04d}"
                 align_entry(entry, ocr_page)
+                i += 1
     
     elif section == "institutional":
-        for entity in gemini_result.get("entities", []):
+        for i, entity in enumerate(gemini_result.get("entities", [])):
+            entity["uid"] = f"{stem}:{i:04d}"
             align_entry(entity, ocr_page)
     
     elif section == "advertisement":
-        for ad in gemini_result.get("advertisements", []):
+        for i, ad in enumerate(gemini_result.get("advertisements", [])):
+            ad["uid"] = f"{stem}:{i:04d}"
             align_entry(ad, ocr_page)
     
     else:
         # Generic: align any addresses found
-        for addr in gemini_result.get("addresses_found", []):
+        for i, addr in enumerate(gemini_result.get("addresses_found", [])):
+            addr["uid"] = f"{stem}:{i:04d}"
             addr_ids = addr.get("address_word_ids", [])
             addr["address_bbox"] = resolve_bbox_for_word_ids(
-                addr_ids, word_index, context="generic address"
+                addr_ids, ocr_page, context="generic address"
             )
     
     return gemini_result

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer
@@ -8,13 +10,16 @@ export default function Footer() {
         className="text-bp-ink-dim uppercase"
         style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
       >
-        Technisch Bureau — Gemeente Groningen — 1926
-      </span>
-      <span
-        className="text-bp-amber uppercase"
-        style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
-      >
-        Nr. Grn/Adr/1926 — 21 Nov. 1926
+        Gebouwd door{" "}
+        <Link
+          href="https://lieuwejongsma.nl"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-bp-amber hover:underline"
+        >
+          Lieuwe Jongsma
+        </Link>
+        , 2026
       </span>
     </footer>
   );
