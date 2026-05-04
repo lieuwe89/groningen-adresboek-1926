@@ -78,6 +78,49 @@ export function buildFtsQuery(raw: string): string | null {
   return tokens.join(" AND ");
 }
 
+export type SectionInfo = {
+  section: string;
+  label: string;
+  first_stem: string;
+  first_page_number: number | null;
+  count: number;
+};
+
+const SECTION_LABELS: Record<string, string> = {
+  other: "Voorwerk",
+  institutional: "Instellingen",
+  advertisement: "Advertenties",
+  name_register: "Naamregister",
+  street_register: "Stratenregister",
+  occupation_register: "Beroepenregister",
+};
+
+const SECTIONS_SQL = `
+  SELECT
+    section,
+    MIN(stem) AS first_stem,
+    MIN(page_number) AS first_page_number,
+    COUNT(*) AS count
+  FROM pages
+  WHERE section IS NOT NULL AND section <> ''
+  GROUP BY section
+  ORDER BY MIN(stem)
+`;
+
+export function listSections(): SectionInfo[] {
+  const db = getDb();
+  const rows = db.prepare(SECTIONS_SQL).all() as Array<{
+    section: string;
+    first_stem: string;
+    first_page_number: number | null;
+    count: number;
+  }>;
+  return rows.map((r) => ({
+    ...r,
+    label: SECTION_LABELS[r.section] || r.section,
+  }));
+}
+
 export function search(query: string, limit = 50, offset = 0): SearchResult {
   const fts = buildFtsQuery(query);
   if (!fts) return { total: 0, results: [] };

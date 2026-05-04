@@ -244,3 +244,78 @@ The pipeline already has `OcrLine.bbox` available and **correct**, but the align
 
 - `CLAUDE.md` "Pilot constraints / fix for v2" item #11 documented this exact failure mode ("Surya occasionally emits the same bbox for every word on a line") and claimed it was fixed. The fix existed but its detection threshold was wrong, so the bug stayed silent in the data.
 - The 2026-05-03 admin-CRM screenshots showed bboxes clearly starting after the surname. The "typography indentation" hand-wave was wrong; trust the user's eyes.
+
+
+## 12. Per-page JSON / DB index mismatch (Slice C postmortem, 2026-05-04)
+
+### What was wrong
+
+Wiring the SearchPanel to `/api/search` (Slice C UI) revealed two latent issues
+in the data layer:
+
+1. **`/page/<stem>` returned 404 for 353 of 838 pages.**
+   Pages in the `street_register`, `occupation_register`, `institutional`,
+   `advertisement`, and `other` (front-matter) sections store entries under
+   keys like `streets[]`, `occupations[]`, etc. — the per-page JSON's
+   top-level `entries` field is `null`. `web/lib/overrides.ts:mergeOverrides`
+   called `.map` on `page.entries` directly, so `loadPage` swallowed a
+   `TypeError`, returned `null`, and `app/page/[stem]/page.tsx` rendered
+   `notFound()`. Browsing into those pages from the public site was simply
+   broken.
+
+2. **Global-search hit on a non-name-register page lands on a stub.**
+   `scripts/build_db.py` indexes `street_register` etc. via
+   `pipeline.json_export._collect_entries_for_index`, which pulls from
+   `streets[].properties[]` / `occupations[].properties[]`. So FTS hits
+   resolve correctly (the right `stem` and a `stable_id` of
+   `<stem>:<index>`), but on the destination page `data.entries` is empty
+   and the entry index doesn't map to anything renderable. Scan loads, no
+   left-rail highlight, no bbox overlay.
+
+### The fix (landed 2026-05-04, Slice C commit)
+
+- Defensive `page.entries ?? []` in `web/lib/overrides.ts:mergeOverrides`.
+  404 → 200; the page renders the scan with an empty entry list. This is
+  the minimum needed to make global-search nav land somewhere coherent.
+
+### What's still wrong (deferred)
+
+The `<stem>:<index>` collision between FTS rows and per-page JSON is
+real: idx in the DB references the position in the *per-section sub-array*
+(streets[]/occupations[]), but on the front end nothing un-wraps those
+into `entries[]`. Two structural fixes worth doing before the public site
+is fully wired:
+
+- **Make `loadPage` (or a new `loadPageEntries(stem)`) flatten section
+  sub-arrays into a uniform `entries[]`** so the front end can pretend
+  every page has a flat list. Source of truth for the order must match
+  what `_collect_entries_for_index` produced — otherwise the FTS-derived
+  `stable_id` won't index into the right entry. Easiest path: have both
+  the builder and the loader call the same flattener.
+- **Or:** change the DB schema to store `entry_index_in_page` *and*
+  `entry_kind` (`name | street | occupation | …`) so the loader can find
+  the right sub-array entry without flattening. Heavier change.
+
+Either way, the public site should not ship without one of these fixed —
+clicking a global-search hit on a street should highlight that street's
+row, not a blank entry stub.
+
+### How to spot a similar issue in future builds
+
+`/page/<stem>` returning 404 for an entire section is a smell: it means
+the front-end loader and the index builder are reading the per-page JSON
+through different schemas. Cheap diagnostic: `curl -s
+http://localhost:3001/page/<stem>` for one page from each section and
+confirm 200; if any 404s, the loader is missing a section type.
+
+### Earlier hints we missed
+
+- HANDOFF.md §3 already noted that geocoded coverage on
+  `street_register` was 92.2% and `occupation_register` was 5.6% — the
+  build_db script was clearly *aware* of those sections and was indexing
+  them. Nothing on the front-end side was. The mismatch was visible in
+  the coverage table but not flagged as a loader problem.
+- `web/lib/data.ts:Entry` has no `stable_id` field. The DB schema does.
+  When two sides of a system disagree on whether an ID exists, that's
+  usually a flag that they were built at different times against
+  different assumptions.

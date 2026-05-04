@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import SectionJump from "./SectionJump";
 
 export default function Header() {
   const pathname = usePathname() || "";
@@ -39,9 +40,9 @@ export default function Header() {
         >
           Interactieve verkenner — Naamregister &amp; Plattegrond
         </div>
-        <div className="flex gap-[20px] mt-[5px]">
+        <div className="flex gap-[20px] mt-[5px] items-end">
           <Meta label="Schaal" value="1 : 8 000" />
-          <Meta label="Sectie" value="Naamregister" />
+          <SectionJump currentStem={stem} />
           <Meta label="Blad" value="A — Z" />
         </div>
       </div>
