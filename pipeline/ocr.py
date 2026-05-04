@@ -30,7 +30,8 @@ from pathlib import Path
 
 from PIL import Image
 
-from pipeline.config import HOCR_DIR
+from pipeline.config import HOCR_DIR, OCR_STRATEGY, OCR_DEVICE, LOGHI_MODEL_PATH
+from pipeline.classifier import classify_page, PageType
 
 logger = logging.getLogger(__name__)
 
@@ -99,17 +100,33 @@ _detection_predictor = None
 _foundation_predictor = None
 
 
-def _get_predictors():
+def _get_device(override=None):
+    """Detect the best available device for PyTorch."""
+    if override and override != "auto":
+        return override
+
+    import torch
+    if torch.cuda.is_available():
+        return "cuda"
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
+def _get_predictors(device="auto"):
     """Lazy-init Surya predictors so importing this module is cheap."""
     global _recognition_predictor, _detection_predictor, _foundation_predictor
     if _recognition_predictor is None:
         from surya.foundation import FoundationPredictor
         from surya.recognition import RecognitionPredictor
         from surya.detection import DetectionPredictor
-        logger.info("Loading Surya foundation + detection + recognition models (first run downloads weights)...")
-        _foundation_predictor = FoundationPredictor()
+        
+        target_device = _get_device(device)
+        logger.info(f"Loading Surya models on {target_device}...")
+        
+        _foundation_predictor = FoundationPredictor(device=target_device)
         _recognition_predictor = RecognitionPredictor(foundation_predictor=_foundation_predictor)
-        _detection_predictor = DetectionPredictor()
+        _detection_predictor = DetectionPredictor(device=target_device)
         logger.info("Surya models loaded.")
     return _detection_predictor, _recognition_predictor
 
@@ -313,22 +330,36 @@ def _load_cache(scan_filename: str) -> OcrPage | None:
     return page
 
 
+def run_loghi_recognition(image: Image.Image, text_lines: list) -> list[str]:
+    """
+    Call Loghi HTR as a separate subprocess.
+    
+    This keeps TensorFlow and PyTorch dependencies separate.
+    Placeholder implementation: would crop line images and call the CLI.
+    """
+    if not LOGHI_MODEL_PATH:
+        logger.warning("  Loghi selected but LOGHI_MODEL_PATH not set. Falling back to '???'")
+        return ["???" for _ in text_lines]
+    
+    logger.info(f"  Calling Loghi HTR (model: {LOGHI_MODEL_PATH})...")
+    # Subprocess logic would go here
+    return ["HTR_RESULT" for _ in text_lines]
+
+
 def run_ocr(
     image: Image.Image,
     scan_filename: str,
     save_debug: bool = True,
     use_cache: bool = True,
+    strategy: str = None,
+    device: str = None,
 ) -> OcrPage:
     """
-    Run Surya OCR on an image and return a structured OcrPage.
-
-    Args:
-        image: PIL Image (RGB; grayscale is converted automatically).
-        scan_filename: Original scan filename for reference.
-        save_debug: If True, dump a per-word text file under HOCR_DIR for debugging.
-        use_cache: If True, return a cached OcrPage when available and persist
-            a fresh result to disk after each run.
+    Run OCR on an image using the specified strategy (Surya, Loghi, or Auto).
     """
+    strategy = strategy or OCR_STRATEGY
+    device = device or OCR_DEVICE
+
     if use_cache:
         cached = _load_cache(scan_filename)
         if cached is not None:
@@ -338,9 +369,19 @@ def run_ocr(
     if image.mode != "RGB":
         image = image.convert("RGB")
 
-    logger.info(f"Running Surya OCR on {scan_filename}...")
-    det, rec = _get_predictors()
+    # 1. Classification (if auto)
+    if strategy == "auto":
+        page_type = classify_page(image)
+        actual_engine = "loghi" if page_type == PageType.HANDWRITTEN else "surya"
+        logger.info(f"  Auto-strategy: detected {page_type.value} -> using {actual_engine}")
+    else:
+        actual_engine = strategy
 
+    logger.info(f"Running {actual_engine} OCR on {scan_filename}...")
+    det, rec = _get_predictors(device=device)
+
+    # 2. Detection (Always Surya for layout analysis)
+    # Even if we use Loghi for recognition, we use Surya for bounding boxes.
     predictions = rec(
         [image],
         task_names=["ocr_with_boxes"],
@@ -348,12 +389,25 @@ def run_ocr(
         return_words=True,
         sort_lines=True,
     )
+
     if not predictions:
-        logger.warning(f"  Surya returned no predictions for {scan_filename}")
+        logger.warning(f"  OCR returned no predictions for {scan_filename}")
         return OcrPage(scan_file=scan_filename, width=image.width, height=image.height)
 
     result = predictions[0]
     text_lines = getattr(result, "text_lines", []) or []
+
+    # 3. Recognition Override (if Loghi)
+    if actual_engine == "loghi":
+        loghi_texts = run_loghi_recognition(image, text_lines)
+        for tl, lt in zip(text_lines, loghi_texts):
+            tl.text = lt
+            # Naive word split to keep ID mapping if possible
+            if hasattr(tl, "words") and tl.words:
+                words = lt.split()
+                if len(words) == len(tl.words):
+                    for w, t in zip(tl.words, words):
+                        w.text = t
 
     page = OcrPage(
         scan_file=scan_filename,

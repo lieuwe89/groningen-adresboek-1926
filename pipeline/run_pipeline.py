@@ -100,7 +100,7 @@ def setup_logging(verbose: bool = False):
 # ── Pipeline stages ───────────────────────────────────────────────────────────
 
 
-def stage_ocr(scan_paths: list[Path]) -> dict[str, OcrPage]:
+def stage_ocr(scan_paths: list[Path], strategy: str = None, device: str = None) -> dict[str, OcrPage]:
     """
     Stage 2: Run Surya OCR on all scans.
 
@@ -114,7 +114,7 @@ def stage_ocr(scan_paths: list[Path]) -> dict[str, OcrPage]:
     for i, scan_path in enumerate(scan_paths, start=1):
         logger.info(f"[{i}/{len(scan_paths)}] OCR: {scan_path.name}")
         normalized = normalize_image(scan_path)
-        ocr_page = run_ocr(normalized, scan_path.name)
+        ocr_page = run_ocr(normalized, scan_path.name, strategy=strategy, device=device)
         results[scan_path.name] = ocr_page
         logger.info(f"  → {len(ocr_page.all_words)} words detected")
 
@@ -298,6 +298,8 @@ def _retry_failed_pages(
 def stage_ocr_llm_pipelined(
     scan_paths: list[Path],
     force_reprocess: bool = False,
+    strategy: str = None,
+    device: str = None,
 ) -> tuple[dict[str, OcrPage], dict[str, dict]]:
     """
     Pipelined OCR + LLM. OCR runs on the main thread (the producer); a single
@@ -406,7 +408,7 @@ def stage_ocr_llm_pipelined(
         for i, scan_path in enumerate(scan_paths, start=1):
             logger_ocr.info(f"[{i}/{len(scan_paths)}] OCR: {scan_path.name}")
             normalized = normalize_image(scan_path)
-            ocr_page = run_ocr(normalized, scan_path.name)
+            ocr_page = run_ocr(normalized, scan_path.name, strategy=strategy, device=device)
             ocr_results[scan_path.name] = ocr_page
             logger_ocr.info(f"  → {len(ocr_page.all_words)} words detected")
             q.put((scan_path, ocr_page))
@@ -687,6 +689,16 @@ def main():
             "Does not change checkpoints."
         ),
     )
+    parser.add_argument(
+        "--strategy",
+        type=str,
+        help="OCR strategy: 'auto', 'surya', or 'loghi'.",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        help="OCR device: 'cpu', 'cuda', 'mps', 'directml', or 'auto'.",
+    )
 
     args = parser.parse_args()
 
@@ -731,7 +743,7 @@ def main():
     # in --ocr-only mode.
     if args.ocr_only:
         t_start = time.time()
-        ocr_results = stage_ocr(scan_paths)
+        ocr_results = stage_ocr(scan_paths, strategy=args.strategy, device=args.device)
         t_ocr = time.time() - t_start
         logger.info(f"OCR took {t_ocr:.1f}s ({t_ocr/len(scan_paths):.1f}s/page)")
         logger.info("Skipping Gemini processing (--ocr-only mode)")
@@ -739,7 +751,8 @@ def main():
     else:
         t_start = time.time()
         ocr_results, gemini_results = stage_ocr_llm_pipelined(
-            scan_paths, force_reprocess=args.reprocess
+            scan_paths, force_reprocess=args.reprocess,
+            strategy=args.strategy, device=args.device
         )
         t_pipeline = time.time() - t_start
         logger.info(f"OCR+LLM (pipelined) took {t_pipeline:.1f}s")
