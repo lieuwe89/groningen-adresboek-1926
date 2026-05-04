@@ -49,6 +49,9 @@ out/
 *.tsbuildinfo
 web/next-env.d.ts
 
+# Generated SQLite (rebuild via `npm run build:db` or `python scripts/build_db.py`)
+web/data/
+
 # Build artifacts
 *.log
 *.pid
