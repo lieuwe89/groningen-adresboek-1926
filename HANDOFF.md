@@ -1,224 +1,206 @@
-# Handoff — 2026-05-04 (public-site groundwork)
+# Handoff — 2026-05-04 (Slice C UI: book-wide search + section jump)
 
-This session moved Round 3 work from the personal macOS box onto a private
-GitHub repo and laid the data layer for the public map-centric explorer.
-Everything in this handoff is committed and pushed; nothing is lost on
-`/clear`.
+This session wired the public-site UI to the data layer that Slice B+C
+foundation set up: `SearchPanel` now calls `/api/search` for book-wide
+results, and a section-jump dropdown in the header navigates between
+the printed book's six sections.
+
+Pushed to `origin/main`. Web app version bumped 0.1.0 → 0.2.0.
 
 ## TL;DR — where to resume
 
 ```bash
 git pull
 cd web && npm install
-npm run build:db                    # regenerates web/data/adresboek.sqlite
-npm run dev                         # http://localhost:3001
-curl 'http://localhost:3001/api/search?q=bakker&limit=3'   # smoke
+npm run build:db                # regenerates web/data/adresboek.sqlite (gitignored)
+npm run dev                     # http://localhost:3001
 ```
 
-Then continue with one of the **next-step options** at the bottom. The most
-natural next move is **Slice F (MapLibre + markers)** — the data is ready.
+In the running app:
+
+- Type into the search box (left rail) — when you have ≥ 2 chars, the
+  rail switches to "BOEKZOEKEN" and shows hits across the whole book
+  with page numbers. Click a hit to navigate.
+- Header has a "Sectie" dropdown — pick e.g. "Stratenregister" to jump
+  to the first scan of that section.
+
+Then continue with one of the **next-step options** at the bottom. The
+most natural next move is **Slice F (MapLibre + markers)** — the data
+is ready and the UI rails around it are stable.
 
 ## Repo
 
 - **GitHub:** https://github.com/lieuwe89/groningen-adresboek-1926 (private)
-- **`origin/main` HEAD:** `a3234d9` "Slice B + C foundation"
+- **`origin/main` HEAD:** `a0f1210` "chore(web): bump version to 0.2.0"
 - **Local clone:** `/Users/lieuwejongsma/projects/groningen-adresboek-1926`
-- **History:** initial commit `0321de1` is the squashed root (prior 2 commits
-  rewritten away to drop >100 MB GeoTIFFs from blob history; see NEXT_STEPS
-  §11 for the bbox fix postmortem that lived in those commits).
-- **Working tree status:** clean, on `main`, tracking `origin/main`.
+- **Working tree:** clean except for in-progress pipeline-engine work
+  on `pipeline/align.py`, `pipeline/json_export.py`, `pipeline/llm.py`,
+  `pipeline/ocr.py` and untracked `pipeline/ocr/`,
+  `pipeline/prompts/classify_section.txt` — separate work-in-progress
+  from the OCR-engine-abstraction branch (commits `1e6220b` and
+  `5802e0c`). Not touched in this session.
 
 ## What landed this session
 
-### 1. Bbox refresh (Round 3 follow-up — rewrites output/)
+### 1. Wired SearchPanel to `/api/search` (Slice C UI) — commit `0402130`
 
-`pipeline/refresh_outputs.py` (new) — re-aligns + re-exports all 838 pages
-from cached OCR + cached LLM raw, no network, no GPU. 13.5 s.
+`web/components/SearchPanel.tsx` gained a global mode. When the search
+input has ≥ 2 trimmed characters, `Viewer.tsx` debounces a fetch to
+`/api/search` (220 ms, abortable, request-sequence guard against
+out-of-order responses) and passes results to a new `GlobalResults`
+subcomponent. Empty input falls back to the original page-local entry
+list.
 
-Bypasses `pipeline/run_pipeline.py` because that file imports a stale
-`pytesseract` / `TARGET_DPI` / `TESSERACT_LANG` Tesseract layout helper
-in `pipeline/preprocess.py` that no longer matches `pipeline/config.py`.
-Refresh script avoids the broken module path.
+Hits show name + occupation + address + page number. Click navigates
+to `/page/<stem>?entry=<stable_id>&q=<query>`. On the destination page,
+`Viewer.tsx` reads `?entry` and `?q` once on stem change, restoring
+the query in the input and selecting the linked entry.
 
-Verified post-refresh: `Berg` 0150 entry at x=273; `Bergh` 0151 at x=148;
-`Beukema` 0152 at x=248. All match the post-fix expectation in NEXT_STEPS §11.
+New shared client type: `web/lib/searchTypes.ts` (mirrors `SearchRow`
+in `lib/db.ts` so the better-sqlite3 import doesn't leak into the
+client bundle).
 
-### 2. PDOK geocoding — done
+**Defensive fix bundled in same commit:** `web/lib/overrides.ts:111`
+now uses `page.entries ?? []` — 353 of 838 per-page JSONs have
+`entries: null` (street/occupation/front-matter sections store entries
+under `streets[]`/`occupations[]`/etc.), and `mergeOverrides.map` was
+throwing → `loadPage` returned null → 404 for the entire section.
+Patch makes those pages render the scan with an empty entry list. The
+deeper schema mismatch is logged for later (see "Known caveats").
 
-- `scripts/geocode_addresses.py` — concurrent (20 workers), resumable,
-  idempotent. Stdlib only. Synced from a second-PC run that had to add
-  street aliases (1926 → current Dutch spelling) plus `compute_flags`
-  semantics (`uncertain` / `not_found`).
-- `output/geocoded/addresses.json` (~14 MB, on Drive — gitignored) holds
-  results.
-- Coverage: 35,513 / 36,280 unique addresses (97.9 %). Bucketed:
-  - `adres` (precise pin) — 19,072
-  - `weg` (street-level only) — 10,686 *flagged uncertain*
-  - `gemeente` (city centroid; demolished/renamed street) — 5,680 *flagged uncertain*
-  - `woonplaats` / `postcode` / `buurt` — small numbers, mostly rural
-- `HANDOFF_GEOCODE.md` (committed) is the original detached-run brief; it
-  reflects the script *before* the alias work, so re-read with that caveat.
+### 2. Section-jump dropdown — commit `7e384dc`
 
-### 3. SQLite + FTS5 build (Slice B)
+`GET /api/sections` (new route) returns the six sections of the 1926
+book with their first stem, first printed page number, count, and a
+Dutch label:
 
-`scripts/build_db.py` (new) → `web/data/adresboek.sqlite` (45.9 MB,
-gitignored). Tables: `pages`, `entries`, `entries_fts` (FTS5,
-`unicode61 remove_diacritics 2`), `cross_references`. Reuses
-`pipeline.json_export._collect_entries_for_index` so all section types
-(name / street / occupation / institutional / advertisement / other) are
-imported, not just name register.
+| section_id | label | first_stem | count |
+|---|---|---|---|
+| `other` | Voorwerk | 1769_19525-1926_0001 | 10 |
+| `institutional` | Instellingen | 1769_19525-1926_0011 | 104 |
+| `advertisement` | Advertenties | 1769_19525-1926_0025 | 6 |
+| `name_register` | Naamregister | 1769_19525-1926_0121 | 485 |
+| `street_register` | Stratenregister | 1769_19525-1926_0606 | 196 |
+| `occupation_register` | Beroepenregister | 1769_19525-1926_0802 | 37 |
 
-End-to-end stats from the most recent build: **838 pages · 60,783 entries · 49,959 with lat/lng (82.2 %) · 5 overrides merged · 218 cross-refs**, in 2.8 s.
+`web/components/SectionJump.tsx` is a client component that fetches
+once on mount and renders a `<select>` with `Sectie — blz N (count)`
+options. The current section is auto-detected from the active stem
+(highest `first_stem <= currentStem`). Replaces the static
+`<Meta label="Sectie" value="Naamregister" />` in `Header.tsx`.
 
-Geocoded coverage by section:
+Same commit appended `NEXT_STEPS.md §12` — postmortem on the per-page
+JSON / DB index mismatch.
 
-| section | total | geocoded |
-|---|---|---|
-| name_register | 27,845 | 99.1% |
-| street_register | 22,080 | 92.2% |
-| institutional | 5,545 | 28.2% |
-| occupation_register | 5,162 | 5.6% |
-| other | 118 | 97.5% |
-| advertisement | 33 | 66.7% |
+### 3. Version bump — commit `a0f1210`
 
-The `5.6 %` on occupation_register is real: those entries are people
-listed under occupation headings, mostly without addresses. The `28.2 %`
-on institutional is similarly explained — many institutions don't have a
-clean street/number that PDOK matches.
+`web/package.json` 0.1.0 → 0.2.0 (per repo convention: bump before
+push). No git tag — this repo doesn't have a tagging convention yet.
+First time we'd want one is probably when ROADMAP slice F or G ships,
+since that's the first deploy-able milestone.
 
-Build is idempotent (drops + recreates everything) and re-runs cleanly
-after CRM edits or geocoding additions.
+## Known caveats (still open)
 
-### 4. /api/search route (Slice C foundation)
+### Per-page JSON / DB stable_id mismatch (deferred)
 
-- `web/lib/db.ts` — better-sqlite3 singleton with `query_only=ON`, WAL
-  journal. `buildFtsQuery` strips FTS operators and prefix-matches each
-  token, AND-joined.
-- `web/app/api/search/route.ts` — `GET /api/search?q=&limit=&offset=`,
-  `runtime=nodejs`, `dynamic=force-dynamic`.
-- Smoke verified in the dev server: `q=bakker` → `total=1200`, returns
-  rows with `id`, `stable_id`, `stem`, `page_number`, `section`, name,
-  occupation, `address_full`, `lat`, `lng`, all bboxes, `geocode_flags`,
-  status flags.
+`scripts/build_db.py` indexes street/occupation/institutional sections
+via `pipeline.json_export._collect_entries_for_index`, which pulls
+from `streets[].properties[]` etc. So FTS hits resolve correctly to
+the right `stem` and assign a `stable_id` of `<stem>:<index>`. But the
+front-end loader `web/lib/data.ts:loadPage` only reads
+`page.entries`, which is `null` for those sections, so when you click
+a global-search hit on a street, the destination page renders the scan
+fine but has no entry list, no left-rail highlight, no bbox overlay.
 
-`web/package.json` now has a `build:db` script that calls the Python
-builder from the project root via `.venv/bin/python`.
+This is fully documented in `NEXT_STEPS.md §12`. Two structural fixes
+laid out there:
 
-### 5. Repo structure + GitHub setup
+- (A) Have both `loadPage` *and* `build_db.py` run a shared flattener
+  that collapses section sub-arrays into a uniform `entries[]` in the
+  same order. Pure code change; no schema or data migration. Probably
+  the right move.
+- (B) Change the DB schema to store `entry_index_in_page` *and*
+  `entry_kind` so the loader can find the right sub-array entry.
+  Heavier, but more future-proof if other entry kinds appear.
 
-- Comprehensive `.gitignore` covering `scans/`, `Maps/`, `output/*` (with
-  `!output/overrides/` to keep CRM edits), `tessdata/`, `.venv/`,
-  `node_modules/`, `web/data/`, `.env*`, `pipeline/config_local.py`,
-  `secrets.md`, `.tmp.*`, `.DS_Store`, `.claude/`.
-- `README.md` rewritten with: repo layout, *required external assets*
-  table, cross-platform setup, refresh-outputs path, full reference list.
-- Legacy notes moved into `docs/archive/`; design HTMLs into
-  `docs/design-ref/`.
-- `output/overrides/` IS tracked — those are user CRM edits, not generated.
+The public site should not ship without one of these — global search
+is one of the headline features and clicking a hit on a street should
+land you on the highlighted street row, not a blank stub.
 
-### 6. Things explicitly NOT done
+### Section classification noise
 
-- `web/components/SearchPanel.tsx` is **still page-scoped** — the new
-  `/api/search` endpoint exists but the UI does not call it yet. The
-  current SearchPanel filters `data.entries` (one page) client-side. The
-  next move is to wire it in (or build a parallel global-search component);
-  see *next-step options* below.
-- `pipeline/preprocess.py` Tesseract leftovers not cleaned. `run_pipeline.py`
-  still works on Windows (where pytesseract is installed) but errors on
-  the macOS box. The refresh path avoids it.
-- No DZI tiles, no OpenSeadragon, no MapLibre, no COG overlays, no Fly.io
-  deploy yet — those are Slices D / E / F / G / J in `NEXT_STEPS.md`.
+`street_register` first stem is `0606` but that scan visually shows an
+advertisement page — section labels at section borders are noisy
+(see ad pages 0023–0028 misclassified as `advertisement` when they
+sit inside the institutional/name-register region by printed page).
+Refining `pipeline/config.py:SECTION_MAP` is pipeline-side work and
+out of scope for the public-site phase. The dropdown lands on whatever
+the DB says.
 
-## What needs syncing per machine
+### Pipeline `preprocess.py` Tesseract leftovers (unchanged from prev handoff)
 
-`web/data/adresboek.sqlite` is gitignored. To get it on the other PC:
-
-```bash
-git clone https://github.com/lieuwe89/groningen-adresboek-1926.git
-cd groningen-adresboek-1926
-# Sync these from Drive (NOT in git):
-#   output/json/                 (per-page entries)
-#   output/overrides/            (CRM edits — actually IS in git, but
-#                                  also synced via Drive for local edits)
-#   output/geocoded/addresses.json
-#   output/combined/             (used by build script)
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-cd web
-npm install
-npm run build:db          # rebuilds web/data/adresboek.sqlite
-npm run dev
-```
-
-If `output/json/` is too big to sync conveniently, the alternative is a
-fresh extraction run, but for the public-site work the existing pilot
-JSONs are fine.
-
-## Decisions answered for the public-site phase
-
-The user answered the four open questions from `docs/archive/website_plan.md`:
-
-1. **Map layers** — 6 historical maps (already in `Maps/GeoTIFF/`) + 1
-   modern map split into polygons + labels. The 6 historic GeoTIFFs are
-   91 MB to 226 MB each (need COG conversion before serving).
-2. **Hosting** — `playground.lieuwejongsma.nl/Groningen1926`. This means
-   `basePath: "/Groningen1926"` in `next.config.ts` when we deploy.
-3. **Page browsing** — sequential flip-through wanted, with a dropdown to
-   jump to a section (front matter / inleiding / namenregister / streets
-   / occupations / etc.). The dropdown should display the section labels,
-   not just page numbers.
-4. **Analytics** — skip (not wanted).
+Still there. `run_pipeline.py` errors on macOS, `refresh_outputs.py`
+avoids it. ~30 min cleanup for v2.
 
 ## Next-step options (sorted by leverage)
 
-1. **Wire SearchPanel.tsx to `/api/search`** (~1–2 h). The piece every
-   other UI feature builds on. Currently the API exists but no UI calls
-   it. After this, search becomes book-wide instead of page-only, and
-   results carry `stem`+`stable_id` so clicking can navigate.
+1. **Slice F: MapLibre + markers** (~3–4 h). Replace the blueprint
+   placeholder in `web/components/MapPanel.tsx` with a real MapLibre
+   map. Plot the 49,959 lat/lng entries with clustering, popups for
+   marker clicks. Reads via a new `/api/markers?bounds=…` endpoint or
+   serves the full geocoded set as static JSON for v1. Search ←→ map
+   linking comes here.
 
-2. **Slice F: MapLibre + markers** (~3–4 h). Replace the blueprint
-   placeholder in `web/components/MapPanel.tsx` with a real MapLibre map,
-   plot the 49,959 lat/lng entries with clustering, popups for marker
-   clicks. Reads via a new `/api/markers?bounds=...` endpoint or just
-   serves the full geocoded set as static JSON for v1.
+2. **Fix stable_id flatten (caveat above)** (~2 h). Sharing the
+   flattener between `build_db.py` and `loadPage` so global-search
+   hits on street/occupation pages actually highlight. Worth doing
+   before Slice F so map markers can carry the correct entry refs.
 
-3. **Slice G: COG historic overlays** (~2–3 h once #2 is done).
-   `gdal_translate -of COG` over the 6 GeoTIFFs (output to `web/public/maps/`
-   or a Fly volume), then `@geomatico/maplibre-cog-protocol` for runtime
-   tile fetch. Layer-switcher UI with opacity slider per layer.
+3. **Slice G: COG historic overlays** (~2–3 h once #1 is done).
+   `gdal_translate -of COG` over the 6 GeoTIFFs (output to
+   `web/public/maps/` or a Fly volume), then
+   `@geomatico/maplibre-cog-protocol` for runtime tile fetch.
+   Layer-switcher UI with opacity slider per layer.
 
-4. **Slice D + E: DZI tiles + OpenSeadragon** (~3 h). `brew install vips`,
-   then `vips dzsave` over the 838 scans → ~2 GB of WebP tiles in
-   `web/public/tiles/`. Replace plain `<img>` in ScanPanel with
-   OpenSeadragon. SVG overlay for entry highlighting (re-using the bboxes
-   already in the search response).
+4. **Slice D + E: DZI tiles + OpenSeadragon** (~3 h).
+   `brew install vips`, then `vips dzsave` over the 838 scans → ~2 GB
+   of WebP tiles in `web/public/tiles/`. Replace plain `<img>` in
+   `ScanPanel` with OpenSeadragon. SVG overlay for entry highlighting
+   (re-using bboxes already in the search response).
 
-5. **Section-jump dropdown** (~1 h). Reads `pages.section` distinct values
-   from SQLite, renders a `<select>` with `[Front matter — p. 1, Inleiding —
-   p. 5, Naamregister — p. 119, ...]`, navigates to the first page of the
-   chosen section. The data is already there.
+5. **Pipeline backlog** (low priority for public-site work):
+   - Clean stale `pipeline/preprocess.py` Tesseract code.
+   - LLM prompt iteration for `(B.)`/`E.` mis-reads.
+   - Land the engine-abstraction WIP from `pipeline/align.py` etc.
 
-6. **Pipeline backlog** (low priority for public-site work):
-   - Clean stale `pipeline/preprocess.py` Tesseract code so
-     `run_pipeline.py` runs on macOS. ~30 min.
-   - LLM prompt iteration for `(B.)`/`E.` mis-reads. Sample-driven.
-
-## Key file references
+## Key file references (delta this session)
 
 | File | What |
 |---|---|
-| `pipeline/refresh_outputs.py` | One-shot re-align + re-export, no network |
-| `scripts/geocode_addresses.py` | PDOK batch geocoder (current version, alias-aware) |
-| `scripts/build_db.py` | JSON+overrides+geocoded → `web/data/adresboek.sqlite` |
-| `web/lib/db.ts` | better-sqlite3 connection + FTS query builder |
-| `web/app/api/search/route.ts` | GET /api/search?q=&limit=&offset= |
-| `web/package.json` | `npm run build:db` script |
-| `NEXT_STEPS.md` | Full roadmap; Decisions §2; bbox postmortem §11 |
-| `HANDOFF_GEOCODE.md` | Detached-PC run brief (pre-alias version) |
-| `docs/archive/website_plan.md` | Full public-site plan with API shape, deploy details |
-| `docs/archive/ui.md` | UI/UX layout, palette, interaction flows |
+| `web/lib/searchTypes.ts` | Client-shared types for `/api/search` response |
+| `web/lib/db.ts` | + `listSections()`, `SectionInfo`, Dutch labels |
+| `web/lib/overrides.ts` | Defensive `page.entries ?? []` fix |
+| `web/app/api/search/route.ts` | Unchanged from previous handoff |
+| `web/app/api/sections/route.ts` | New — GET /api/sections |
+| `web/components/SearchPanel.tsx` | + `globalMode` rendering, `GlobalResults` |
+| `web/components/SectionJump.tsx` | New client dropdown for header |
+| `web/components/Header.tsx` | Replaces static "Sectie" Meta with dropdown |
+| `web/app/page/[stem]/Viewer.tsx` | Debounced fetch, nav, URL-param restore |
+| `NEXT_STEPS.md` | Appended §12 — Slice C postmortem |
+| `web/package.json` | 0.1.0 → 0.2.0 |
+
+Background context still in:
+
+- `HANDOFF_GEOCODE.md` — geocoder run notes (pre-alias version, caveat applies).
+- `docs/archive/website_plan.md` — full public-site plan with API shape, deploy details.
+- `docs/archive/ui.md` — UI/UX layout, palette, interaction flows.
+- `NEXT_STEPS.md` §11 — bbox cluster bug postmortem (still relevant for v2).
 
 ## To resume in a fresh Claude session
 
 Open this file. Tell Claude: *"continue from HANDOFF.md"*. Pick one of
-the **next-step options**.
+the **next-step options**. Strong recommendation: **#2 (stable_id
+flatten) before #1 (Slice F)**, because Slice F's map markers will
+carry the same `stable_id` references and inherit the same broken
+nav-into-empty-page behaviour for non-name-register entries if not
+fixed first. Maybe ~2h spent now saves rework in Slice F.
