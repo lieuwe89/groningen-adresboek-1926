@@ -109,6 +109,7 @@ export function applyOverride(entry: Entry, ov?: EntryOverride): Entry {
 }
 
 export function mergeOverrides(stem: string, page: PageData, overrides: OverridesFile): PageData {
-  const entries = page.entries.map((e, i) => applyOverride(e, overrides[entryId(stem, i)]));
+  const base = page.entries ?? [];
+  const entries = base.map((e, i) => applyOverride(e, overrides[entryId(stem, i)]));
   return { ...page, entries };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import type { Entry } from "@/lib/data";
+import type { SearchHit } from "@/lib/searchTypes";
 
 export type StatusFilter = "all" | "verified" | "needs_review" | "unreviewed";
 
@@ -16,6 +17,15 @@ interface Props {
   onFilter: (f: StatusFilter) => void;
   totalCount: number;
   showStatus?: boolean;
+  // Global search mode: when query is non-empty, parent fetches /api/search
+  // and passes results here. When undefined, render local page entries.
+  globalMode?: boolean;
+  globalResults?: SearchHit[];
+  globalTotal?: number;
+  globalLoading?: boolean;
+  globalError?: string | null;
+  currentStem?: string;
+  onSelectGlobal?: (hit: SearchHit) => void;
 }
 
 export default function SearchPanel(p: Props) {
@@ -93,16 +103,30 @@ export default function SearchPanel(p: Props) {
             className="text-bp-ink-dim uppercase"
             style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
           >
-            Resultaten
+            {p.globalMode ? "Boekzoeken" : "Resultaten"}
           </span>
           <span className="text-bp-amber" style={{ fontSize: 10, fontWeight: 700 }}>
-            {p.entries.length}
+            {p.globalMode
+              ? p.globalLoading
+                ? "…"
+                : p.globalTotal ?? 0
+              : p.entries.length}
           </span>
         </div>
 
         {/* Results list */}
         <div className="flex-1 overflow-y-auto">
-          {p.entries.map(({ entry, idx }) => {
+          {p.globalMode ? (
+            <GlobalResults
+              results={p.globalResults || []}
+              total={p.globalTotal || 0}
+              loading={!!p.globalLoading}
+              error={p.globalError || null}
+              currentStem={p.currentStem}
+              onSelect={p.onSelectGlobal}
+            />
+          ) : (
+            p.entries.map(({ entry, idx }) => {
             const active = idx === p.activeIdx;
             const name = formatName(entry);
             const occ = entry.occupation_expanded || entry.occupation || "";
@@ -164,8 +188,9 @@ export default function SearchPanel(p: Props) {
                 </div>
               </button>
             );
-          })}
-          {p.entries.length === 0 && (
+            })
+          )}
+          {!p.globalMode && p.entries.length === 0 && (
             <div className="px-[13px] py-[20px] text-bp-ink-dim" style={{ fontSize: 9 }}>
               Geen resultaten op deze pagina.
             </div>
@@ -177,7 +202,9 @@ export default function SearchPanel(p: Props) {
           className="border-t border-bp-ink/55 px-[13px] py-[6px] text-bp-ink-dim uppercase"
           style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
         >
-          Afd. I — Persoonsgegevens · {p.totalCount} totaal
+          {p.globalMode
+            ? `Afd. I — Boekzoeken · ${p.globalTotal ?? 0} treffers`
+            : `Afd. I — Persoonsgegevens · ${p.totalCount} totaal`}
         </div>
       </aside>
     </div>
@@ -241,4 +268,105 @@ function FilterBtn({
 function formatName(e: Entry): string {
   const parts = [e.name, e.initials, e.name_prefix].filter(Boolean);
   return parts.join(" ");
+}
+
+function formatHitName(h: SearchHit): string {
+  return [h.name, h.initials].filter(Boolean).join(" ");
+}
+
+function GlobalResults({
+  results,
+  total,
+  loading,
+  error,
+  currentStem,
+  onSelect,
+}: {
+  results: SearchHit[];
+  total: number;
+  loading: boolean;
+  error: string | null;
+  currentStem?: string;
+  onSelect?: (h: SearchHit) => void;
+}) {
+  if (error) {
+    return (
+      <div className="px-[13px] py-[20px] text-bp-amber" style={{ fontSize: 9 }}>
+        {error}
+      </div>
+    );
+  }
+  if (loading && results.length === 0) {
+    return (
+      <div className="px-[13px] py-[20px] text-bp-ink-dim" style={{ fontSize: 9 }}>
+        Zoeken…
+      </div>
+    );
+  }
+  if (results.length === 0) {
+    return (
+      <div className="px-[13px] py-[20px] text-bp-ink-dim" style={{ fontSize: 9 }}>
+        Geen resultaten in het hele boek.
+      </div>
+    );
+  }
+  return (
+    <>
+      {results.map((h) => {
+        const onCurrent = h.stem === currentStem;
+        const name = formatHitName(h) || "—";
+        const occ = h.occupation_expanded || h.occupation || "";
+        const addr = h.address_full || "";
+        return (
+          <button
+            key={h.id}
+            onClick={() => onSelect?.(h)}
+            className="w-full text-left flex flex-col gap-[3px]"
+            style={{
+              padding: "10px 13px",
+              background: onCurrent ? "#e8b84c0c" : "transparent",
+              borderLeft: onCurrent ? "2px solid #e8b84c" : "2px solid transparent",
+            }}
+          >
+            <span
+              className="flex items-center gap-[6px]"
+              style={{
+                fontSize: 11,
+                letterSpacing: "0.08em",
+                fontWeight: 700,
+                color: onCurrent ? "#e8b84c" : "#e6d9b0",
+              }}
+            >
+              {name}
+            </span>
+            <span
+              className="text-bp-ink-dim"
+              style={{ fontSize: 8.5, letterSpacing: "0.08em" }}
+            >
+              {occ}
+            </span>
+            <div className="flex items-center justify-between gap-[6px]">
+              <span className="text-bp-ink-dim truncate" style={{ fontSize: 8.5 }}>
+                {addr}
+              </span>
+              <span
+                className="text-bp-amber flex-shrink-0 uppercase"
+                style={{ fontSize: 8, letterSpacing: "0.12em", fontWeight: 700 }}
+              >
+                p. {h.page_number ?? "?"}
+              </span>
+            </div>
+          </button>
+        );
+      })}
+      {total > results.length && (
+        <div
+          className="px-[13px] py-[10px] text-bp-ink-dim text-center uppercase"
+          style={{ fontSize: 8, letterSpacing: "0.18em" }}
+        >
+          {results.length} van {total}
+        </div>
+      )}
+    </>
+  );
 }
