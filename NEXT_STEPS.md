@@ -318,3 +318,63 @@ confirm 200; if any 404s, the loader is missing a section type.
   When two sides of a system disagree on whether an ID exists, that's
   usually a flag that they were built at different times against
   different assumptions.
+
+## 13. Slice F — Clickable buildings + historic overlays (2026-05-04)
+
+Map panel now real, not a blueprint placeholder. **Shipped in v0.3.0.**
+
+### What's there
+
+- `scripts/ingest_bag.py` pulls BAG `pand` (89k polygons) and
+  `verblijfsobject` (125k addresses) from PDOK WFS for the city bbox,
+  joins, writes `output/bag/buildings.geojson`. Quad-tree bbox split to
+  get past PDOK's 50k startIndex cap. Reads back in WGS84
+  (`srsName=EPSG:4326`).
+- `scripts/match_addresses.py` matches book entries to BAG via street +
+  huisnummer (+ optional huisletter). Match rate **44.7%** of geocoded
+  entries → 8898 buildings have ≥1 record. Aliases handle 1947 spelling
+  reform (`heere↔here`, `groote↔grote`, `hooge↔hoge`, `visch↔vis`),
+  Dutch abbreviations (`Gebr.`, `Sav.`, `St.`, `Jhr.`), and prefix
+  variants. Trailing punct/parens/business-name comma stripped at
+  parse.
+- `build_db.py` extended: `entries.pand_id` + new `buildings` table
+  with geometry, bbox, centroid, entry_count.
+- `/api/buildings` returns FeatureCollection of all buildings with
+  records. `/api/buildings/[pand_id]` returns details + entries grouped
+  by address.
+- `MapView.tsx`: MapLibre with Carto dark basemap, building polygons
+  with subtle amber outline (1.0 width on hover), 14% fill (32% on
+  hover). Click → opens floating `BuildingPanel` listing entries by
+  address; click entry → navigates to scan page with entry highlighted.
+- 6 historic GeoTIFFs converted to JPEG-COG (`scripts/convert_historic_cogs.sh`,
+  738 MB → 73 MB total) served from `web/public/maps/`. Layer switcher
+  (radio) picks one or none, opacity slider sets `raster-opacity`.
+  Building outlines stay on top so click still works under historic.
+- Map position persists across navigation via `sessionStorage`.
+
+### Match rate gap (55% unmatched, deferred)
+
+Per-user-ask, unmatched entries are hidden from the map for now. Causes
+seen in samples:
+- 1926 streets that have been renamed entirely (e.g. `Zuidersingelstraat`)
+- Buildings demolished or renumbered post-1926
+- Multi-address entries (`Oosterkade 3, 4, 5 en 13`) parsed as the last
+  number only
+- Business-name prefixes the parser couldn't strip cleanly
+- Edge cases not in the alias list
+
+Plan: a later pass will let the user manually pin unmatched entries to
+a building. For now they're absent from the map but still searchable in
+the book index.
+
+### Known weak spots
+
+- **No deduplication** between buildings that span multiple BAG `pand`
+  records (rare but happens for connected row houses).
+- **Historic COG opacity slider** is "fill the map XOR fade out". For
+  blending modes (multiply/screen) we'd need a different paint setup.
+- **glyphs URL** points at the public maplibre demo; if that goes away
+  the symbol-layer rendering would silently drop labels (we don't use
+  any symbol layers right now, but if added we should self-host glyphs).
+- **No WFS resume token persisted** for ingest beyond the per-typename
+  state; re-running with a different bbox restarts from zero.

@@ -58,3 +58,4 @@ web/data/
 
 # Local Claude task scratch
 /tasks/
+web/public/maps/

@@ -1,14 +1,29 @@
 import Database, { type Database as DB } from "better-sqlite3";
 import path from "path";
 
+import fs from "fs";
+
 let _db: DB | null = null;
+let _dbInode: number | null = null;
 
 export function getDb(): DB {
-  if (_db) return _db;
   const dbPath = path.resolve(process.cwd(), "data", "adresboek.sqlite");
+  // Reopen if the file's inode has changed (e.g. build_db.py recreated it).
+  let currentInode: number | null = null;
+  try {
+    currentInode = fs.statSync(dbPath).ino;
+  } catch {
+    // ignore — fileMustExist below will throw
+  }
+  if (_db && currentInode === _dbInode) return _db;
+  if (_db) {
+    try { _db.close(); } catch { /* ignore */ }
+    _db = null;
+  }
   _db = new Database(dbPath, { fileMustExist: true });
   _db.pragma("journal_mode = WAL");
   _db.pragma("query_only = ON");
+  _dbInode = currentInode;
   return _db;
 }
 
@@ -119,6 +134,110 @@ export function listSections(): SectionInfo[] {
     ...r,
     label: SECTION_LABELS[r.section] || r.section,
   }));
+}
+
+// ── Buildings (BAG pand polygons with linked 1926 entries) ───────────────
+
+export type BuildingFeature = {
+  type: "Feature";
+  geometry: unknown;
+  properties: {
+    pand_id: string;
+    entry_count: number;
+    address_count: number;
+  };
+};
+
+export function listBuildings(): BuildingFeature[] {
+  const db = getDb();
+  const rows = db.prepare(
+    `SELECT pand_id, geometry, entry_count, address_count
+     FROM buildings`
+  ).all() as Array<{
+    pand_id: string;
+    geometry: string;
+    entry_count: number;
+    address_count: number;
+  }>;
+  return rows.map((r) => ({
+    type: "Feature" as const,
+    geometry: JSON.parse(r.geometry),
+    properties: {
+      pand_id: r.pand_id,
+      entry_count: r.entry_count,
+      address_count: r.address_count,
+    },
+  }));
+}
+
+export type BuildingEntry = {
+  stable_id: string;
+  stem: string;
+  page_number: number | null;
+  name: string | null;
+  initials: string | null;
+  occupation: string | null;
+  address_full: string | null;
+};
+
+export type BuildingDetail = {
+  pand_id: string;
+  centroid: { lat: number; lng: number } | null;
+  bbox: [number, number, number, number] | null;
+  addresses: Array<{
+    address_full: string;
+    entries: BuildingEntry[];
+  }>;
+};
+
+export function getBuilding(pand_id: string): BuildingDetail | null {
+  const db = getDb();
+  const b = db.prepare(
+    `SELECT pand_id, centroid_lat, centroid_lng,
+            bbox_west, bbox_south, bbox_east, bbox_north
+     FROM buildings WHERE pand_id = ?`
+  ).get(pand_id) as
+    | {
+        pand_id: string;
+        centroid_lat: number | null;
+        centroid_lng: number | null;
+        bbox_west: number | null;
+        bbox_south: number | null;
+        bbox_east: number | null;
+        bbox_north: number | null;
+      }
+    | undefined;
+  if (!b) return null;
+  const rows = db.prepare(
+    `SELECT e.stable_id, p.stem, p.page_number,
+            e.name, e.initials,
+            COALESCE(e.occupation_expanded, e.occupation) AS occupation,
+            e.address_full
+     FROM entries e JOIN pages p ON e.page_id = p.id
+     WHERE e.pand_id = ?
+     ORDER BY e.address_full, e.name`
+  ).all(pand_id) as BuildingEntry[];
+  const byAddress = new Map<string, BuildingEntry[]>();
+  for (const e of rows) {
+    const k = e.address_full ?? "";
+    if (!byAddress.has(k)) byAddress.set(k, []);
+    byAddress.get(k)!.push(e);
+  }
+  return {
+    pand_id: b.pand_id,
+    centroid:
+      b.centroid_lat != null && b.centroid_lng != null
+        ? { lat: b.centroid_lat, lng: b.centroid_lng }
+        : null,
+    bbox:
+      b.bbox_west != null
+        ? [b.bbox_west!, b.bbox_south!, b.bbox_east!, b.bbox_north!]
+        : null,
+    addresses: Array.from(byAddress.entries()).map(([address_full, entries]) => ({
+      address_full,
+      entries,
+    })),
+  };
 }
 
 export function search(query: string, limit = 50, offset = 0): SearchResult {

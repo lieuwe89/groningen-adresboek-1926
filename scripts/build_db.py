@@ -31,6 +31,8 @@ from pipeline.json_export import _collect_entries_for_index  # noqa: E402
 JSON_DIR = ROOT / "output" / "json"
 OVERRIDES_DIR = ROOT / "output" / "overrides"
 GEOCODED_PATH = ROOT / "output" / "geocoded" / "addresses.json"
+BAG_BUILDINGS_PATH = ROOT / "output" / "bag" / "buildings.geojson"
+BAG_MATCH_PATH = ROOT / "output" / "bag" / "match.json"
 DB_PATH = ROOT / "web" / "data" / "adresboek.sqlite"
 
 logging.basicConfig(
@@ -46,6 +48,7 @@ DROP TABLE IF EXISTS entries_fts;
 DROP TABLE IF EXISTS cross_references;
 DROP TABLE IF EXISTS entries;
 DROP TABLE IF EXISTS pages;
+DROP TABLE IF EXISTS buildings;
 
 CREATE TABLE pages (
     id INTEGER PRIMARY KEY,
@@ -94,13 +97,29 @@ CREATE TABLE entries (
     flag_bbox_unreliable INTEGER DEFAULT 0,
     fingerprint TEXT,
     edited_at TEXT,
-    searchable_text TEXT
+    searchable_text TEXT,
+    pand_id TEXT                       -- BAG building id (NULL if no match)
 );
 
 CREATE INDEX idx_entries_page ON entries(page_id);
 CREATE INDEX idx_entries_coords ON entries(lat, lng) WHERE lat IS NOT NULL;
 CREATE INDEX idx_entries_address_norm ON entries(address_full_normalized);
 CREATE INDEX idx_entries_name ON entries(name);
+CREATE INDEX idx_entries_pand ON entries(pand_id) WHERE pand_id IS NOT NULL;
+
+CREATE TABLE buildings (
+    pand_id TEXT PRIMARY KEY,
+    geometry TEXT NOT NULL,            -- GeoJSON geometry as text
+    bbox_west REAL,
+    bbox_south REAL,
+    bbox_east REAL,
+    bbox_north REAL,
+    centroid_lat REAL,
+    centroid_lng REAL,
+    address_count INTEGER NOT NULL,    -- VBOs in this pand
+    entry_count INTEGER NOT NULL       -- 1926 entries linked to this pand
+);
+CREATE INDEX idx_buildings_bbox ON buildings(bbox_west, bbox_south, bbox_east, bbox_north);
 
 CREATE VIRTUAL TABLE entries_fts USING fts5(
     name, initials, name_prefix_expanded,
@@ -207,6 +226,24 @@ def main() -> None:
     else:
         log.warning("No geocoded file — entries will have NULL lat/lng")
 
+    # BAG match: stable_id -> pand_id; pand_id -> entry_count
+    pand_for_entry: dict[str, str] = {}
+    pand_entry_count: dict[str, int] = {}
+    if BAG_MATCH_PATH.exists():
+        match = json.loads(BAG_MATCH_PATH.read_text(encoding="utf-8"))
+        for pand_id, b in match.items():
+            if pand_id == "_summary":
+                continue
+            cnt = 0
+            for _addr, info in b.get("addresses", {}).items():
+                for sid in info.get("entries", []):
+                    pand_for_entry[sid] = pand_id
+                    cnt += 1
+            pand_entry_count[pand_id] = cnt
+        log.info(f"Loaded BAG match: {len(pand_for_entry)} entries → {len(pand_entry_count)} pand")
+    else:
+        log.warning("No BAG match file — entries will have NULL pand_id")
+
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     if DB_PATH.exists():
         DB_PATH.unlink()
@@ -287,10 +324,12 @@ def main() -> None:
                        word_ids, name_word_ids, address_word_ids,
                        lat, lng, geocode_score, geocode_type, geocode_matched, geocode_flags,
                        flag_verified, flag_needs_review, flag_bbox_unreliable,
-                       fingerprint, edited_at, searchable_text)
+                       fingerprint, edited_at, searchable_text,
+                       pand_id)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                           ?, ?, ?, ?, ?, ?)""",
+                           ?, ?, ?, ?, ?, ?,
+                           ?)""",
                 (
                     page_id, idx, stable_id,
                     entry.get("name"),
@@ -323,6 +362,7 @@ def main() -> None:
                     entry.get("_fingerprint") or fingerprint(entry),
                     entry.get("_edited_at"),
                     entry.get("searchable_text"),
+                    pand_for_entry.get(stable_id),
                 ),
             )
             entry_id = cur.lastrowid
@@ -344,6 +384,47 @@ def main() -> None:
         if (page_files.index(pf) + 1) % 100 == 0:
             log.info(f"  imported {page_files.index(pf) + 1}/{len(page_files)} pages")
 
+    n_buildings = 0
+    if BAG_BUILDINGS_PATH.exists() and pand_entry_count:
+        log.info("Loading BAG buildings.geojson...")
+        bag = json.loads(BAG_BUILDINGS_PATH.read_text(encoding="utf-8"))
+        for feat in bag["features"]:
+            pid = feat["properties"]["pand_id"]
+            ec = pand_entry_count.get(pid, 0)
+            if ec == 0:
+                continue  # only persist buildings that have at least one record
+            geom = feat["geometry"]
+            # Compute bbox + centroid from polygon coords (multipolygon / polygon)
+            coords_iter = []
+            if geom["type"] == "Polygon":
+                for ring in geom["coordinates"]:
+                    coords_iter.extend(ring)
+            elif geom["type"] == "MultiPolygon":
+                for poly in geom["coordinates"]:
+                    for ring in poly:
+                        coords_iter.extend(ring)
+            xs = [c[0] for c in coords_iter]
+            ys = [c[1] for c in coords_iter]
+            bbox_w, bbox_e = min(xs), max(xs)
+            bbox_s, bbox_n = min(ys), max(ys)
+            cur.execute(
+                """INSERT INTO buildings
+                   (pand_id, geometry, bbox_west, bbox_south, bbox_east, bbox_north,
+                    centroid_lat, centroid_lng, address_count, entry_count)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    pid,
+                    json.dumps(geom, ensure_ascii=False),
+                    bbox_w, bbox_s, bbox_e, bbox_n,
+                    (bbox_s + bbox_n) / 2,
+                    (bbox_w + bbox_e) / 2,
+                    feat["properties"].get("address_count", 0),
+                    ec,
+                ),
+            )
+            n_buildings += 1
+        log.info(f"  inserted {n_buildings} buildings (with ≥1 entry)")
+
     log.info("Rebuilding FTS5 index...")
     cur.execute("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')")
 
@@ -360,6 +441,8 @@ def main() -> None:
     log.info(f"  pages:       {len(page_files)}")
     log.info(f"  entries:     {n_entries}")
     log.info(f"  geocoded:    {n_geocoded} ({100*n_geocoded/max(n_entries,1):.1f}%)")
+    log.info(f"  pand-matched:{len(pand_for_entry)} ({100*len(pand_for_entry)/max(n_entries,1):.1f}%)")
+    log.info(f"  buildings:   {n_buildings}")
     log.info(f"  overridden:  {n_overridden}")
     log.info(f"  xrefs:       {n_xrefs}")
     log.info(f"  output:      {DB_PATH.relative_to(ROOT)} ({size_mb:.1f} MB)")
