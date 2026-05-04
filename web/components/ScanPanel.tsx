@@ -1,11 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { Entry } from "@/lib/data";
 import EditForm from "@/components/EditForm";
+import type { ScanViewerHandle } from "@/components/ScanViewer";
+
+const ScanViewer = dynamic(() => import("@/components/ScanViewer"), {
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 flex items-center justify-center text-bp-ink-dim" style={{ fontSize: 9 }}>
+      Scan laden…
+    </div>
+  ),
+});
 
 const BboxEditor = dynamic(() => import("@/components/BboxEditor"), {
   ssr: false,
@@ -31,183 +41,14 @@ interface Props {
   onToggleFocus?: () => void;
 }
 
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 10;
-const WHEEL_FACTOR = 1.0015;
-
 export default function ScanPanel(p: Props) {
   const router = useRouter();
-  const imgRef = useRef<HTMLImageElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dim, setDim] = useState<{ w: number; h: number } | null>(null);
-  const [container, setContainer] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [dragging, setDragging] = useState(false);
+  const viewerRef = useRef<ScanViewerHandle | null>(null);
   const [bboxEditMode, setBboxEditMode] = useState(false);
-  const dragStart = useRef<{ mx: number; my: number; px: number; py: number } | null>(null);
 
-  // Refs mirror state for handlers that need latest values without StrictMode
-  // double-invocation issues from nested setState updaters.
-  const zoomRef = useRef(1);
-  const panRef = useRef({ x: 0, y: 0 });
-  zoomRef.current = zoom;
-  panRef.current = pan;
-
-  // Base scale: cover container so paper background is never visible.
-  const baseScale = useMemo(() => {
-    if (!dim || !container.w || !container.h) return 1;
-    return Math.max(container.w / dim.w, container.h / dim.h);
-  }, [dim, container]);
-
-  const dispW = dim ? dim.w * baseScale : 0;
-  const dispH = dim ? dim.h * baseScale : 0;
-
-  const clampPan = useCallback(
-    (px: number, py: number, z: number) => {
-      if (!container.w || !container.h || !dispW || !dispH) return { x: px, y: py };
-      const minX = container.w - dispW * z;
-      const minY = container.h - dispH * z;
-      // displayed >= container, so minX/minY ≤ 0; max is 0.
-      return {
-        x: Math.min(0, Math.max(minX, px)),
-        y: Math.min(0, Math.max(minY, py)),
-      };
-    },
-    [container.w, container.h, dispW, dispH]
-  );
-
-  const centerPan = useCallback(
-    (z: number) => ({ x: (container.w - dispW * z) / 2, y: (container.h - dispH * z) / 2 }),
-    [container.w, container.h, dispW, dispH]
-  );
-
-  // Track container size
-  useLayoutEffect(() => {
-    const c = containerRef.current;
-    if (!c) return;
-    const update = () => setContainer({ w: c.clientWidth, h: c.clientHeight });
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(c);
-    return () => ro.disconnect();
-  }, []);
-
-  // Reset on scan change. Handle cached image (onLoad may not fire).
   useEffect(() => {
-    setDim(null);
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
     setBboxEditMode(false);
-    const img = imgRef.current;
-    if (img && img.complete && img.naturalWidth > 0) {
-      setDim({ w: img.naturalWidth, h: img.naturalHeight });
-    }
   }, [p.stem]);
-
-  // When dim or container changes, re-center pan if it's at default (0,0).
-  useEffect(() => {
-    if (!dim || !container.w) return;
-    if (panRef.current.x === 0 && panRef.current.y === 0 && zoomRef.current === 1) {
-      setPan(centerPan(1));
-    }
-  }, [dim, container, centerPan]);
-
-  // Auto-refocus when active entry changes: if its bbox isn't fully on-screen,
-  // zoom out (only if needed) to fit, then pan to center it.
-  const bboxKey = p.activeEntry?.entry_bbox?.join(",");
-  useEffect(() => {
-    const bb = p.activeEntry?.entry_bbox;
-    if (!bb || !dim || !container.w || !container.h || !dispW || !dispH) return;
-    const z = zoomRef.current;
-    const pp = panRef.current;
-    const sx = (n: number) => pp.x + (n / dim.w) * dispW * z;
-    const sy = (n: number) => pp.y + (n / dim.h) * dispH * z;
-    const left = sx(bb[0]);
-    const top = sy(bb[1]);
-    const right = sx(bb[2]);
-    const bottom = sy(bb[3]);
-    const visible =
-      left >= 0 && top >= 0 && right <= container.w && bottom <= container.h;
-    if (visible) return;
-
-    // Width/height of bbox at zoom=1 (in container/displayed coords).
-    const bbDispW = ((bb[2] - bb[0]) / dim.w) * dispW;
-    const bbDispH = ((bb[3] - bb[1]) / dim.h) * dispH;
-    // Zoom needed for bbox to occupy ≤ FILL of container.
-    const FILL = 0.85;
-    const zFit = Math.min(
-      (container.w * FILL) / bbDispW,
-      (container.h * FILL) / bbDispH
-    );
-    let newZoom = Math.min(z, zFit);
-    newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
-
-    const cxImg = (bb[0] + bb[2]) / 2;
-    const cyImg = (bb[1] + bb[3]) / 2;
-    const targetX = container.w / 2 - (cxImg / dim.w) * dispW * newZoom;
-    const targetY = container.h / 2 - (cyImg / dim.h) * dispH * newZoom;
-    setPan(clampPan(targetX, targetY, newZoom));
-    if (newZoom !== z) setZoom(newZoom);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bboxKey, dim, container.w, container.h, dispW, dispH, clampPan]);
-
-  const reset = useCallback(() => {
-    setZoom(1);
-    setPan(centerPan(1));
-  }, [centerPan]);
-
-  const zoomBy = useCallback(
-    (factor: number, originX?: number, originY?: number) => {
-      const z = zoomRef.current;
-      const nz = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z * factor));
-      if (nz === z) return;
-      const c = containerRef.current;
-      let newPan = panRef.current;
-      if (c && originX !== undefined && originY !== undefined) {
-        const r = c.getBoundingClientRect();
-        const cx = originX - r.left;
-        const cy = originY - r.top;
-        const pp = panRef.current;
-        const ix = (cx - pp.x) / z;
-        const iy = (cy - pp.y) / z;
-        newPan = { x: cx - ix * nz, y: cy - iy * nz };
-      }
-      newPan = clampPan(newPan.x, newPan.y, nz);
-      setPan(newPan);
-      setZoom(nz);
-    },
-    [clampPan]
-  );
-
-  const onWheel = useCallback(
-    (e: React.WheelEvent) => {
-      e.preventDefault();
-      const factor = Math.pow(WHEEL_FACTOR, -e.deltaY);
-      zoomBy(factor, e.clientX, e.clientY);
-    },
-    [zoomBy]
-  );
-
-  const onMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    setDragging(true);
-    dragStart.current = { mx: e.clientX, my: e.clientY, px: pan.x, py: pan.y };
-  };
-  const onMouseMove = (e: React.MouseEvent) => {
-    if (!dragging || !dragStart.current) return;
-    const ds = dragStart.current;
-    const next = clampPan(
-      ds.px + (e.clientX - ds.mx),
-      ds.py + (e.clientY - ds.my),
-      zoomRef.current
-    );
-    setPan(next);
-  };
-  const stopDrag = () => {
-    setDragging(false);
-    dragStart.current = null;
-  };
 
   const bbox = p.activeEntry?.entry_bbox;
   const name = formatName(p.activeEntry);
@@ -343,85 +184,21 @@ export default function ScanPanel(p: Props) {
           />
         )}
         {!showBboxEditor && (
-        <div
-          ref={containerRef}
-          className="relative flex-1 overflow-hidden select-none"
-          style={{
-            background: "#1a1208",
-            cursor: dragging ? "grabbing" : "grab",
-            touchAction: "none",
-          }}
-          onWheel={onWheel}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={stopDrag}
-          onMouseLeave={stopDrag}
-          onDoubleClick={reset}
-        >
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              width: dispW || 0,
-              height: dispH || 0,
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-              transformOrigin: "0 0",
-              willChange: "transform",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={imgRef}
-              key={p.stem}
-              src={`/scans/${p.stem}.jpg`}
-              alt={`Scan ${p.stem}`}
-              className="block pointer-events-none"
-              draggable={false}
-              style={{ width: "100%", height: "100%" }}
-              onLoad={(e) => {
-                const img = e.currentTarget;
-                setDim({ w: img.naturalWidth, h: img.naturalHeight });
+          <div className="relative flex-1 overflow-hidden">
+            <ScanViewer
+              ref={(h) => {
+                viewerRef.current = h;
               }}
+              stem={p.stem}
+              bbox={bbox}
             />
-            {bbox && dim && (
-              <div
-                style={{
-                  position: "absolute",
-                  left: `${(bbox[0] / dim.w) * 100}%`,
-                  top: `${(bbox[1] / dim.h) * 100}%`,
-                  width: `${((bbox[2] - bbox[0]) / dim.w) * 100}%`,
-                  height: `${((bbox[3] - bbox[1]) / dim.h) * 100}%`,
-                  background: "#e8b84c44",
-                  border: `${1 / zoom}px solid #e8b84c`,
-                  pointerEvents: "none",
-                }}
-              />
-            )}
-          </div>
 
-          <div className="absolute flex flex-col gap-[2px]" style={{ right: 8, bottom: 8 }}>
-            <ZoomBtn onClick={() => zoomBy(1.4)} label="+" />
-            <ZoomBtn onClick={reset} label="⌖" small />
-            <ZoomBtn onClick={() => zoomBy(1 / 1.4)} label="−" />
+            <div className="absolute flex flex-col gap-[2px]" style={{ right: 8, bottom: 8, zIndex: 5 }}>
+              <ZoomBtn onClick={() => viewerRef.current?.zoomBy(1.4)} label="+" />
+              <ZoomBtn onClick={() => viewerRef.current?.reset()} label="⌖" small />
+              <ZoomBtn onClick={() => viewerRef.current?.zoomBy(1 / 1.4)} label="−" />
+            </div>
           </div>
-
-          <div
-            className="absolute uppercase"
-            style={{
-              left: 8,
-              bottom: 8,
-              fontSize: 8,
-              letterSpacing: "0.12em",
-              padding: "3px 6px",
-              border: "1px solid #e8b84c55",
-              background: "#182d5cee",
-              color: "#7a7054",
-            }}
-          >
-            Z {zoom.toFixed(1)}×
-          </div>
-        </div>
         )}
 
         <div

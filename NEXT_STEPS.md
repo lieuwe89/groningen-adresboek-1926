@@ -378,3 +378,41 @@ the book index.
   any symbol layers right now, but if added we should self-host glyphs).
 - **No WFS resume token persisted** for ingest beyond the per-typename
   state; re-running with a different bbox restarts from zero.
+
+## 14. Slice E — Deep-zoom scan viewer (2026-05-04)
+
+### What's there
+
+- `scripts/generate_dzi.sh` runs `vips dzsave` over every JPEG in
+  `web/public/scans/` and writes a DZI tile pyramid to
+  `web/public/tiles/<stem>.dzi` + `<stem>_files/`. WebP tiles, 256 px,
+  Q=82, 1 px overlap. ~870 MB total for 838 scans. Idempotent: skip if
+  the .dzi mtime is newer than the source. Gitignored.
+- `web/components/ScanViewer.tsx` — OpenSeadragon wrapper, dynamic-
+  imported (no SSR). Re-opens the tile source on `stem` prop change,
+  draws a gold bbox overlay via `viewport.imageToViewportRectangle`,
+  auto-fits the viewport when the bbox is off-screen (20% padding),
+  goes home on double-click. Imperative handle exposes `zoomBy(factor)`
+  and `reset()` for the existing custom +/⌖/− buttons.
+- `ScanPanel.tsx` no longer pans/zooms a raw `<img>`. The whole manual
+  baseScale/clampPan/wheel/drag block is gone; it just renders the
+  ScanViewer in the non-bbox-edit branch. BboxEditor (Konva on raw img)
+  is unchanged.
+- Web bumped 0.3.0 → 0.4.0.
+
+### One quirk worth knowing
+
+`vips dzsave --suffix '.webp[Q=82]'` MUST be quoted. Without quotes
+bash-with-`nullglob` interprets `[Q=82]` as a character class, fails
+the glob, and silently eats the argument — leaving `--suffix` with no
+value and vips dies "too many arguments". Bit me on the first run.
+
+### Deferred for v2
+
+- **Glyphs / basemap self-host.** Same as Slice F; not specific to E.
+- **Tiles in `public/`.** Works, but 838 dzi + 838 _files dirs is a lot
+  of paths for next dev/build to scan. If startup gets slow, move to
+  `web/dzi/` + a custom static route.
+- **Pre-seeding tiles on Fly.** Volumes are per-machine; will need to
+  upload the tile tree to each VM (same gotcha as the OAI catalog
+  in archie-chatbot).
