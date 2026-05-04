@@ -280,25 +280,24 @@ in the data layer:
 
 ### What's still wrong (deferred)
 
-The `<stem>:<index>` collision between FTS rows and per-page JSON is
-real: idx in the DB references the position in the *per-section sub-array*
-(streets[]/occupations[]), but on the front end nothing un-wraps those
-into `entries[]`. Two structural fixes worth doing before the public site
-is fully wired:
+~~Two structural fixes worth doing before the public site is fully wired~~
+**FIXED 2026-05-04 (Slice C2).** Option (A) landed:
 
-- **Make `loadPage` (or a new `loadPageEntries(stem)`) flatten section
-  sub-arrays into a uniform `entries[]`** so the front end can pretend
-  every page has a flat list. Source of truth for the order must match
-  what `_collect_entries_for_index` produced — otherwise the FTS-derived
-  `stable_id` won't index into the right entry. Easiest path: have both
-  the builder and the loader call the same flattener.
-- **Or:** change the DB schema to store `entry_index_in_page` *and*
-  `entry_kind` (`name | street | occupation | …`) so the loader can find
-  the right sub-array entry without flattening. Heavier change.
+- New TS port at `web/lib/flatten.ts` mirrors
+  `pipeline.json_export._collect_entries_for_index` line-for-line.
+  `loadPage` and `loadPageRaw` apply the flatten before merging
+  overrides, so non-name-register sections expose a flat `entries[]`
+  list to every consumer.
+- DB rebuild verified 1:1 row-count match across all 838 pages —
+  TS flatten == DB rows (60,783 entries).
+- Browser-tested: clicking a `street_register` global-search hit on
+  page 603 (Pelsterstraat 43, Zijlstra J.) now lands on the destination
+  page with the correct row selected and the right rail showing the
+  entry — no more blank stub.
 
-Either way, the public site should not ship without one of these fixed —
-clicking a global-search hit on a street should highlight that street's
-row, not a blank entry stub.
+Note for future schema drift: TS port at `web/lib/flatten.ts` MUST stay
+in lockstep with the Python flattener. If the iteration order changes
+on either side, change it on the other.
 
 ### How to spot a similar issue in future builds
 

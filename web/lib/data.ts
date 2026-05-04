@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { loadOverrides, mergeOverrides } from "./overrides";
+import { flattenPageEntries } from "./flatten";
 
 export type Bbox = [number, number, number, number];
 
@@ -44,7 +45,8 @@ export async function loadPage(stem: string): Promise<PageData | null> {
   const file = path.join(JSON_DIR, `${stem}.json`);
   try {
     const raw = await fs.readFile(file, "utf8");
-    const base = JSON.parse(raw) as PageData;
+    const parsed = JSON.parse(raw) as PageData;
+    const base: PageData = { ...parsed, entries: flattenPageEntries(parsed) };
     const overrides = await loadOverrides(stem);
     return mergeOverrides(stem, base, overrides);
   } catch {
@@ -56,7 +58,8 @@ export async function loadPageRaw(stem: string): Promise<PageData | null> {
   const file = path.join(JSON_DIR, `${stem}.json`);
   try {
     const raw = await fs.readFile(file, "utf8");
-    return JSON.parse(raw) as PageData;
+    const parsed = JSON.parse(raw) as PageData;
+    return { ...parsed, entries: flattenPageEntries(parsed) };
   } catch {
     return null;
   }

@@ -8,15 +8,18 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pipeline.config import COMBINED_DIR, JSON_DIR
-from pipeline.ocr import OcrPage
+
+if TYPE_CHECKING:
+    from pipeline.ocr import OcrPage
 
 logger = logging.getLogger(__name__)
 
 
 def export_page_json(
-    ocr_page: OcrPage,
+    ocr_page: "OcrPage",
     aligned_result: dict,
     output_dir: Path = JSON_DIR,
 ) -> Path:
