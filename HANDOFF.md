@@ -1,197 +1,224 @@
-# Handoff — 2026-05-03 (Round 3: bbox cluster fix)
+# Handoff — 2026-05-04 (public-site groundwork)
 
-Round 3 = pipeline-side bbox bug, root-caused and fixed. Round 2 (web CRM, below) still stands. To resume:
+This session moved Round 3 work from the personal macOS box onto a private
+GitHub repo and laid the data layer for the public map-centric explorer.
+Everything in this handoff is committed and pushed; nothing is lost on
+`/clear`.
 
-- **If continuing on the web CRM** → see "Round 2" section below; nothing changed for that work.
-- **If picking up bbox refresh** → run `python pipeline/run_pipeline.py` from the project root to rebuild `output/json/`, `output/alto/`, `output/combined/` with corrected bboxes. No Surya re-run, no LLM cost — uses caches in `output/hocr/` and `output/llm_raw/`. ETA: minutes, not hours.
-
-## What was wrong
-
-Entry/name bboxes were systematically shifted right of the visible text on every page. Surnames in the name register fell *outside* their own entry's bbox. Ad-page bboxes started ~150–400 px inside the actual ad. Surface symptom user reported: "bboxes consistently start too far to the right."
-
-Root cause: Surya's per-word bboxes occasionally collapse — N-1 words on a row share one cluster bbox covering only a sub-range of the line, while the trailing word gets a wider bbox. The pipeline's `_repair_word_bboxes` pass had a 30 % diversity threshold that the trailing word lifted past, so repair never fired on the dominant failure pattern. Even when it did fire, it redistributed across the wrong span (word cluster, not line bbox).
-
-Full postmortem in `NEXT_STEPS.md` §11.
-
-## What changed
-
-- **`pipeline/ocr.py`** — rewrote `_repair_word_bboxes`:
-  - Detection: "majority of words share a cluster" instead of the old 30 % distinct-bboxes threshold.
-  - Redistribution: spans `OcrLine.bbox` (correct line bounds), with y from the words themselves.
-  - Idempotent — already-distinct word bboxes don't re-trigger.
-  - Validated against real cache data: `G. BEUTE` line (page 0153) and `Beukema (B.)` line (page 0152) now redistribute over their full line span, including the surname/title.
-
-- **`NEXT_STEPS.md`** — §1 status updated; new §11 postmortem with: what was wrong, root cause, the fix, refresh instructions, future-detection runbook (rendered overlay script + line-vs-word-cluster invariant), v2 lessons, earlier hints we missed.
-
-- **No web/admin changes** this round. CRM behaviour identical.
-
-## Refresh existing outputs (one command)
+## TL;DR — where to resume
 
 ```bash
-cd /Users/lieuwejongsma/projects/groningen-adresboek-1926
-python pipeline/run_pipeline.py
+git pull
+cd web && npm install
+npm run build:db                    # regenerates web/data/adresboek.sqlite
+npm run dev                         # http://localhost:3001
+curl 'http://localhost:3001/api/search?q=bakker&limit=3'   # smoke
 ```
 
-`_load_cache` applies the new repair on every cache read, so existing OCR caches yield correct word bboxes in-memory without re-running Surya. The pipeline re-aligns from `output/llm_raw/` (no LLM calls) and re-exports JSON + ALTO + combined indexes. Existing `output/json/<stem>.json` files will be rewritten with corrected `entry_bbox`, `name_bbox`, `address_bbox`. After the run, refresh the web app and verify a few stems where the shift was most visible (0150, 0151, 0152, 0153).
+Then continue with one of the **next-step options** at the bottom. The most
+natural next move is **Slice F (MapLibre + markers)** — the data is ready.
 
-## Verification done in this round
+## Repo
 
-- Pulled JSON + cache for several stems; confirmed cluster pattern in cache (e.g. on page 0152 line `[248, 305, 1035, 337]`, all 7 leading words clustered at `[443, 312, 839, 329]`).
-- Drew JSON `entry_bbox` directly onto JPEGs with `~/Documents/claude-output/bbox_debug.py` to prove the shift was in the data, not the renderer.
-- Walked the rendered web UI's bbox div via DevTools (`getBoundingClientRect` ratios) — confirmed the renderer is correct; bbox div is at `bbox[0] / dim.w` of the displayed image, no drift.
-- Ran the new repair logic standalone against real cache lines and confirmed: `G.` now at x=169, `48,` at x=1682; `Beukema` now at x=248–356 instead of being entirely outside the bbox.
+- **GitHub:** https://github.com/lieuwe89/groningen-adresboek-1926 (private)
+- **`origin/main` HEAD:** `a3234d9` "Slice B + C foundation"
+- **Local clone:** `/Users/lieuwejongsma/projects/groningen-adresboek-1926`
+- **History:** initial commit `0321de1` is the squashed root (prior 2 commits
+  rewritten away to drop >100 MB GeoTIFFs from blob history; see NEXT_STEPS
+  §11 for the bbox fix postmortem that lived in those commits).
+- **Working tree status:** clean, on `main`, tracking `origin/main`.
 
-## Diagnostics kept for reuse
+## What landed this session
 
-- `~/Documents/claude-output/bbox_debug.py` — given a stem, reads `output/json/` + `scans/` and writes a PNG with all entry bboxes drawn over the JPEG. Use any time bbox alignment looks off in the UI.
-- `~/Documents/claude-output/bbox_debug2.py` — adds header/footer bbox overlays + every word outline. For broader page-level diagnosis.
+### 1. Bbox refresh (Round 3 follow-up — rewrites output/)
 
-## Items intentionally NOT done
+`pipeline/refresh_outputs.py` (new) — re-aligns + re-exports all 838 pages
+from cached OCR + cached LLM raw, no network, no GPU. 13.5 s.
 
-- Did not commit / clean up `web/`, `.claude/`, `.tmp.*` etc. Those were untracked at session start; out of scope for this fix.
-- Did not write the script to detect/fix the cluster-bbox issue retroactively in `output/hocr/` cache files. The runtime repair on cache load is sufficient — caches are not consumed outside the pipeline.
-- Did not address other pipeline data-quality issues (LLM text errors, low cross-reference count, `address_full` duplication). Out of scope; tracked in `NEXT_STEPS.md` §1.
+Bypasses `pipeline/run_pipeline.py` because that file imports a stale
+`pytesseract` / `TARGET_DPI` / `TESSERACT_LANG` Tesseract layout helper
+in `pipeline/preprocess.py` that no longer matches `pipeline/config.py`.
+Refresh script avoids the broken module path.
 
-## Heads-up flagged for later
+Verified post-refresh: `Berg` 0150 entry at x=273; `Bergh` 0151 at x=148;
+`Beukema` 0152 at x=248. All match the post-fix expectation in NEXT_STEPS §11.
 
-- `pipeline/config_local.py` has API keys in plaintext (`OPENROUTER_API_KEY`, `GOOGLE_AI_API_KEY`). A spawn-task chip exists to verify gitignore status and rotate if compromised. Not actioned yet.
-- LLM mis-read on page 0152 entry [0]: `initials='E.'` for what is actually `(B.)` on the scan. Tip-of-iceberg for prompt-side OCR-correction errors. Add to LLM prompt iteration backlog if not already there.
+### 2. PDOK geocoding — done
 
-## To resume in fresh Claude session
+- `scripts/geocode_addresses.py` — concurrent (20 workers), resumable,
+  idempotent. Stdlib only. Synced from a second-PC run that had to add
+  street aliases (1926 → current Dutch spelling) plus `compute_flags`
+  semantics (`uncertain` / `not_found`).
+- `output/geocoded/addresses.json` (~14 MB, on Drive — gitignored) holds
+  results.
+- Coverage: 35,513 / 36,280 unique addresses (97.9 %). Bucketed:
+  - `adres` (precise pin) — 19,072
+  - `weg` (street-level only) — 10,686 *flagged uncertain*
+  - `gemeente` (city centroid; demolished/renamed street) — 5,680 *flagged uncertain*
+  - `woonplaats` / `postcode` / `buurt` — small numbers, mostly rural
+- `HANDOFF_GEOCODE.md` (committed) is the original detached-run brief; it
+  reflects the script *before* the alias work, so re-read with that caveat.
 
-Open this file and tell Claude "continue from HANDOFF.md". Round 3 work is committed; pick up from "Refresh existing outputs" above if you want to regenerate the JSON/ALTO data, or jump back to Round 2's checklist for web CRM work.
+### 3. SQLite + FTS5 build (Slice B)
 
----
+`scripts/build_db.py` (new) → `web/data/adresboek.sqlite` (45.9 MB,
+gitignored). Tables: `pages`, `entries`, `entries_fts` (FTS5,
+`unicode61 remove_diacritics 2`), `cross_references`. Reuses
+`pipeline.json_export._collect_entries_for_index` so all section types
+(name / street / occupation / institutional / advertisement / other) are
+imported, not just name register.
 
-# Handoff — 2026-05-03 (Round 2 close)
+End-to-end stats from the most recent build: **838 pages · 60,783 entries · 49,959 with lat/lng (82.2 %) · 5 overrides merged · 218 cross-refs**, in 2.8 s.
 
-Builds on `HANDOFF.md` from earlier same day (Round 1 — foundation slice + text edit slice). Round 2 is **complete except for two deferred items**: word-bbox redistribution (item 3) and stable-ID reconcile script (item 2).
+Geocoded coverage by section:
 
-## Where to resume
+| section | total | geocoded |
+|---|---|---|
+| name_register | 27,845 | 99.1% |
+| street_register | 22,080 | 92.2% |
+| institutional | 5,545 | 28.2% |
+| occupation_register | 5,162 | 5.6% |
+| other | 118 | 97.5% |
+| advertisement | 33 | 66.7% |
+
+The `5.6 %` on occupation_register is real: those entries are people
+listed under occupation headings, mostly without addresses. The `28.2 %`
+on institutional is similarly explained — many institutions don't have a
+clean street/number that PDOK matches.
+
+Build is idempotent (drops + recreates everything) and re-runs cleanly
+after CRM edits or geocoding additions.
+
+### 4. /api/search route (Slice C foundation)
+
+- `web/lib/db.ts` — better-sqlite3 singleton with `query_only=ON`, WAL
+  journal. `buildFtsQuery` strips FTS operators and prefix-matches each
+  token, AND-joined.
+- `web/app/api/search/route.ts` — `GET /api/search?q=&limit=&offset=`,
+  `runtime=nodejs`, `dynamic=force-dynamic`.
+- Smoke verified in the dev server: `q=bakker` → `total=1200`, returns
+  rows with `id`, `stable_id`, `stem`, `page_number`, `section`, name,
+  occupation, `address_full`, `lat`, `lng`, all bboxes, `geocode_flags`,
+  status flags.
+
+`web/package.json` now has a `build:db` script that calls the Python
+builder from the project root via `.venv/bin/python`.
+
+### 5. Repo structure + GitHub setup
+
+- Comprehensive `.gitignore` covering `scans/`, `Maps/`, `output/*` (with
+  `!output/overrides/` to keep CRM edits), `tessdata/`, `.venv/`,
+  `node_modules/`, `web/data/`, `.env*`, `pipeline/config_local.py`,
+  `secrets.md`, `.tmp.*`, `.DS_Store`, `.claude/`.
+- `README.md` rewritten with: repo layout, *required external assets*
+  table, cross-platform setup, refresh-outputs path, full reference list.
+- Legacy notes moved into `docs/archive/`; design HTMLs into
+  `docs/design-ref/`.
+- `output/overrides/` IS tracked — those are user CRM edits, not generated.
+
+### 6. Things explicitly NOT done
+
+- `web/components/SearchPanel.tsx` is **still page-scoped** — the new
+  `/api/search` endpoint exists but the UI does not call it yet. The
+  current SearchPanel filters `data.entries` (one page) client-side. The
+  next move is to wire it in (or build a parallel global-search component);
+  see *next-step options* below.
+- `pipeline/preprocess.py` Tesseract leftovers not cleaned. `run_pipeline.py`
+  still works on Windows (where pytesseract is installed) but errors on
+  the macOS box. The refresh path avoids it.
+- No DZI tiles, no OpenSeadragon, no MapLibre, no COG overlays, no Fly.io
+  deploy yet — those are Slices D / E / F / G / J in `NEXT_STEPS.md`.
+
+## What needs syncing per machine
+
+`web/data/adresboek.sqlite` is gitignored. To get it on the other PC:
 
 ```bash
-cd /Users/lieuwejongsma/projects/groningen-adresboek-1926/web
+git clone https://github.com/lieuwe89/groningen-adresboek-1926.git
+cd groningen-adresboek-1926
+# Sync these from Drive (NOT in git):
+#   output/json/                 (per-page entries)
+#   output/overrides/            (CRM edits — actually IS in git, but
+#                                  also synced via Drive for local edits)
+#   output/geocoded/addresses.json
+#   output/combined/             (used by build script)
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cd web
+npm install
+npm run build:db          # rebuilds web/data/adresboek.sqlite
 npm run dev
 ```
 
-Default: http://localhost:3001 → redirects to `/page/1769_19525-1926_0150` (public).
-Admin: http://localhost:3001/admin/page/1769_19525-1926_0150 (basic-auth: `admin` / `devpass`, set in `web/.env.local`).
-Stats: http://localhost:3001/admin/stats (admin only).
+If `output/json/` is too big to sync conveniently, the alternative is a
+fresh extraction run, but for the public-site work the existing pilot
+JSONs are fine.
 
-## Built this session (Round 2)
+## Decisions answered for the public-site phase
 
-### Item 1 — Konva bbox editor
-- `web/components/BboxEditor.tsx` — Konva `Stage` with native pan (Stage drag), wheel zoom (cursor-anchored), zoom buttons (`+`/`-`/`⌖`), dblclick reset, auto-refocus on entry change. `Rect` + `Transformer` with handles auto-scaled by `1/stageScale` so they stay constant screen size at any zoom. Rect drag-bound to image bounds. Save/revert UI with dirty tracking.
-- `web/components/ScanPanel.tsx` — admin-only "Bewerk bbox" toggle in scan panel header. `next/dynamic({ssr:false})` swaps scan rendering for `<BboxEditor>` when toggled on. Resets on stem change.
-- `web/app/api/admin/page/[stem]/entry/[idx]/route.ts` — extended PATCH to accept `bbox`: 4 ints, `x2>x1`, `y2>y1`, `≥0`; rejects with 400 on invalid. Sanitiser also added for `flags` (allowlist of 3 keys, boolean values only).
-- Deps: `konva@10.3.0` + `react-konva@19.2.3` (React 19 compat).
-- Verified end-to-end: `PATCH {bbox:[100,200,500,300]}` → wrote override → public `/page/<stem>` HTML reflects merged `entry_bbox`, `name_bbox`/`address_bbox` untouched.
+The user answered the four open questions from `docs/archive/website_plan.md`:
 
-### Admin login button (drive-by request)
-- `web/components/Header.tsx` — converted to client component (uses `usePathname`). Shows `Admin` button on public routes (links to `/admin/page/<current-stem>`); flips to `Publiek` on admin routes. Browser pops basic-auth dialog on first admin click; auth caches for the session.
+1. **Map layers** — 6 historical maps (already in `Maps/GeoTIFF/`) + 1
+   modern map split into polygons + labels. The 6 historic GeoTIFFs are
+   91 MB to 226 MB each (need COG conversion before serving).
+2. **Hosting** — `playground.lieuwejongsma.nl/Groningen1926`. This means
+   `basePath: "/Groningen1926"` in `next.config.ts` when we deploy.
+3. **Page browsing** — sequential flip-through wanted, with a dropdown to
+   jump to a section (front matter / inleiding / namenregister / streets
+   / occupations / etc.). The dropdown should display the section labels,
+   not just page numbers.
+4. **Analytics** — skip (not wanted).
 
-### Focus mode (drive-by request — admin viewport was too small)
-- `web/components/ScanPanel.tsx` — admin-only "Focus" toggle. When on:
-  - SearchPanel + MapPanel hidden (`!focusMode &&` in Viewer)
-  - Global Header + Footer hidden
-  - Scan panel goes from fixed `width:415` to `flex:1 width:100%`
-  - In bbox edit mode, the entry-summary block + EditForm also hide (no point editing text + bbox at the same time)
-- Net gain: ~620px more vertical height for the Konva canvas. At 800px viewport, canvas grew from ~280px to ~713px (≈2.5×).
-- Toggle in scan panel header: "Focus" / "Smal".
+## Next-step options (sorted by leverage)
 
-### Item 4 — Filter UI + verified flag
-- `web/lib/data.ts` — `Entry.flags?: { verified, needs_review, bbox_unreliable }` typed.
-- `web/lib/overrides.ts` — `applyOverride` merges `ov.flags` onto entry.
-- `web/components/SearchPanel.tsx` — exports `StatusFilter` type. Filter row: `Alle / Goed / Twijfel / Open`. Entry rows show small color dot if flagged (green = verified, amber = needs_review). **Both gated behind `showStatus` prop** — only render when `editMode` is true.
-- `web/app/page/[stem]/Viewer.tsx` — filter logic: combines text query with status filter (`verified` / `needs_review` / `unreviewed`). Passes `showStatus={editMode}` to SearchPanel.
-- `web/components/EditForm.tsx` — three checkbox row (Goed / Twijfel / Bbox slecht). Goed and Twijfel mutually exclusive. PATCH only sends changed flags. Revert restores both fields and flags.
+1. **Wire SearchPanel.tsx to `/api/search`** (~1–2 h). The piece every
+   other UI feature builds on. Currently the API exists but no UI calls
+   it. After this, search becomes book-wide instead of page-only, and
+   results carry `stem`+`stable_id` so clicking can navigate.
 
-### Item 5 — Stats dashboard
-- `web/lib/stats.ts` — `computeStats()` walks all 838 JSONs + overrides; returns `{overall, bySection[], byPage[]}` with counts for verified / needs_review / bbox_unreliable / edited / unreviewed.
-- `web/app/admin/stats/page.tsx` — server component, `dynamic="force-dynamic"`. Renders summary cards (6), 4 progress bars, per-section table, per-page table filtered to pages with edits (deep-link to admin editor).
-- `web/components/Header.tsx` — admin-only `Stats` link (visible on any `/admin` route).
-- Verified counts: 838 pages · 27,845 entries (name_register only).
+2. **Slice F: MapLibre + markers** (~3–4 h). Replace the blueprint
+   placeholder in `web/components/MapPanel.tsx` with a real MapLibre map,
+   plot the 49,959 lat/lng entries with clustering, popups for marker
+   clicks. Reads via a new `/api/markers?bounds=...` endpoint or just
+   serves the full geocoded set as static JSON for v1.
 
-## Surprise the data revealed
+3. **Slice G: COG historic overlays** (~2–3 h once #2 is done).
+   `gdal_translate -of COG` over the 6 GeoTIFFs (output to `web/public/maps/`
+   or a Fly volume), then `@geomatico/maplibre-cog-protocol` for runtime
+   tile fetch. Layer-switcher UI with opacity slider per layer.
 
-The stats page made one thing obvious: **street_register / occupation_register / institutional sections have ZERO extracted entries** despite having 196+37+104 = 337 pages. The pipeline didn't return structured entries for them in the pilot. Logged informally — fix the prompts before book #2. Already on the pipeline backlog (`NEXT_STEPS.md` §7).
+4. **Slice D + E: DZI tiles + OpenSeadragon** (~3 h). `brew install vips`,
+   then `vips dzsave` over the 838 scans → ~2 GB of WebP tiles in
+   `web/public/tiles/`. Replace plain `<img>` in ScanPanel with
+   OpenSeadragon. SVG overlay for entry highlighting (re-using the bboxes
+   already in the search response).
 
-## File map (changes this session)
+5. **Section-jump dropdown** (~1 h). Reads `pages.section` distinct values
+   from SQLite, renders a `<select>` with `[Front matter — p. 1, Inleiding —
+   p. 5, Naamregister — p. 119, ...]`, navigates to the first page of the
+   chosen section. The data is already there.
 
-```
-web/
-  app/
-    admin/
-      stats/page.tsx         — NEW: dashboard
-  components/
-    BboxEditor.tsx           — NEW: Konva canvas
-    Header.tsx               — client now (usePathname); Admin/Publiek + Stats buttons
-    ScanPanel.tsx            — Focus + Bbox toggles, dynamic BboxEditor swap, summary/EditForm hidden in bbox edit mode
-    SearchPanel.tsx          — status filter row + dot, gated behind showStatus
-    EditForm.tsx             — Goed/Twijfel/Bbox slecht checkboxes
-  lib/
-    data.ts                  — Entry.flags typed
-    overrides.ts             — applyOverride merges flags
-    stats.ts                 — NEW: computeStats aggregator
-  app/api/admin/page/[stem]/entry/[idx]/route.ts
-                             — sanitizeBbox + sanitizeFlags allowlist
-  app/page/[stem]/Viewer.tsx — focusMode + showStatus wiring; status filter logic
-NEXT_STEPS.md                — §9: note about original semantic filters (deferred restore)
-HANDOFF.md                   — this file (replaces previous)
-```
+6. **Pipeline backlog** (low priority for public-site work):
+   - Clean stale `pipeline/preprocess.py` Tesseract code so
+     `run_pipeline.py` runs on macOS. ~30 min.
+   - LLM prompt iteration for `(B.)`/`E.` mis-reads. Sample-driven.
 
-## Round 2 status
+## Key file references
 
-| Item | Status | Notes |
-|---|---|---|
-| 1. Konva bbox edit | ✅ shipped | Manual drag/resize feel still untested in browser (headless drag is awkward). Recommend a quick spin to confirm. |
-| 2. Stable-ID reconcile script | ⏸ deferred | Per original handoff: only needed before next pipeline run (book #2 or pilot rerun). |
-| 3. Word-bbox redistribution | ⏸ deferred | When admin moves `entry_bbox`, ALTO export still uses old per-word bboxes. UI is fine; only ALTO exports drift. Reuse algorithm from `pipeline/ocr.py`. |
-| 4. Filter UI | ✅ shipped | Status filter (Alle/Goed/Twijfel/Open) + dots, admin-only. |
-| 5. Stats dashboard | ✅ shipped | Server-side aggregation at `/admin/stats`. |
+| File | What |
+|---|---|
+| `pipeline/refresh_outputs.py` | One-shot re-align + re-export, no network |
+| `scripts/geocode_addresses.py` | PDOK batch geocoder (current version, alias-aware) |
+| `scripts/build_db.py` | JSON+overrides+geocoded → `web/data/adresboek.sqlite` |
+| `web/lib/db.ts` | better-sqlite3 connection + FTS query builder |
+| `web/app/api/search/route.ts` | GET /api/search?q=&limit=&offset= |
+| `web/package.json` | `npm run build:db` script |
+| `NEXT_STEPS.md` | Full roadmap; Decisions §2; bbox postmortem §11 |
+| `HANDOFF_GEOCODE.md` | Detached-PC run brief (pre-alias version) |
+| `docs/archive/website_plan.md` | Full public-site plan with API shape, deploy details |
+| `docs/archive/ui.md` | UI/UX layout, palette, interaction flows |
 
-## Open issues / known gotchas
+## To resume in a fresh Claude session
 
-- **Bbox edit drag/resize** — verified by API + DOM presence + Konva mounted. Did NOT manually click-drag to confirm handle ergonomics. First action next session: open admin, toggle Focus + Bewerk bbox, drag/resize, confirm save flow round-trips.
-- **`output/overrides/1769_19525-1926_0150.json`** — should be `{}` (cleaned up after each test). Verify before committing.
-- **Bbox excludes name** (pipeline) — still pending. `pipeline/align.py`. Logged in `NEXT_STEPS.md` §7.
-- **Pipeline data quality** — known low cross-references, address_full duplication, ~5% LLM errors. Per Decision 5: fix in overrides, not by re-running pipeline.
-- **Public semantic filters** — original Alle/Namen/Straten/Beroepen buttons were dropped to make room for status filter. Note in `NEXT_STEPS.md` §9; restore as separate row if needed.
-- **Konva on Next 16** — works via `dynamic(import, {ssr:false})`. The `'use client'` directive alone isn't enough because Konva touches `window` at module load.
-- **Hook noise** — `PreToolUse:Edit` keeps printing "READ-BEFORE-EDIT REMINDER" even when the file was just read. Edits succeed regardless. Annoying but not blocking.
-- **Old console errors persist in preview tool** — when checking `preview_console_logs`, you may see stale parse errors from earlier edits. Trust the actual server logs (`preview_logs`) for current state.
-
-## Ready-to-resume checklist
-
-- [ ] Open `/admin/page/1769_19525-1926_0150` (login `admin` / `devpass`)
-- [ ] Toggle "Focus" + "Bewerk bbox"
-- [ ] Drag the rect, resize via handles, click "Opslaan bbox"
-- [ ] Reload — bbox should persist
-- [ ] Open `/admin/stats` — verify dashboard renders
-- [ ] Tick "Goed" on an entry, save, return to search panel — confirm green dot appears, "Goed" filter narrows to that entry
-
-## What NOT to do (still applies)
-
-- Don't mutate `output/json/`, `output/alto/`, `output/llm_raw/` — those are reproducible. Corrections go in `output/overrides/`.
-- Don't switch stack from Next + Konva + Tailwind.
-- Don't deploy admin publicly. Local-only or VPN/IP allowlist.
-- Don't add multi-user auth.
-- Don't try per-word bbox editing in admin.
-
-## Uncommitted changes
-
-Even more than at session start. `web/` got: BboxEditor, stats page + lib, EditForm flag UI, SearchPanel status filter + gating, Header rewrite, Viewer focus+filter wiring, ScanPanel toggles, route.ts sanitizers. `NEXT_STEPS.md` updated with semantic-filter note. `HANDOFF.md` replaced (this file).
-
-`output/overrides/1769_19525-1926_0150.json` should be `{}` after this session's cleanup. Verify with `cat` before committing.
-
-To commit when resuming:
-```bash
-cd /Users/lieuwejongsma/projects/groningen-adresboek-1926
-git status
-# Be selective — top-level git root is ~/, not this repo. Setting up a real
-# repo for the project is still a fresh decision (don't add 1.5GB scans).
-```
-
-## To resume in fresh Claude session
-
-Open this file and tell Claude "continue from HANDOFF.md".
+Open this file. Tell Claude: *"continue from HANDOFF.md"*. Pick one of
+the **next-step options**.
