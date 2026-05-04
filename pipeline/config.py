@@ -63,6 +63,15 @@ GEMINI_DELAY_SECONDS = 60.0 / GEMINI_REQUESTS_PER_MINUTE
 # English helps with foreign words, names, and addresses occasionally present.
 SURYA_LANGS = ["nl", "en"]
 
+# OCR Strategy: "auto" (use classifier per page), "surya" (force Surya), "loghi" (force Loghi)
+OCR_STRATEGY = os.environ.get("OCR_STRATEGY", "auto")
+
+# OCR Device: "cpu", "cuda", "mps", "directml", or "auto"
+OCR_DEVICE = os.environ.get("OCR_DEVICE", "auto")
+
+# Loghi Model Path (swappable)
+LOGHI_MODEL_PATH = os.environ.get("LOGHI_MODEL_PATH", None)
+
 # ── Image Processing ─────────────────────────────────────────────────────────
 
 # Minimum image width (pixels) for OCR. Scans below this are upscaled.
@@ -125,15 +134,17 @@ SECTION_MAP = [
 ]
 
 
-def get_section_for_page(page_number: int) -> tuple[str, str]:
+def get_section_for_page(page_number: int) -> tuple[str, str, str | None]:
     """
-    Return (section_type, prompt_filename) for a given printed page number.
+    Return (section_type, prompt_filename, ocr_engine) for a given printed page number.
     Falls back to 'generic' if no section is mapped.
     """
-    for start, end, section_type, prompt_file in SECTION_MAP:
+    for entry in SECTION_MAP:
+        start, end, section_type, prompt_file = entry[:4]
+        ocr_engine = entry[4] if len(entry) > 4 else None
         if start <= page_number <= end:
-            return section_type, prompt_file
-    return "generic", "generic.txt"
+            return section_type, prompt_file, ocr_engine
+    return "generic", "generic.txt", None
 
 
 # ── Scan Filename Parsing ─────────────────────────────────────────────────────
