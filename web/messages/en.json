@@ -12,7 +12,7 @@
   },
   "WelcomeModal": {
     "title": "Welcome to the 1926 Address Book",
-    "body1": "This is a hobby project by <name/> (Groningen Archives). The goal is to make the 1926 Groningen address book searchable and spatially explorable in an interactive way.",
+    "body1": "This is a hobby project by <name></name> (Groningen Archives). The goal is to make the 1926 Groningen address book searchable and spatially explorable in an interactive way.",
     "disclaimer": "Note: This is a work in progress. The link between addresses and map locations may contain errors or gaps due to historical renumbering or extraction differences.",
     "mobileNotice": "This website works best on a larger screen",
     "dontShowAgain": "Don't show again",
@@ -75,7 +75,7 @@
     "page": "pg"
   },
   "Footer": {
-    "builtBy": "Built by <name/>, {year}"
+    "builtBy": "Built by <name></name>, {year}"
   },
   "Common": {
     "name": "Name",

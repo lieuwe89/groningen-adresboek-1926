@@ -12,7 +12,7 @@
   },
   "WelcomeModal": {
     "title": "Welkom bij het Adresboek 1926",
-    "body1": "Dit is een hobbyproject van <name/> (Groninger Archieven). Het doel is om het Groningse adresboek uit 1926 op een interactieve manier doorzoekbaar en ruimtelijk verkenbaar te maken.",
+    "body1": "Dit is een hobbyproject van <name></name> (Groninger Archieven). Het doel is om het Groningse adresboek uit 1926 op een interactieve manier doorzoekbaar en ruimtelijk verkenbaar te maken.",
     "disclaimer": "Let op: Dit is een werk in uitvoering. De koppeling tussen adressen en locaties op de kaart kan fouten of hiaten bevatten door historische hernummeringen of extractieverschillen.",
     "mobileNotice": "Deze website werkt het best op een groter scherm",
     "dontShowAgain": "Niet weer laten zien",
@@ -75,7 +75,7 @@
     "page": "blz"
   },
   "Footer": {
-    "builtBy": "Gebouwd door <name/>, {year}"
+    "builtBy": "Gebouwd door <name></name>, {year}"
   },
   "Common": {
     "name": "Naam",
