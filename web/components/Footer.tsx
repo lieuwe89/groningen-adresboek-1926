@@ -14,7 +14,7 @@ export default function Footer() {
         style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
       >
         {t.rich('builtBy', {
-          name: (chunks) => (
+          name: () => (
             <Link
               href="https://lieuwejongsma.nl"
               target="_blank"
@@ -22,7 +22,6 @@ export default function Footer() {
               className="text-bp-amber hover:underline"
             >
               Lieuwe Jongsma
-              {chunks}
             </Link>
           ),
           year: 2026
