@@ -295,7 +295,11 @@ function PageTitle() {
   return (
     <div className="mb-8 flex items-start gap-4">
       <Link
-        href={`/${locale}`}
+        href={
+          typeof window !== 'undefined' 
+            ? window.location.pathname.replace(`/${locale}/info`, '') + `/${locale}`
+            : `/${locale}`
+        }
         className="mt-[3px] flex items-center gap-[5px] uppercase font-bold shrink-0"
         style={{
           fontSize: 8.5,
