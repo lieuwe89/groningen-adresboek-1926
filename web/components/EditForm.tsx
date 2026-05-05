@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Entry } from "@/lib/data";
+import { useProxyUrl } from "@/lib/useProxyUrl";
 
 interface Props {
   stem: string;
@@ -57,6 +58,7 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
   const [initialFlags, setInitialFlags] = useState<Flags>(flagsFromEntry(entry));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { proxyPath } = useProxyUrl();
 
   useEffect(() => {
     const next = fromEntry(entry);
@@ -94,7 +96,7 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
       });
       const body: Record<string, unknown> = { fields };
       if (Object.keys(flagsDiff).length) body.flags = flagsDiff;
-      const res = await fetch(`/api/admin/page/${stem}/entry/${idx}`, {
+      const res = await fetch(proxyPath(`/api/admin/page/${stem}/entry/${idx}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

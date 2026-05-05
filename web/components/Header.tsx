@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import SectionJump from "./SectionJump";
@@ -16,6 +17,11 @@ export default function Header() {
   const isAdmin = pathname.includes("/admin");
   const stemMatch = pathname.match(/page\/([^/]+)/);
   const stem = stemMatch?.[1];
+  // Use state for active check to handle hydration and proxy path discrepancies
+  const [isInfo, setIsInfo] = useState(pathname.includes('info'));
+  useEffect(() => {
+    setIsInfo(window.location.pathname.includes('info'));
+  }, [pathname]);
 
   const switchLocale = (newLocale: string) => {
     if (newLocale === locale) return;
@@ -56,15 +62,23 @@ export default function Header() {
           {t('description')}
         </div>
         <div className="flex gap-[20px] mt-[5px] items-end">
-          <SectionJump currentStem={stem} />
+          <SectionJump currentStem={stem} isInfo={isInfo} />
           <Meta label={t('labelSheet')} value="A — Z" />
         </div>
       </div>
       <div className="flex items-center gap-[14px]">
         <InfoBtn 
           label={t('info')}
-          active={pathname.endsWith("/info")} 
-          href={proxyPath(pathname.endsWith("/info") ? `/${locale}` : `/${locale}/info`)}
+          active={isInfo} 
+          onClick={() => {
+            const currentPath = typeof window !== 'undefined' ? window.location.pathname : pathname;
+            const reallyIsInfo = isInfo || currentPath.includes('info');
+            if (reallyIsInfo) {
+              window.location.href = proxyPath(`/${locale}`);
+            } else {
+              router.push(proxyPath(`/${locale}/info`));
+            }
+          }}
         />
         <div className="flex gap-[2px]">
           <button 
@@ -150,18 +164,18 @@ function Meta({ label, value }: { label: string; value: string }) {
   );
 }
 
-function InfoBtn({ label, active, href }: { label: string; active: boolean; href: string }) {
+function InfoBtn({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <Link
+    <button
       id="tour-info"
-      href={href}
+      onClick={onClick}
       className="flex items-center gap-[5px] uppercase font-bold transition-colors hover:bg-bp-amber/15"
       style={{
         fontSize: 9,
         letterSpacing: "0.18em",
-        border: active ? "1px solid #e8b84c" : "1px solid #7a705488",
-        color: active ? "#182d5c" : "#e8b84c",
-        background: active ? "#e8b84c" : "transparent",
+        border: active ? "1px solid #e8b84c !important" : "1px solid #7a705488",
+        color: active ? "#182d5c !important" : "#e8b84c",
+        background: active ? "#e8b84c !important" : "transparent",
         padding: "3px 9px",
       }}
     >
@@ -171,6 +185,6 @@ function InfoBtn({ label, active, href }: { label: string; active: boolean; href
         <line x1="12" y1="11" x2="12" y2="16" strokeLinecap="round" />
       </svg>
       {label}
-    </Link>
+    </button>
   );
 }

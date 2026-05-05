@@ -81,7 +81,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const controller = new AbortController();
     const handle = window.setTimeout(async () => {
       try {
-        const url = `/api/search?q=${encodeURIComponent(trimmedQuery)}&limit=${SEARCH_LIMIT}`;
+        const url = proxyPath(`/api/search?q=${encodeURIComponent(trimmedQuery)}&limit=${SEARCH_LIMIT}`);
         const res = await fetch(url, { signal: controller.signal });
         if (seq !== fetchSeq.current) return;
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

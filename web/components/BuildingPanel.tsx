@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from 'next-intl';
+import { useProxyUrl } from "@/lib/useProxyUrl";
 
 type Entry = {
   stable_id: string;
@@ -31,13 +32,14 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const t = useTranslations('BuildingPanel');
+  const { proxyPath } = useProxyUrl();
 
   useEffect(() => {
     setLoading(true);
     setError(null);
     setData(null);
     const ctrl = new AbortController();
-    fetch(`/api/buildings/${encodeURIComponent(pandId)}`, { signal: ctrl.signal })
+    fetch(proxyPath(`/api/buildings/${encodeURIComponent(pandId)}`), { signal: ctrl.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

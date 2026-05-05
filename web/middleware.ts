@@ -29,12 +29,17 @@ export default function middleware(req: NextRequest) {
     if (auth !== expectedHeader()) {
       return new NextResponse("Authentication required", {
         status: 401,
-        headers: { "WWW-Authenticate": 'Basic realm="Adresboek 1926 Admin"' },
+        headers: { "WWW-Authenticate": 'Basic realm="Adresboek 1926 Admin", charset="UTF-8"' },
       });
     }
   }
 
-  // Fall through to intl middleware for localized routes
+  // 4. Admin API routes: return early to avoid next-intl redirection
+  if (pathname.startsWith('/api/admin')) {
+    return NextResponse.next();
+  }
+
+  // 5. Fall through to intl middleware for localized routes
   return intlMiddleware(req);
 }
 

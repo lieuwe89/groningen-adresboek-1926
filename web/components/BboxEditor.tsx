@@ -11,6 +11,7 @@ import {
 import { Stage, Layer, Image as KImage, Rect, Transformer } from "react-konva";
 import type Konva from "konva";
 import type { Bbox } from "@/lib/data";
+import { useProxyUrl } from "@/lib/useProxyUrl";
 
 interface Props {
   stem: string;
@@ -39,6 +40,7 @@ export default function BboxEditor(p: Props) {
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { proxyPath } = useProxyUrl();
   const initRefocusedFor = useRef<string | null>(null);
 
   // Track container size
@@ -57,7 +59,7 @@ export default function BboxEditor(p: Props) {
     setImg(null);
     setDim(null);
     const im = new window.Image();
-    im.src = `/scans/${p.stem}.jpg`;
+    im.src = proxyPath(`/scans/${p.stem}.jpg`);
     im.onload = () => {
       setImg(im);
       setDim({ w: im.naturalWidth, h: im.naturalHeight });
@@ -230,7 +232,7 @@ export default function BboxEditor(p: Props) {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/page/${p.stem}/entry/${p.entryIdx}`, {
+      const res = await fetch(proxyPath(`/api/admin/page/${p.stem}/entry/${p.entryIdx}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bbox: rect }),

@@ -33,7 +33,7 @@ export function useProxyUrl() {
     }
     
     // Fallback: check if /groningen-1926 is in the path at all
-    if (fullPath.includes("/groningen-1926")) {
+    if (fullPath.includes("/groningen-1926") || (typeof window !== 'undefined' && window.location.hostname.includes('playground'))) {
         return "/groningen-1926";
     }
     

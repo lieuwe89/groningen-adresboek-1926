@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from 'next-intl';
+import { useProxyUrl } from "@/lib/useProxyUrl";
 
 type SectionInfo = {
   section: string;
@@ -17,19 +18,21 @@ type Props = {
   // Optional: stem of the page currently being viewed. Used to mark the
   // current section in the dropdown so users see where they are.
   currentStem?: string;
+  isInfo?: boolean;
 };
 
-export default function SectionJump({ currentStem }: Props) {
+export default function SectionJump({ currentStem, isInfo }: Props) {
   const router = useRouter();
   const pathname = usePathname() || "";
   const locale = useLocale();
   const t = useTranslations('Header');
+  const { proxyPath } = useProxyUrl();
   const [sections, setSections] = useState<SectionInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
-    fetch("/api/sections")
+    fetch(proxyPath("/api/sections"))
       .then(async (r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return (await r.json()) as { sections: SectionInfo[] };
@@ -65,13 +68,11 @@ export default function SectionJump({ currentStem }: Props) {
     
     const isAdmin = pathname.includes("/admin/");
     const base = isAdmin ? `/${locale}/admin/page` : `/${locale}/page`;
-    router.push(`${base}/${s.first_stem}`);
+    router.push(proxyPath(`${base}/${s.first_stem}`));
   }
 
-  // Hide outside page routes (no stem / not page viewer).
-  // Note: pathname in Next.js includes the locale prefix
-  const onPageRoute = pathname.includes("/page/") || pathname.includes("/admin/page/");
-  if (!onPageRoute) return null;
+  // Hide on info page
+  if (isInfo) return null;
 
   const cur = currentSectionId();
 

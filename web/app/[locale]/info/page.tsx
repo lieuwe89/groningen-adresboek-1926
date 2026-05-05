@@ -294,23 +294,8 @@ export default function InfoPage() {
 /* ── Sub-components ─────────────────────────────────────────────────────────── */
 
 function PageTitle() {
-  const locale = useLocale();
-  const { proxyPath } = useProxyUrl();
   return (
     <div className="mb-8 flex items-start gap-4">
-      <Link
-        href={proxyPath(`/${locale}`)}
-        className="mt-[3px] flex items-center gap-[5px] uppercase font-bold shrink-0"
-        style={{
-          fontSize: 8.5,
-          letterSpacing: "0.18em",
-          border: "1px solid #7a705488",
-          color: "#7a7054",
-          padding: "4px 9px",
-        }}
-      >
-        ← Terug
-      </Link>
       <div>
         <div
           className="text-bp-ink-dim uppercase font-semibold"
