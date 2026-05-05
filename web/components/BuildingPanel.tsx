@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from 'next-intl';
 
 type Entry = {
   stable_id: string;
@@ -29,6 +30,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
   const [data, setData] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations('BuildingPanel');
 
   useEffect(() => {
     setLoading(true);
@@ -73,7 +75,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
           fontWeight: 700,
         }}
       >
-        <span>§ 4 — GEBOUW</span>
+        <span>{t('title')}</span>
         <button
           type="button"
           onClick={onClose}
@@ -85,14 +87,14 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
       </div>
       <div className="flex-1 overflow-y-auto" style={{ padding: "8px 0" }}>
         {loading && (
-          <div style={{ padding: "12px", color: "#7a7054", fontSize: 9 }}>laden…</div>
+          <div style={{ padding: "12px", color: "#7a7054", fontSize: 9 }}>{t('loading')}</div>
         )}
         {error && (
           <div style={{ padding: "12px", color: "#e89e3b", fontSize: 9 }}>{error}</div>
         )}
         {!loading && !error && data && data.addresses.length === 0 && (
           <div style={{ padding: "12px", color: "#7a7054", fontSize: 9 }}>
-            Geen vermeldingen aan dit gebouw gekoppeld.
+            {t('noEntries')}
           </div>
         )}
         {!loading && !error && data &&
@@ -142,7 +144,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
                     <span style={{ color: "#7a7054", fontSize: 9 }}>{e.occupation}</span>
                   )}
                   {e.page_number != null && (
-                    <span style={{ color: "#7a7054", fontSize: 9 }}>blz {e.page_number}</span>
+                    <span style={{ color: "#7a7054", fontSize: 9 }}>{t('page')} {e.page_number}</span>
                   )}
                 </button>
               ))}

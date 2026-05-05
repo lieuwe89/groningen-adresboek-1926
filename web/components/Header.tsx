@@ -1,21 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import SectionJump from "./SectionJump";
+import { useTranslations, useLocale } from 'next-intl';
 
 export default function Header() {
+  const t = useTranslations('Header');
+  const locale = useLocale();
+  const router = useRouter();
   const pathname = usePathname() || "";
-  const isAdmin = pathname.startsWith("/admin");
+  
+  const isAdmin = pathname.includes("/admin");
   const stemMatch = pathname.match(/page\/([^/]+)/);
   const stem = stemMatch?.[1];
+
+  const switchLocale = (newLocale: string) => {
+    if (newLocale === locale) return;
+    const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
+    router.push(newPathname);
+  };
+
   const adminHref = isAdmin
     ? stem
-      ? `/page/${stem}`
-      : "/"
+      ? `/${locale}/page/${stem}`
+      : `/${locale}`
     : stem
-      ? `/admin/page/${stem}`
-      : "/admin";
+      ? `/${locale}/admin/page/${stem}`
+      : `/${locale}/admin`;
+
   return (
     <header
       className="relative flex items-end justify-between border-b border-bp-ink/55 px-[22px] pt-[10px] pb-[8px]"
@@ -26,34 +39,57 @@ export default function Header() {
           className="text-bp-ink-dim font-semibold uppercase"
           style={{ fontSize: 8.5, letterSpacing: "0.22em" }}
         >
-          “Gemeente Groningen” — Adresboek
+          {t('subtitle')}
         </div>
         <h1
           className="text-bp-amber font-bold uppercase"
           style={{ fontSize: 15, letterSpacing: "0.28em" }}
         >
-          Adresboek 1926
+          {t('title')}
         </h1>
         <div
           className="text-bp-ink-bright uppercase"
           style={{ fontSize: 8.5, letterSpacing: "0.18em" }}
         >
-          Interactieve verkenner — Naamregister &amp; Plattegrond
+          {t('description')}
         </div>
         <div className="flex gap-[20px] mt-[5px] items-end">
           <SectionJump currentStem={stem} />
-          <Meta label="Blad" value="A — Z" />
+          <Meta label={t('labelSheet')} value="A — Z" />
         </div>
       </div>
       <div className="flex items-center gap-[14px]">
-        <InfoBtn active={pathname === "/info"} />
+        <InfoBtn 
+          label={t('info')}
+          active={pathname.endsWith("/info")} 
+          href={pathname.endsWith("/info") ? `/${locale}` : `/${locale}/info`}
+        />
         <div className="flex gap-[2px]">
-          <LangBtn label="NL" active />
-          <LangBtn label="EN" />
+          <button 
+            onClick={() => switchLocale('nl')}
+            className={`px-[7px] py-[3px] uppercase font-bold border transition-colors text-[9px] tracking-[0.18em] ${
+              locale === 'nl' 
+                ? "text-bp-amber border-bp-amber/60 cursor-default" 
+                : "text-bp-ink-dim border-bp-ink-dim/20 hover:text-bp-amber hover:border-bp-amber/40"
+            }`}
+          >
+            NL
+          </button>
+          <button 
+            onClick={() => switchLocale('en')}
+            className={`px-[7px] py-[3px] uppercase font-bold border transition-colors text-[9px] tracking-[0.18em] ${
+              locale === 'en' 
+                ? "text-bp-amber border-bp-amber/60 cursor-default" 
+                : "text-bp-ink-dim border-bp-ink-dim/20 hover:text-bp-amber hover:border-bp-amber/40"
+            }`}
+          >
+            EN
+          </button>
         </div>
         {isAdmin && (
           <Link
-            href="/admin/stats"
+            href={`/${locale}/admin/stats`}
+            prefetch={false}
             className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
             style={{
               fontSize: 9,
@@ -64,11 +100,12 @@ export default function Header() {
               padding: "3px 9px",
             }}
           >
-            Stats
+            {t('stats')}
           </Link>
         )}
         <Link
           href={adminHref}
+          prefetch={false}
           className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
           style={{
             fontSize: 9,
@@ -79,7 +116,7 @@ export default function Header() {
             padding: "3px 9px",
           }}
         >
-          {isAdmin ? "Publiek" : "Admin"}
+          {isAdmin ? t('public') : t('admin')}
         </Link>
         <div
           className="text-bp-ink-dim"
@@ -111,28 +148,11 @@ function Meta({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LangBtn({ label, active = false }: { label: string; active?: boolean }) {
-  return (
-    <button
-      className="px-[7px] py-[3px] uppercase font-bold transition-colors"
-      style={{
-        fontSize: 9,
-        letterSpacing: "0.18em",
-        border: active ? "1px solid #e8b84c99" : "1px solid #7a705444",
-        color: active ? "#e8b84c" : "#7a7054",
-        background: "transparent",
-      }}
-    >
-      {label}
-    </button>
-  );
-}
-
-function InfoBtn({ active }: { active: boolean }) {
+function InfoBtn({ label, active, href }: { label: string; active: boolean; href: string }) {
   return (
     <Link
       id="tour-info"
-      href={active ? "/" : "/info"}
+      href={href}
       className="flex items-center gap-[5px] uppercase font-bold transition-colors hover:bg-bp-amber/15"
       style={{
         fontSize: 9,
@@ -148,7 +168,7 @@ function InfoBtn({ active }: { active: boolean }) {
         <line x1="12" y1="8" x2="12" y2="8.5" strokeLinecap="round" />
         <line x1="12" y1="11" x2="12" y2="16" strokeLinecap="round" />
       </svg>
-      Info
+      {label}
     </Link>
   );
 }

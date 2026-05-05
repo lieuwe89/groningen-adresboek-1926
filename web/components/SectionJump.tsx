@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { useTranslations, useLocale } from 'next-intl';
 
 type SectionInfo = {
   section: string;
@@ -21,6 +22,8 @@ type Props = {
 export default function SectionJump({ currentStem }: Props) {
   const router = useRouter();
   const pathname = usePathname() || "";
+  const locale = useLocale();
+  const t = useTranslations('Header');
   const [sections, setSections] = useState<SectionInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,11 +62,15 @@ export default function SectionJump({ currentStem }: Props) {
     if (!id || !sections) return;
     const s = sections.find((x) => x.section === id);
     if (!s) return;
-    router.push(`/page/${s.first_stem}`);
+    
+    const isAdmin = pathname.includes("/admin/");
+    const base = isAdmin ? `/${locale}/admin/page` : `/${locale}/page`;
+    router.push(`${base}/${s.first_stem}`);
   }
 
   // Hide outside page routes (no stem / not page viewer).
-  const onPageRoute = pathname.startsWith("/page/") || pathname.startsWith("/admin/page/");
+  // Note: pathname in Next.js includes the locale prefix
+  const onPageRoute = pathname.includes("/page/") || pathname.includes("/admin/page/");
   if (!onPageRoute) return null;
 
   const cur = currentSectionId();
@@ -74,13 +81,13 @@ export default function SectionJump({ currentStem }: Props) {
         className="text-bp-ink-dim uppercase"
         style={{ fontSize: 7.5, letterSpacing: "0.18em", fontWeight: 600 }}
       >
-        Sectie
+        {t('labelSection')}
       </span>
       <select
         value={cur}
         onChange={onChange}
         disabled={!sections || !!error}
-        title={error ? `Fout bij laden: ${error}` : "Spring naar sectie"}
+        title={error ? `Error loading: ${error}` : "Jump to section"}
         className="text-bp-ink-bright uppercase outline-none cursor-pointer"
         style={{
           fontSize: 9,
@@ -93,13 +100,13 @@ export default function SectionJump({ currentStem }: Props) {
           minWidth: 150,
         }}
       >
-        {sections === null && !error && <option value="">Laden…</option>}
-        {error && <option value="">Fout</option>}
+        {sections === null && !error && <option value="">Loading…</option>}
+        {error && <option value="">Error</option>}
         {sections?.map((s) => (
           <option key={s.section} value={s.section} style={{ background: "#182d5c" }}>
             {s.label}
             {s.first_scan_number != null ? ` — scan ${s.first_scan_number}` : ""}
-            {` (${s.count} pagina's)`}
+            {` (${s.count} ${s.count === 1 ? 'page' : 'pages'})`}
           </option>
         ))}
       </select>

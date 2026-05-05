@@ -2,6 +2,7 @@
 
 import type { Entry } from "@/lib/data";
 import type { SearchHit } from "@/lib/searchTypes";
+import { useTranslations } from 'next-intl';
 
 export type StatusFilter = "all" | "verified" | "needs_review" | "unreviewed";
 
@@ -30,6 +31,9 @@ interface Props {
 }
 
 export default function SearchPanel(p: Props) {
+  const t = useTranslations('Search');
+  const tc = useTranslations('Common');
+
   return (
     <div
       className="overflow-hidden flex-shrink-0 border-r border-bp-ink/55 bg-bp-blue"
@@ -48,7 +52,7 @@ export default function SearchPanel(p: Props) {
             className="text-bp-amber uppercase"
             style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
           >
-            § 1 — Zoekregister
+            {t('title')}
           </span>
           <button
             onClick={p.onClose}
@@ -79,7 +83,7 @@ export default function SearchPanel(p: Props) {
               type="text"
               value={p.query}
               onChange={(e) => p.onQuery(e.target.value)}
-              placeholder="BALK"
+              placeholder={t('placeholder')}
               className="flex-1 bg-transparent outline-none text-bp-ink-bright uppercase"
               style={{ fontSize: 10, letterSpacing: "0.12em", fontWeight: 700 }}
             />
@@ -104,7 +108,7 @@ export default function SearchPanel(p: Props) {
             className="text-bp-ink-dim uppercase"
             style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
           >
-            {p.globalMode ? "Boekzoeken" : "Resultaten"}
+            {t('results')}
           </span>
           <span className="text-bp-amber" style={{ fontSize: 10, fontWeight: 700 }}>
             {p.globalMode

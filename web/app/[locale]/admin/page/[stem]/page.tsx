@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 import { listStems, loadPage, neighborStems } from "@/lib/data";
-import Viewer from "./Viewer";
+import Viewer from "@/app/[locale]/page/[stem]/Viewer";
 
-export default async function PageRoute(props: PageProps<"/page/[stem]">) {
+export default async function AdminPageRoute(props: {
+  params: Promise<{ locale: string; stem: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { stem } = await props.params;
   const { entry } = await props.searchParams;
   const [data, allStems] = await Promise.all([loadPage(stem), listStems()]);
@@ -25,6 +28,7 @@ export default async function PageRoute(props: PageProps<"/page/[stem]">) {
       data={data}
       prev={prev}
       next={next}
+      editMode
       initialIdx={initialIdx}
     />
   );

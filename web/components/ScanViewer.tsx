@@ -37,6 +37,19 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
 
   const applyOverlaysRef = useRef<((force?: boolean) => void) | null>(null);
 
+  // Path prefix for /tiles/ — handles reverse-proxy deployments (e.g. /groningen-1926).
+  // window.location.pathname includes the proxy prefix; Next.js pathname does not.
+  const tilesBaseRef = useRef<string | null>(null);
+  function getTilesBase(): string {
+    if (tilesBaseRef.current === null) {
+      tilesBaseRef.current = window.location.pathname.replace(
+        /(\/(nl|en))?\/(admin\/)?page\/.+$/,
+        ""
+      );
+    }
+    return tilesBaseRef.current;
+  }
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -55,7 +68,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         minZoomImageRatio: 1,
         maxZoomPixelRatio: 4,
         gestureSettingsMouse: { clickToZoom: false, dblClickToZoom: false },
-        tileSources: `/tiles/${stem}.dzi`,
+        tileSources: `${getTilesBase()}/tiles/${stem}.dzi`,
       });
       viewerRef.current = viewer;
 
@@ -111,7 +124,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
     const v = viewerRef.current;
     if (!v) return;
     dimsRef.current = null;
-    v.open(`/tiles/${stem}.dzi`);
+    v.open(`${getTilesBase()}/tiles/${stem}.dzi`);
   }, [stem]);
 
   useEffect(() => {

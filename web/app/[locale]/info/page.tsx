@@ -3,6 +3,8 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import GlobalGrid from "@/components/GlobalGrid";
+import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 
 /* ── Map profiles ──────────────────────────────────────────────────────────── */
 
@@ -114,6 +116,7 @@ const MAPS: MapProfile[] = [
 /* ── Page ───────────────────────────────────────────────────────────────────── */
 
 export default function InfoPage() {
+  const locale = useLocale();
   return (
     <div className="h-full flex flex-col" style={{ position: "relative" }}>
       <GlobalGrid />
@@ -288,10 +291,11 @@ export default function InfoPage() {
 /* ── Sub-components ─────────────────────────────────────────────────────────── */
 
 function PageTitle() {
+  const locale = useLocale();
   return (
     <div className="mb-8 flex items-start gap-4">
       <Link
-        href="/"
+        href={`/${locale}`}
         className="mt-[3px] flex items-center gap-[5px] uppercase font-bold shrink-0"
         style={{
           fontSize: 8.5,

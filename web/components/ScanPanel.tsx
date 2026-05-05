@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { Entry } from "@/lib/data";
 import EditForm from "@/components/EditForm";
 import type { ScanViewerHandle } from "@/components/ScanViewer";
+import { useTranslations, useLocale } from 'next-intl';
 
 const ScanViewer = dynamic(() => import("@/components/ScanViewer"), {
   ssr: false,
@@ -45,14 +46,17 @@ interface Props {
 export default function ScanPanel(p: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
   const viewerRef = useRef<ScanViewerHandle | null>(null);
   const [bboxEditMode, setBboxEditMode] = useState(false);
+  const t = useTranslations('Scan');
+  const tc = useTranslations('Common');
 
   function handleSelectEntry(idx: number) {
     const stableId = `${p.stem}:${idx}`;
     const params = new URLSearchParams(searchParams.toString());
     params.set("entry", stableId);
-    router.push(`/page/${p.stem}?${params.toString()}`);
+    router.push(`/${locale}/page/${p.stem}?${params.toString()}`);
   }
 
   useEffect(() => {
@@ -88,7 +92,7 @@ export default function ScanPanel(p: Props) {
             className="text-bp-amber uppercase"
             style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
           >
-            § 3 — Originele Scan
+            {t('title')}
           </span>
           <div className="flex items-center gap-[10px]">
             {p.onToggleFocus && (
@@ -165,8 +169,8 @@ export default function ScanPanel(p: Props) {
             Pagina {p.page}
           </span>
           <div className="flex gap-[16px] mt-[3px]">
-            <InfoCol label="Naam" value={name || "—"} />
-            <InfoCol label="Beroep" value={occ || "—"} />
+            <InfoCol label={tc('name')} value={name || "—"} />
+            <InfoCol label={tc('occupation')} value={occ || "—"} />
           </div>
           <div className="flex flex-col gap-[2px] mt-[2px]">
             <div className="flex items-baseline justify-between">
@@ -174,7 +178,7 @@ export default function ScanPanel(p: Props) {
                 className="text-bp-ink-dim uppercase"
                 style={{ fontSize: 7.5, letterSpacing: "0.14em" }}
               >
-                Adres
+                {tc('address')}
               </span>
               {p.activeEntry && !p.activeEntry.pand_id && (
                 <span
@@ -238,7 +242,7 @@ export default function ScanPanel(p: Props) {
         >
           {p.prev ? (
             <Link
-              href={`/page/${p.prev}`}
+              href={`/${locale}/page/${p.prev}`}
               className="text-bp-ink-dim hover:text-bp-amber transition-colors"
             >
               ← {p.page - 1}
@@ -254,7 +258,7 @@ export default function ScanPanel(p: Props) {
           </span>
           {p.next ? (
             <Link
-              href={`/page/${p.next}`}
+              href={`/${locale}/page/${p.next}`}
               className="text-bp-ink-dim hover:text-bp-amber transition-colors"
             >
               {p.page + 1} →

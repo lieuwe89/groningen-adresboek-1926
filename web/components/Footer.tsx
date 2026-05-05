@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { useTranslations } from 'next-intl';
 
 export default function Footer() {
+  const t = useTranslations('Footer');
+  
   return (
     <footer
       className="flex items-center justify-between border-t border-bp-ink/55 px-[22px]"
@@ -10,16 +13,19 @@ export default function Footer() {
         className="text-bp-ink-dim uppercase"
         style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
       >
-        Gebouwd door{" "}
-        <Link
-          href="https://lieuwejongsma.nl"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-bp-amber hover:underline"
-        >
-          Lieuwe Jongsma
-        </Link>
-        , 2026
+        {t.rich('builtBy', {
+          name: () => (
+            <Link
+              href="https://lieuwejongsma.nl"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-bp-amber hover:underline"
+            >
+              Lieuwe Jongsma
+            </Link>
+          ),
+          year: 2026
+        })}
       </span>
     </footer>
   );

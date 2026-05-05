@@ -4,10 +4,14 @@ import { useCallback, useRef } from "react";
 import Shepherd from "shepherd.js";
 import "shepherd.js/dist/css/shepherd.css";
 import { useSelection } from "./SelectionContext";
+import { useTranslations } from 'next-intl';
 
 export function useTour() {
-  const tourRef = useRef<Shepherd.Tour | null>(null);
+  // shepherd.js v15 ships no TS declarations — typed as any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tourRef = useRef<any>(null);
   const { setLayersOpen, setTourActive, setSearchOpen, setScanOpen } = useSelection();
+  const t = useTranslations('Tour');
 
   const startTour = useCallback(() => {
     // 1. Cleanup any existing tour instance
@@ -31,12 +35,12 @@ export function useTour() {
     // Step 1: Welcome / Map Overview
     tour.addStep({
       id: "map",
-      title: "De kaart",
-      text: "Dit is de kaart van Groningen anno nu. De gemarkeerde gebouwen bevatten adressen uit het adresboek van 1926. Klik op een gebouw om te zien wie er woonde.",
+      title: t('map.title'),
+      text: t('map.text'),
       attachTo: { element: "#tour-map", on: "left" },
       buttons: [
         {
-          text: "Volgende",
+          text: t('buttons.next'),
           action() { return this.next(); },
           classes: "shepherd-button-primary",
         },
@@ -46,8 +50,8 @@ export function useTour() {
     // Step 2: Layers
     tour.addStep({
       id: "layers",
-      title: "Kaartlagen",
-      text: "Wissel hier tussen de moderne kaart en historische plattegronden uit de periode 1915–1935.",
+      title: t('layers.title'),
+      text: t('layers.text'),
       attachTo: { element: "#tour-layers-panel", on: "right" },
       beforeShowPromise: () => {
         setLayersOpen(true);
@@ -55,7 +59,7 @@ export function useTour() {
       },
       buttons: [
         {
-          text: "Vorige",
+          text: t('buttons.prev'),
           action() { 
             setLayersOpen(false);
             return this.back(); 
@@ -63,7 +67,7 @@ export function useTour() {
           classes: "shepherd-button-secondary",
         },
         {
-          text: "Volgende",
+          text: t('buttons.next'),
           action() { 
             setLayersOpen(false);
             return this.next(); 
@@ -76,8 +80,8 @@ export function useTour() {
     // Step 3: Search
     tour.addStep({
       id: "search",
-      title: "Zoeken",
-      text: "Doorzoek het hele adresboek op naam, adres of beroep.",
+      title: t('search.title'),
+      text: t('search.text'),
       attachTo: { element: "#tour-search-panel", on: "right" },
       beforeShowPromise: () => {
         setSearchOpen(true);
@@ -85,7 +89,7 @@ export function useTour() {
       },
       buttons: [
         {
-          text: "Vorige",
+          text: t('buttons.prev'),
           action() { 
             setSearchOpen(false);
             return this.back(); 
@@ -93,7 +97,7 @@ export function useTour() {
           classes: "shepherd-button-secondary",
         },
         {
-          text: "Volgende",
+          text: t('buttons.next'),
           action() { 
             setSearchOpen(false);
             return this.next(); 
@@ -106,8 +110,8 @@ export function useTour() {
     // Step 4: Scan
     tour.addStep({
       id: "scan",
-      title: "Paginaweergave",
-      text: "Bekijk de originele gescande pagina uit het adresboek van 1926.",
+      title: t('scan.title'),
+      text: t('scan.text'),
       attachTo: { element: "#tour-scan-panel", on: "left" },
       beforeShowPromise: () => {
         setScanOpen(true);
@@ -115,7 +119,7 @@ export function useTour() {
       },
       buttons: [
         {
-          text: "Vorige",
+          text: t('buttons.prev'),
           action() { 
             setScanOpen(false);
             return this.back(); 
@@ -123,7 +127,7 @@ export function useTour() {
           classes: "shepherd-button-secondary",
         },
         {
-          text: "Volgende",
+          text: t('buttons.next'),
           action() { 
             setScanOpen(false);
             return this.next(); 
@@ -136,17 +140,17 @@ export function useTour() {
     // Step 5: Sections
     tour.addStep({
       id: "section",
-      title: "Secties",
-      text: "Navigeer snel naar het naamregister of het stratenregister.",
+      title: t('section.title'),
+      text: t('section.text'),
       attachTo: { element: "#tour-section", on: "bottom" },
       buttons: [
         {
-          text: "Vorige",
+          text: t('buttons.prev'),
           action() { return this.back(); },
           classes: "shepherd-button-secondary",
         },
         {
-          text: "Volgende",
+          text: t('buttons.next'),
           action() { return this.next(); },
           classes: "shepherd-button-primary",
         },
@@ -156,17 +160,17 @@ export function useTour() {
     // Step 6: Info
     tour.addStep({
       id: "info",
-      title: "Project Info",
-      text: "Hier vind je meer informatie over de bronnen en het proces achter dit project.",
+      title: t('info.title'),
+      text: t('info.text'),
       attachTo: { element: "#tour-info", on: "bottom" },
       buttons: [
         {
-          text: "Vorige",
+          text: t('buttons.prev'),
           action() { return this.back(); },
           classes: "shepherd-button-secondary",
         },
         {
-          text: "Afronden",
+          text: t('buttons.finish'),
           action() { return this.complete(); },
           classes: "shepherd-button-primary",
         },
@@ -188,7 +192,7 @@ export function useTour() {
     tourRef.current = tour;
     tour.start();
 
-  }, [setLayersOpen, setTourActive, setSearchOpen, setScanOpen]);
+  }, [setLayersOpen, setTourActive, setSearchOpen, setScanOpen, t]);
 
   return { startTour };
 }

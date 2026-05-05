@@ -1,0 +1,85 @@
+{
+  "Header": {
+    "subtitle": "“Municipality of Groningen” — Address Book",
+    "title": "Address Book 1926",
+    "description": "Interactive explorer — Name Register & Map",
+    "labelSheet": "Sheet",
+    "labelSection": "Section",
+    "info": "Info",
+    "admin": "Admin",
+    "public": "Public",
+    "stats": "Stats"
+  },
+  "WelcomeModal": {
+    "title": "Welcome to the 1926 Address Book",
+    "body1": "This is a hobby project by <name/> (Groningen Archives). The goal is to make the 1926 Groningen address book searchable and spatially explorable in an interactive way.",
+    "disclaimer": "Note: This is a work in progress. The link between addresses and map locations may contain errors or gaps due to historical renumbering or extraction differences.",
+    "mobileNotice": "This website works best on a larger screen",
+    "dontShowAgain": "Don't show again",
+    "startTour": "Start Tour",
+    "skip": "Skip"
+  },
+  "Tour": {
+    "map": {
+      "title": "The Map",
+      "text": "This is the map of Groningen today. The marked buildings contain addresses from the 1926 address book. Click on a building to see who lived there."
+    },
+    "layers": {
+      "title": "Map Layers",
+      "text": "Switch here between modern and historical maps from the 1915–1935 period. This allows you to overlay the Groningen of then on the Groningen of now."
+    },
+    "search": {
+      "title": "Search",
+      "text": "Search the entire address book by name, address, or occupation. Click on a result to jump directly to the correct page."
+    },
+    "scan": {
+      "title": "Page View",
+      "text": "View the original scanned page from the 1926 address book. Browse through the book and zoom in on the handwritten details."
+    },
+    "section": {
+      "title": "Sections",
+      "text": "Jump to different parts of the book: the name register, street register, and more."
+    },
+    "info": {
+      "title": "More Information",
+      "text": "Click here for more information about the project, the sources, and the historical maps."
+    },
+    "buttons": {
+      "next": "Next",
+      "prev": "Back",
+      "finish": "Finish",
+      "close": "Close"
+    }
+  },
+  "Search": {
+    "title": "§ 1 — Search Register",
+    "results": "Results",
+    "placeholder": "Name, address or occupation..."
+  },
+  "Scan": {
+    "title": "§ 3 — Original Scan",
+    "loading": "Loading scan..."
+  },
+  "Map": {
+    "search": "Search",
+    "scan": "Scan",
+    "layers": "Map Layers",
+    "modern": "Modern (no overlay)",
+    "opacity": "Transparency",
+    "buildings": "Address Buildings"
+  },
+  "BuildingPanel": {
+    "title": "§ 4 — Building",
+    "loading": "loading...",
+    "noEntries": "No entries linked to this building.",
+    "page": "pg"
+  },
+  "Footer": {
+    "builtBy": "Built by <name/>, {year}"
+  },
+  "Common": {
+    "name": "Name",
+    "address": "Address",
+    "occupation": "Occupation"
+  }
+}

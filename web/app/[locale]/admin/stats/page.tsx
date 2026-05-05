@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { computeStats, type PageStats, type SectionStats } from "@/lib/stats";
+import { useLocale } from 'next-intl';
 
 export const dynamic = "force-dynamic";
 
-export default async function StatsPage() {
+export default async function StatsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const stats = await computeStats();
   const ov = stats.overall;
   const pct = (n: number, d: number) => (d > 0 ? (n / d) * 100 : 0);
@@ -30,7 +32,7 @@ export default async function StatsPage() {
         </div>
         <div className="flex items-center gap-[14px]">
           <Link
-            href="/admin/page/1769_19525-1926_0150"
+            href={`/${locale}/admin/page/1769_19525-1926_0150`}
             className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
             style={{
               fontSize: 9,
@@ -96,7 +98,7 @@ export default async function StatsPage() {
                 (alleen pagina&apos;s met bewerkingen)
               </span>
             </SectionHeading>
-            <PageTable rows={editedPages} />
+            <PageTable rows={editedPages} locale={locale} />
           </section>
         );
       })()}
@@ -236,7 +238,7 @@ export default async function StatsPage() {
     );
   }
 
-  function PageTable({ rows }: { rows: PageStats[] }) {
+  function PageTable({ rows, locale }: { rows: PageStats[], locale: string }) {
     if (rows.length === 0) {
       return (
         <div className="text-bp-ink-dim" style={{ fontSize: 10 }}>
@@ -260,7 +262,7 @@ export default async function StatsPage() {
               <Td num>{r.edited}</Td>
               <Td>
                 <Link
-                  href={`/admin/page/${r.stem}`}
+                  href={`/${locale}/admin/page/${r.stem}`}
                   className="text-bp-amber hover:underline"
                   style={{ fontSize: 9, letterSpacing: "0.1em" }}
                 >

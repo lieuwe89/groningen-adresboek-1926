@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import BuildingPanel from "./BuildingPanel";
 import { HISTORIC_MAPS } from "@/lib/historicMaps";
 import { useSelection } from "@/lib/SelectionContext";
+import { useTranslations, useLocale } from 'next-intl';
 
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
@@ -24,6 +25,8 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
   const [activePand, setActivePand] = useState<string | null>(null);
   const { layersOpen: layersExpanded, setLayersOpen: setLayersExpanded, tourActive } = useSelection();
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('Map');
 
   return (
     <section id="tour-map" className="relative flex-1 min-w-0 overflow-hidden bg-bp-blue">
@@ -41,7 +44,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           onClose={() => setActivePand(null)}
           onSelectEntry={(stem, stableId) => {
             const params = new URLSearchParams({ entry: stableId });
-            router.push(`/page/${stem}?${params.toString()}`);
+            router.push(`/${locale}/page/${stem}?${params.toString()}`);
           }}
         />
       )}
@@ -69,7 +72,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" />
         </svg>
-        Zoeken
+        {t('search')}
       </button>
 
       {/* "Scan" floating button — visible only when scan panel closed and no building popup */}
@@ -91,7 +94,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           transition: "opacity 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
         }}
       >
-        Scan
+        {t('scan')}
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#e8b84c" strokeWidth="2">
           <rect x="4" y="3" width="16" height="18" rx="1" />
           <path d="M8 8h8M8 12h8M8 16h5" />
@@ -127,7 +130,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
             cursor: "pointer",
           }}
         >
-          <span>Kaartlagen</span>
+          <span>{t('layers')}</span>
           <svg
             width="10"
             height="10"
@@ -154,7 +157,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           }}
         >
           <LayerRow
-            label="Modern (geen overlay)"
+            label={t('modern')}
             on={historicId === null}
             onChange={() => setHistoricId(null)}
             radio
@@ -181,7 +184,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
                 color: "#cfc39a",
               }}
             >
-              <span className="uppercase" style={{ minWidth: 84, fontWeight: 700 }}>Transparantie</span>
+              <span className="uppercase" style={{ minWidth: 84, fontWeight: 700 }}>{t('opacity')}</span>
               <input
                 type="range"
                 min={0}
@@ -203,7 +206,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
             </div>
           )}
 
-          <LayerRow label="Adresgebouwen" on={buildingsOn} onChange={setBuildingsOn} />
+          <LayerRow label={t('buildings')} on={buildingsOn} onChange={setBuildingsOn} />
         </div>
       </div>
     </section>

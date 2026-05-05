@@ -1,10 +1,15 @@
 import { notFound } from "next/navigation";
 import { listStems, loadPage, neighborStems } from "@/lib/data";
-import Viewer from "@/app/page/[stem]/Viewer";
+import Viewer from "./Viewer";
 
-export default async function AdminPageRoute(props: PageProps<"/admin/page/[stem]">) {
-  const { stem } = await props.params;
-  const { entry } = await props.searchParams;
+type PageProps = {
+  params: Promise<{ locale: string; stem: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function PageRoute({ params, searchParams }: PageProps) {
+  const { stem } = await params;
+  const { entry } = await searchParams;
   const [data, allStems] = await Promise.all([loadPage(stem), listStems()]);
   if (!data) notFound();
   const { prev, next } = neighborStems(stem, allStems);
@@ -25,7 +30,6 @@ export default async function AdminPageRoute(props: PageProps<"/admin/page/[stem
       data={data}
       prev={prev}
       next={next}
-      editMode
       initialIdx={initialIdx}
     />
   );

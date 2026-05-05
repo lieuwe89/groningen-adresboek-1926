@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams, useParams, usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,6 +11,7 @@ import { useSelection } from "@/lib/SelectionContext";
 import WelcomeModal from "@/components/WelcomeModal";
 import { useTour } from "@/lib/useTour";
 import type { SearchHit, SearchResponse } from "@/lib/searchTypes";
+import { useLocale } from 'next-intl';
 
 const SEARCH_DEBOUNCE_MS = 220;
 const SEARCH_LIMIT = 50;
@@ -18,9 +19,10 @@ const SEARCH_LIMIT = 50;
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const params = useParams();
+  const locale = useLocale();
   const stem = params.stem as string;
   const pathname = usePathname() || "";
-  const isAdmin = pathname.startsWith("/admin");
+  const isAdmin = pathname.includes("/admin");
   
   const {
     activePandId,
@@ -101,7 +103,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   function handleSelectGlobal(hit: SearchHit) {
     const p = new URLSearchParams({ entry: hit.stable_id, q: trimmedQuery });
-    const base = isAdmin ? "/admin/page" : "/page";
+    const base = isAdmin ? `/${locale}/admin/page` : `/${locale}/page`;
     router.push(`${base}/${hit.stem}?${p.toString()}`);
   }
 
