@@ -14,20 +14,34 @@ env/
 *.egg-info/
 
 # Project secrets — NEVER commit
-pipeline/config_local.py
 secrets.md
 .env
 .env.*
 !web/.env.local.example
 
+# Pipeline — lives in its own repo (https://github.com/lieuwe89/tables-ocr-pipeline)
+pipeline/
+requirements.txt
+scripts/
+viewer.py
+viewer/
+Dockerfile.dgx
+
+# Working documents (backlogs, handoffs, planning artefacts)
+HANDOFF.md
+HANDOFF_GEOCODE.md
+NEXT_STEPS.md
+PLAN-*.md
+DOCS_STABILIZATION.md
+docs/archive/
+docs/pipeline-v2.md
+
 # Generated pipeline outputs (rebuildable from cached OCR + LLM raw + scans)
-# Override for `output/overrides/` — those are user-edited corrections, not generated.
+# `output/overrides/` contains user-edited corrections and IS tracked.
 output/*
 !output/overrides/
 
-# Large source assets — synced via Drive / external transfer, NOT committed.
-# To set up a working clone: copy these directories into place from the
-# original storage. See README.md "Required external assets" for sources.
+# Large source assets — not in git (Drive / external transfer)
 scans/
 Maps/
 tessdata/
