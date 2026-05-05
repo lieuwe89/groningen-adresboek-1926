@@ -148,14 +148,14 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         cursor: pointer;
         pointer-events: auto;
         transition: background 120ms, border 120ms;
-        border: ${isActive ? "2px solid #e8b84c" : "1px solid transparent"};
-        background: ${isActive ? "#e8b84c44" : "transparent"};
+        border: ${isActive ? "2px solid #e8b84c88" : "1px solid transparent"};
+        background: ${isActive ? "#e8b84c22" : "transparent"};
       `;
 
       el.addEventListener("mouseenter", () => {
         if (!isActive) {
-          el.style.background = "#e8b84c1a";
-          el.style.border = "1px solid #e8b84c44";
+          el.style.background = "#e8b84c12";
+          el.style.border = "1px solid #e8b84c33";
         }
       });
       el.addEventListener("mouseleave", () => {
