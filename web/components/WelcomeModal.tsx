@@ -38,9 +38,14 @@ export default function WelcomeModal({ onStartTour }: WelcomeModalProps) {
   const switchLocale = (newLocale: string) => {
     if (newLocale === locale) return;
     
-    // Replace the locale segment in the pathname
+    // In production behind a proxy (e.g. /groningen-1926), pathname might be /nl/...
+    // but the browser address bar has /groningen-1926/nl/...
+    const prefix = typeof window !== 'undefined' 
+      ? window.location.pathname.replace(pathname, '') 
+      : '';
+      
     const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
-    router.push(newPathname);
+    router.push(prefix + newPathname);
   };
 
   if (!isOpen) return null;
@@ -91,7 +96,7 @@ export default function WelcomeModal({ onStartTour }: WelcomeModalProps) {
           <div className="space-y-4 text-bp-ink leading-relaxed text-sm mb-8">
             <p>
               {t.rich('body1', {
-                name: () => <span className="text-bp-ink-bright font-semibold">Lieuwe Jongsma</span>,
+                name: <span className="text-bp-ink-bright font-semibold">Lieuwe Jongsma</span>,
                 important: (chunks) => <strong>{chunks}</strong>
               })}
             </p>

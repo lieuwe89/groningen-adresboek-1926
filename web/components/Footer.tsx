@@ -14,7 +14,7 @@ export default function Footer() {
         style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
       >
         {t.rich('builtBy', {
-          name: () => (
+          name: (
             <Link
               href="https://lieuwejongsma.nl"
               target="_blank"

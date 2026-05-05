@@ -17,8 +17,14 @@ export default function Header() {
 
   const switchLocale = (newLocale: string) => {
     if (newLocale === locale) return;
+    
+    // Detect proxy prefix (e.g. /groningen-1926) from window.location
+    const prefix = typeof window !== 'undefined' 
+      ? window.location.pathname.replace(pathname, '') 
+      : '';
+      
     const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
-    router.push(newPathname);
+    router.push(prefix + newPathname);
   };
 
   const adminHref = isAdmin
@@ -62,7 +68,11 @@ export default function Header() {
         <InfoBtn 
           label={t('info')}
           active={pathname.endsWith("/info")} 
-          href={pathname.endsWith("/info") ? `/${locale}` : `/${locale}/info`}
+          href={
+            typeof window !== 'undefined' 
+              ? window.location.pathname.replace(pathname, '') + (pathname.endsWith("/info") ? `/${locale}` : `/${locale}/info`)
+              : (pathname.endsWith("/info") ? `/${locale}` : `/${locale}/info`)
+          }
         />
         <div className="flex gap-[2px]">
           <button 
