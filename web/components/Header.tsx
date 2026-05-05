@@ -131,6 +131,7 @@ function LangBtn({ label, active = false }: { label: string; active?: boolean })
 function InfoBtn({ active }: { active: boolean }) {
   return (
     <Link
+      id="tour-info"
       href={active ? "/" : "/info"}
       className="flex items-center gap-[5px] uppercase font-bold transition-colors hover:bg-bp-amber/15"
       style={{

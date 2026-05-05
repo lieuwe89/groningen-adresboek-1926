@@ -1,0 +1,163 @@
+/* ── Shepherd.js Custom Theme ──────────────────────────────────────────────── */
+/* Matches the dark-blue / gold aesthetic of the Adresboek 1926 app.          */
+
+/* Import base Shepherd styles first (imported via layout.tsx) */
+
+/* Overlay backdrop */
+.shepherd-modal-overlay-container {
+  fill: rgba(5, 12, 30, 0.72);
+}
+
+/* The tooltip element itself */
+.shepherd-element {
+  background: #0d1e3fee;
+  border: 1px solid #e8b84c55;
+  border-radius: 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(232, 184, 76, 0.12);
+  max-width: 360px;
+  font-family: var(--font-serif, Georgia, serif);
+  z-index: 100000 !important;
+  margin: 10px !important;
+}
+
+/* Centered modal (for Step 1) */
+.shepherd-element.shepherd-centered {
+  transform: translate(-50%, -50%) !important;
+  top: 50% !important;
+  left: 50% !important;
+  max-width: 420px;
+}
+
+/* Arrow (pointer) */
+.shepherd-arrow,
+.shepherd-arrow::before {
+  background: #0d1e3fee;
+  border: 1px solid #e8b84c55;
+}
+
+.shepherd-element[data-popper-placement^="top"] .shepherd-arrow::before {
+  border-top: none;
+  border-left: none;
+}
+.shepherd-element[data-popper-placement^="bottom"] .shepherd-arrow::before {
+  border-bottom: none;
+  border-right: none;
+}
+.shepherd-element[data-popper-placement^="left"] .shepherd-arrow::before {
+  border-bottom: none;
+  border-left: none;
+}
+.shepherd-element[data-popper-placement^="right"] .shepherd-arrow::before {
+  border-top: none;
+  border-right: none;
+}
+
+/* Header bar */
+.shepherd-header {
+  background: transparent;
+  padding: 16px 20px 4px;
+}
+
+.shepherd-title {
+  color: #e8b84c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+/* Cancel (×) icon */
+.shepherd-cancel-icon {
+  color: #7a7054;
+  font-size: 18px;
+  transition: color 200ms;
+}
+.shepherd-cancel-icon:hover {
+  color: #e8b84c;
+}
+
+/* Body text */
+.shepherd-text {
+  color: #cfc39a;
+  font-size: 13px;
+  line-height: 1.65;
+  padding: 8px 20px 16px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: 0.01em;
+}
+
+/* Footer with buttons */
+.shepherd-footer {
+  padding: 0 20px 16px;
+  border-top: none;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* Buttons */
+.shepherd-button {
+  background: transparent;
+  border: 1px solid #e8b84c88;
+  color: #e8b84c;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 200ms, color 200ms;
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+.shepherd-button:hover {
+  background: #e8b84c;
+  color: #0d1e3f;
+}
+
+/* Primary button (last / "Volgende") */
+.shepherd-button.shepherd-button-primary {
+  background: #e8b84c;
+  color: #0d1e3f;
+  border-color: #e8b84c;
+}
+.shepherd-button.shepherd-button-primary:hover {
+  background: #f0d78a;
+  border-color: #f0d78a;
+}
+
+/* Secondary button ("Vorige") */
+.shepherd-button.shepherd-button-secondary {
+  background: transparent;
+  color: #7a7054;
+  border-color: #7a705466;
+}
+.shepherd-button.shepherd-button-secondary:hover {
+  color: #e8b84c;
+  border-color: #e8b84c88;
+  background: transparent;
+}
+
+/* Step counter / progress indicator */
+.shepherd-progress {
+  color: #7a7054;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0 20px 4px;
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+/* Target highlight ring */
+.shepherd-target {
+  outline: 2px solid #e8b84c66 !important;
+  outline-offset: 4px;
+}
+
+/* Ensure the highlighted element is visible above the overlay */
+.shepherd-enabled.shepherd-target {
+  z-index: 10000 !important;
+}

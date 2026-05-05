@@ -8,6 +8,8 @@ import SearchPanel, { type StatusFilter } from "@/components/SearchPanel";
 import MapPanel from "@/components/MapPanel";
 import GlobalGrid from "@/components/GlobalGrid";
 import { useSelection } from "@/lib/SelectionContext";
+import WelcomeModal from "@/components/WelcomeModal";
+import { useTour } from "@/lib/useTour";
 import type { SearchHit, SearchResponse } from "@/lib/searchTypes";
 
 const SEARCH_DEBOUNCE_MS = 220;
@@ -117,6 +119,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(handle);
   }, [query, pathname, router, searchParams]);
 
+  const { startTour } = useTour();
+
   return (
     <div className="relative flex flex-col w-full h-full overflow-hidden bg-bp-blue text-bp-ink">
       <GlobalGrid />
@@ -152,6 +156,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <Footer />
+      <WelcomeModal onStartTour={startTour} />
     </div>
   );
 }

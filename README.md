@@ -32,6 +32,26 @@ Entries are geocoded via PDOK / BAG and linked to georeferenced historic maps.
 └── CLAUDE.md                Architecture notes for AI assistants
 ```
 
+## Tech Stack & Architecture
+
+### Core Framework
+- **Next.js 15 (App Router)**: Orchestrates the public-facing site and the administrative backend.
+- **TypeScript**: Ensures type safety across data processing and UI components.
+- **TailwindCSS**: Used for the layout and responsive design system.
+
+### Data & Storage
+- **SQLite**: The primary database (`adresboek.db`), storing ~60,000 entries and their geocodes.
+- **DZI (Deep Zoom Images)**: Served via `web/public/tiles/` for the high-resolution scan viewer.
+- **MapLibre GL JS**: Renders the interactive map, supporting both modern vector tiles and historical raster overlays.
+
+### Geocoding & GIS
+- **PDOK Locatieserver**: Used for real-time address normalization and BAG-compliant geocoding.
+- **GeoTIFF / PMTiles**: Historical maps (circa 1919–1930) are georeferenced and served as tiled layers.
+
+### Infrastructure
+- **Basic Auth**: Secures the administrative correction interface.
+- **Environment Variables**: Managed via `.env.local` for sensitive configuration like passwords.
+
 ## Setup
 
 ```bash
@@ -82,3 +102,17 @@ The pipeline uses Surya OCR for word bounding boxes and a vision LLM (Gemini
 2.5 Flash Lite via OpenRouter) for structured extraction. It outputs per-page
 JSON with word-level bbox references, ALTO XML, and combined search indexes.
 Full book cost was ~$7.50 in LLM API calls.
+
+## User Onboarding & Guided Tour
+
+To help first-time users navigate the application, we've implemented an interactive onboarding experience:
+- **Welcome Modal**: Triggers on the first visit, providing a brief project overview and disclaimer. Preference is persisted in `localStorage` (`grn1926-welcome-dismissed`).
+- **Interactive Tour**: Built with **Shepherd.js**, this 6-step walkthrough highlights core features:
+    1.  **De Kaart**: Overview of the interactive building markers.
+    2.  **Kaartlagen**: Demonstrates switching between modern and historical maps.
+    3.  **Zoeken**: Automated opening of the search sidebar.
+    4.  **Paginaweergave**: Automated opening of the high-res scan viewer.
+    5.  **Secties**: Navigation through different parts of the address book.
+    6.  **Meer Informatie**: Pointing to the detailed project methodology.
+
+The tour uses global state via `SelectionContext` to programmatically control UI panels and menus for a seamless experience.

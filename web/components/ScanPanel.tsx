@@ -76,6 +76,7 @@ export default function ScanPanel(p: Props) {
       }}
     >
       <aside
+        id="tour-scan-panel"
         style={{ width: p.wide ? "100%" : 415 }}
         className="h-full flex flex-col"
       >

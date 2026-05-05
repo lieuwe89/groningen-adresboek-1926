@@ -28,6 +28,10 @@ interface SelectionContextType {
   setActiveIdx: (idx: number) => void;
   onSelectLocal: (idx: number) => void;
   setOnSelectLocal: (fn: (idx: number) => void) => void;
+  layersOpen: boolean;
+  setLayersOpen: (open: boolean) => void;
+  tourActive: boolean;
+  setTourActive: (active: boolean) => void;
 }
 
 const SelectionContext = createContext<SelectionContextType | undefined>(undefined);
@@ -45,6 +49,8 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
   const [localEntries, setLocalEntries] = useState<{ entry: any; idx: number }[]>([]);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [onSelectLocal, setOnSelectLocal] = useState<(idx: number) => void>(() => {});
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [tourActive, setTourActive] = useState(false);
 
   return (
     <SelectionContext.Provider
@@ -73,6 +79,10 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
         setActiveIdx,
         onSelectLocal,
         setOnSelectLocal,
+        layersOpen,
+        setLayersOpen,
+        tourActive,
+        setTourActive,
       }}
     >
       {children}

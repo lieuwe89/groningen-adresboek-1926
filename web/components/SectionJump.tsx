@@ -69,7 +69,7 @@ export default function SectionJump({ currentStem }: Props) {
   const cur = currentSectionId();
 
   return (
-    <div className="flex flex-col gap-[1px]">
+    <div id="tour-section" className="flex flex-col gap-[1px]">
       <span
         className="text-bp-ink-dim uppercase"
         style={{ fontSize: 7.5, letterSpacing: "0.18em", fontWeight: 600 }}

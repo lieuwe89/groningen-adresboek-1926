@@ -38,7 +38,7 @@ export default function SearchPanel(p: Props) {
         transition: "width 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
       }}
     >
-      <aside style={{ width: 295 }} className="h-full flex flex-col">
+      <aside id="tour-search-panel" style={{ width: 295 }} className="h-full flex flex-col">
         {/* Header row */}
         <div
           className="flex items-center justify-between border-b border-bp-ink/55"

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import BuildingPanel from "./BuildingPanel";
 import { HISTORIC_MAPS } from "@/lib/historicMaps";
+import { useSelection } from "@/lib/SelectionContext";
 
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
@@ -21,11 +22,11 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
   const [historicId, setHistoricId] = useState<string | null>(null);
   const [historicOpacity, setHistoricOpacity] = useState(0.85);
   const [activePand, setActivePand] = useState<string | null>(null);
-  const [layersExpanded, setLayersExpanded] = useState(false);
+  const { layersOpen: layersExpanded, setLayersOpen: setLayersExpanded, tourActive } = useSelection();
   const router = useRouter();
 
   return (
-    <section className="relative flex-1 min-w-0 overflow-hidden bg-bp-blue">
+    <section id="tour-map" className="relative flex-1 min-w-0 overflow-hidden bg-bp-blue">
       <MapView
         buildingsVisible={buildingsOn}
         historicId={historicId}
@@ -47,6 +48,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
 
       {/* "Zoeken" floating button — visible only when search panel closed */}
       <button
+        id="tour-search"
         onClick={onOpenSearch}
         className="absolute flex items-center gap-[6px] uppercase font-bold transition-opacity"
         style={{
@@ -72,10 +74,11 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
 
       {/* "Scan" floating button — visible only when scan panel closed and no building popup */}
       <button
+        id="tour-scan"
         onClick={onOpenScan}
         className="absolute flex items-center gap-[6px] uppercase font-bold transition-opacity"
         style={{
-          top: 14,
+          top: 84,
           right: 14,
           fontSize: 9,
           letterSpacing: "0.18em",
@@ -97,6 +100,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
 
       {/* Layers panel (left side) */}
       <div
+        id="tour-layers-panel"
         className="absolute flex flex-col gap-[1px]"
         style={{
           left: 14,
@@ -105,9 +109,12 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           transition: "transform 200ms ease",
         }}
         onMouseEnter={() => setLayersExpanded(true)}
-        onMouseLeave={() => setLayersExpanded(false)}
+        onMouseLeave={() => {
+          if (!tourActive) setLayersExpanded(false);
+        }}
       >
         <button
+          id="tour-layers"
           onClick={() => setLayersExpanded(!layersExpanded)}
           className="flex items-center justify-between px-[10px] py-[8px] uppercase w-full group"
           style={{
