@@ -4,12 +4,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import SectionJump from "./SectionJump";
 import { useTranslations, useLocale } from 'next-intl';
+import { useProxyUrl } from "@/lib/useProxyUrl";
 
 export default function Header() {
   const t = useTranslations('Header');
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname() || "";
+  const { proxyPath } = useProxyUrl();
   
   const isAdmin = pathname.includes("/admin");
   const stemMatch = pathname.match(/page\/([^/]+)/);
@@ -17,23 +19,17 @@ export default function Header() {
 
   const switchLocale = (newLocale: string) => {
     if (newLocale === locale) return;
-    
-    // Detect proxy prefix (e.g. /groningen-1926) from window.location
-    const prefix = typeof window !== 'undefined' 
-      ? window.location.pathname.replace(pathname, '') 
-      : '';
-      
     const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
-    router.push(prefix + newPathname);
+    router.push(proxyPath(newPathname));
   };
 
   const adminHref = isAdmin
     ? stem
-      ? `/${locale}/page/${stem}`
-      : `/${locale}`
+      ? proxyPath(`/${locale}/page/${stem}`)
+      : proxyPath(`/${locale}`)
     : stem
-      ? `/${locale}/admin/page/${stem}`
-      : `/${locale}/admin`;
+      ? proxyPath(`/${locale}/admin/page/${stem}`)
+      : proxyPath(`/${locale}/admin`);
 
   return (
     <header
@@ -68,11 +64,7 @@ export default function Header() {
         <InfoBtn 
           label={t('info')}
           active={pathname.endsWith("/info")} 
-          href={
-            typeof window !== 'undefined' 
-              ? window.location.pathname.replace(pathname, '') + (pathname.endsWith("/info") ? `/${locale}` : `/${locale}/info`)
-              : (pathname.endsWith("/info") ? `/${locale}` : `/${locale}/info`)
-          }
+          href={proxyPath(pathname.endsWith("/info") ? `/${locale}` : `/${locale}/info`)}
         />
         <div className="flex gap-[2px]">
           <button 
@@ -98,7 +90,7 @@ export default function Header() {
         </div>
         {isAdmin && (
           <Link
-            href={`/${locale}/admin/stats`}
+            href={proxyPath(`/${locale}/admin/stats`)}
             prefetch={false}
             className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
             style={{

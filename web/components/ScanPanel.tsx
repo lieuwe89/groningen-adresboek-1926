@@ -8,6 +8,7 @@ import type { Entry } from "@/lib/data";
 import EditForm from "@/components/EditForm";
 import type { ScanViewerHandle } from "@/components/ScanViewer";
 import { useTranslations, useLocale } from 'next-intl';
+import { useProxyUrl } from "@/lib/useProxyUrl";
 
 const ScanViewer = dynamic(() => import("@/components/ScanViewer"), {
   ssr: false,
@@ -51,12 +52,13 @@ export default function ScanPanel(p: Props) {
   const [bboxEditMode, setBboxEditMode] = useState(false);
   const t = useTranslations('Scan');
   const tc = useTranslations('Common');
+  const { proxyPath } = useProxyUrl();
 
   function handleSelectEntry(idx: number) {
     const stableId = `${p.stem}:${idx}`;
     const params = new URLSearchParams(searchParams.toString());
     params.set("entry", stableId);
-    router.push(`/${locale}/page/${p.stem}?${params.toString()}`);
+    router.push(proxyPath(`/${locale}/page/${p.stem}?${params.toString()}`));
   }
 
   useEffect(() => {
@@ -242,7 +244,7 @@ export default function ScanPanel(p: Props) {
         >
           {p.prev ? (
             <Link
-              href={`/${locale}/page/${p.prev}`}
+              href={proxyPath(`/${locale}/page/${p.prev}`)}
               className="text-bp-ink-dim hover:text-bp-amber transition-colors"
             >
               ← {p.page - 1}
@@ -258,7 +260,7 @@ export default function ScanPanel(p: Props) {
           </span>
           {p.next ? (
             <Link
-              href={`/${locale}/page/${p.next}`}
+              href={proxyPath(`/${locale}/page/${p.next}`)}
               className="text-bp-ink-dim hover:text-bp-amber transition-colors"
             >
               {p.page + 1} →

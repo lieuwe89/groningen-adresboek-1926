@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import GlobalGrid from "@/components/GlobalGrid";
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
+import { useProxyUrl } from "@/lib/useProxyUrl";
 
 /* ── Map profiles ──────────────────────────────────────────────────────────── */
 
@@ -292,14 +293,11 @@ export default function InfoPage() {
 
 function PageTitle() {
   const locale = useLocale();
+  const { proxyPath } = useProxyUrl();
   return (
     <div className="mb-8 flex items-start gap-4">
       <Link
-        href={
-          typeof window !== 'undefined' 
-            ? window.location.pathname.replace(`/${locale}/info`, '') + `/${locale}`
-            : `/${locale}`
-        }
+        href={proxyPath(`/${locale}`)}
         className="mt-[3px] flex items-center gap-[5px] uppercase font-bold shrink-0"
         style={{
           fontSize: 8.5,
