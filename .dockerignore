@@ -1,0 +1,25 @@
+# Large assets — not baked into the image (live on a Fly volume)
+web/public/tiles/
+web/public/maps/
+web/public/scans
+
+# Generated / local-only
+web/data/
+web/.env.local
+web/node_modules/
+web/.next/
+
+# Pipeline (separate repo)
+pipeline/
+scripts/
+scans/
+Maps/
+output/
+tessdata/
+requirements.txt
+
+# Misc
+.git/
+.claude/
+*.log
+*.pid

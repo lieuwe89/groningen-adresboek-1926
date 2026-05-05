@@ -7,7 +7,7 @@ let _db: DB | null = null;
 let _dbInode: number | null = null;
 
 export function getDb(): DB {
-  const dbPath = path.resolve(process.cwd(), "data", "adresboek.sqlite");
+  const dbPath = process.env.DB_PATH ?? path.resolve(process.cwd(), "data", "adresboek.sqlite");
   // Reopen if the file's inode has changed (e.g. build_db.py recreated it).
   let currentInode: number | null = null;
   try {
@@ -32,7 +32,7 @@ let _dbWInode: number | null = null;
 
 /** Writable DB handle for admin operations (no query_only). */
 export function getWritableDb(): DB {
-  const dbPath = path.resolve(process.cwd(), "data", "adresboek.sqlite");
+  const dbPath = process.env.DB_PATH ?? path.resolve(process.cwd(), "data", "adresboek.sqlite");
   let currentInode: number | null = null;
   try {
     currentInode = fs.statSync(dbPath).ino;
