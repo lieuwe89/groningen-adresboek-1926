@@ -387,7 +387,7 @@ function MapCard({ map }: { map: MapProfile }) {
         }}
       >
         <img
-          src={`/map-thumbs/${map.thumb}`}
+          src={proxyPath(`/map-thumbs/${map.thumb}`)}
           alt={map.title}
           style={{
             width: "100%",
