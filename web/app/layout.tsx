@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Josefin_Sans, Special_Elite } from "next/font/google";
 import { SelectionProvider } from "@/lib/SelectionContext";
 import "./globals.css";

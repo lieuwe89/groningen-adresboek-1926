@@ -35,6 +35,8 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
   const onSelectEntryRef = useRef(onSelectEntry);
   onSelectEntryRef.current = onSelectEntry;
 
+  const applyOverlaysRef = useRef<((force?: boolean) => void) | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -88,7 +90,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         if (!item) return;
         const sz = item.getContentSize();
         dimsRef.current = { w: sz.x, h: sz.y };
-        applyOverlays(true); // Force focus on open
+        applyOverlaysRef.current?.(true); // Force focus on open
       });
     })();
 
@@ -138,7 +140,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
       if (w <= 0 || h <= 0) return;
 
       const rect = v.viewport.imageToViewportRectangle(x0, y0, w, h);
-      const isActive = i === activeIdx;
+      const isActive = i === aidx;
 
       const el = document.createElement("div");
       el.style.cssText = `
@@ -192,11 +194,12 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
           v.viewport.fitBoundsWithConstraints(padded, false);
           
           lastFocusedIdxRef.current = i;
-          lastFocusedStemRef.current = stem;
+          lastFocusedStemRef.current = curStem;
         }
       }
     });
   }
+  applyOverlaysRef.current = applyOverlays;
 
   useImperativeHandle(ref, () => ({
     zoomBy: (factor: number) => {

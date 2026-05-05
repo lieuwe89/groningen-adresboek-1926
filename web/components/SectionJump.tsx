@@ -7,6 +7,7 @@ type SectionInfo = {
   section: string;
   label: string;
   first_stem: string;
+  first_scan_number: number | null;
   first_page_number: number | null;
   count: number;
 };
@@ -97,8 +98,8 @@ export default function SectionJump({ currentStem }: Props) {
         {sections?.map((s) => (
           <option key={s.section} value={s.section} style={{ background: "#182d5c" }}>
             {s.label}
-            {s.first_page_number != null ? ` — blz ${s.first_page_number}` : ""}
-            {` (${s.count})`}
+            {s.first_scan_number != null ? ` — scan ${s.first_scan_number}` : ""}
+            {` (${s.count} pagina's)`}
           </option>
         ))}
       </select>

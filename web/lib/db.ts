@@ -27,6 +27,29 @@ export function getDb(): DB {
   return _db;
 }
 
+let _dbW: DB | null = null;
+let _dbWInode: number | null = null;
+
+/** Writable DB handle for admin operations (no query_only). */
+export function getWritableDb(): DB {
+  const dbPath = path.resolve(process.cwd(), "data", "adresboek.sqlite");
+  let currentInode: number | null = null;
+  try {
+    currentInode = fs.statSync(dbPath).ino;
+  } catch {
+    // ignore
+  }
+  if (_dbW && currentInode === _dbWInode) return _dbW;
+  if (_dbW) {
+    try { _dbW.close(); } catch { /* ignore */ }
+    _dbW = null;
+  }
+  _dbW = new Database(dbPath, { fileMustExist: true });
+  _dbW.pragma("journal_mode = WAL");
+  _dbWInode = currentInode;
+  return _dbW;
+}
+
 export type SearchRow = {
   id: number;
   stable_id: string;
@@ -97,12 +120,13 @@ export type SectionInfo = {
   section: string;
   label: string;
   first_stem: string;
+  first_scan_number: number | null;
   first_page_number: number | null;
   count: number;
 };
 
 const SECTION_LABELS: Record<string, string> = {
-  other: "Voorwerk",
+  other: "Index & Inleiding",
   institutional: "Instellingen",
   advertisement: "Advertenties",
   name_register: "Naamregister",
@@ -114,6 +138,7 @@ const SECTIONS_SQL = `
   SELECT
     section,
     MIN(stem) AS first_stem,
+    CAST(SUBSTR(MIN(stem), -4) AS INTEGER) AS first_scan_number,
     MIN(page_number) AS first_page_number,
     COUNT(*) AS count
   FROM pages
@@ -127,6 +152,7 @@ export function listSections(): SectionInfo[] {
   const rows = db.prepare(SECTIONS_SQL).all() as Array<{
     section: string;
     first_stem: string;
+    first_scan_number: number | null;
     first_page_number: number | null;
     count: number;
   }>;

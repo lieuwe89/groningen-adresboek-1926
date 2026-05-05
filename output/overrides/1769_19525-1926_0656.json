@@ -1,0 +1,18 @@
+{
+  "1769_19525-1926_0656:101": {
+    "fields": {},
+    "flags": {},
+    "fingerprint": "sha1:8977c560c810e6e2d985a28dd5d11a1cae7d94d6",
+    "edited_at": "2026-05-05T07:07:54.373Z",
+    "bbox": {
+      "type": "rect",
+      "value": [
+        1302,
+        1692,
+        1785,
+        1735
+      ],
+      "source": "manual"
+    }
+  }
+}

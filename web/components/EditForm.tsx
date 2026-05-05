@@ -76,10 +76,13 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
   const setFlag = (k: keyof Flags, v: boolean) =>
     setFlags((s) => ({ ...s, [k]: v }));
 
+  const [geoStatus, setGeoStatus] = useState<string | null>(null);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
+    setGeoStatus(null);
     try {
       const fields: Partial<FieldState> = {};
       (Object.keys(state) as (keyof FieldState)[]).forEach((k) => {
@@ -97,6 +100,24 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(await res.text());
+
+      const json = await res.json();
+      if (json.geocode) {
+        const geo = json.geocode;
+        if (geo.status === "ok") {
+          const hasFlags = geo.flags && geo.flags.length > 0;
+          setGeoStatus(
+            hasFlags
+              ? `⚠ Locatie bijgewerkt (${geo.matched || "onzeker"})`
+              : `📍 Locatie bijgewerkt → ${geo.matched || "gevonden"}`
+          );
+        } else if (geo.status === "no_number") {
+          setGeoStatus("⚠ Geen huisnummer — locatie gewist");
+        } else {
+          setGeoStatus("⚠ Adres niet gevonden — locatie gewist");
+        }
+      }
+
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "save failed");
@@ -193,6 +214,14 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
       {error && (
         <span className="text-red-400" style={{ fontSize: 9 }}>
           {error}
+        </span>
+      )}
+      {geoStatus && (
+        <span
+          className="text-bp-amber"
+          style={{ fontSize: 9, letterSpacing: "0.05em" }}
+        >
+          {geoStatus}
         </span>
       )}
 

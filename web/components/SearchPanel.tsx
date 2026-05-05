@@ -122,7 +122,7 @@ export default function SearchPanel(p: Props) {
               results={p.globalResults || []}
               total={p.globalTotal || 0}
               loading={!!p.globalLoading}
-              globalError={p.globalError || null}
+              error={p.globalError || null}
               currentStem={p.currentStem}
               activeEntryId={p.activeEntryId}
               onSelect={p.onSelectGlobal}

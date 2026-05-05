@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams, useParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams, usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SearchPanel, { type StatusFilter } from "@/components/SearchPanel";
@@ -17,6 +17,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const params = useParams();
   const stem = params.stem as string;
+  const pathname = usePathname() || "";
+  const isAdmin = pathname.startsWith("/admin");
   
   const {
     activePandId,
@@ -44,11 +46,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const fetchSeq = useRef(0);
 
-  // Sync query from URL on load/navigation
+  const lastUrlQuery = useRef<string | null>(null);
   useEffect(() => {
-    const q = searchParams.get("q");
-    if (q && q !== query) {
-      setQuery(q);
+    const q = searchParams.get("q") || "";
+    if (q !== lastUrlQuery.current) {
+      lastUrlQuery.current = q;
+      if (q !== query) {
+        setQuery(q);
+      }
     }
   }, [searchParams, query, setQuery]);
 
@@ -94,8 +99,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   function handleSelectGlobal(hit: SearchHit) {
     const p = new URLSearchParams({ entry: hit.stable_id, q: trimmedQuery });
-    router.push(`/page/${hit.stem}?${p.toString()}`);
+    const base = isAdmin ? "/admin/page" : "/page";
+    router.push(`${base}/${hit.stem}?${p.toString()}`);
   }
+
+  // Sync local query back to URL (debounced)
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      const currentQ = searchParams.get("q") || "";
+      if (query !== currentQ) {
+        const p = new URLSearchParams(searchParams.toString());
+        if (query) p.set("q", query);
+        else p.delete("q");
+        router.replace(`${pathname}?${p.toString()}`, { scroll: false });
+      }
+    }, 500);
+    return () => clearTimeout(handle);
+  }, [query, pathname, router, searchParams]);
 
   return (
     <div className="relative flex flex-col w-full h-full overflow-hidden bg-bp-blue text-bp-ink">

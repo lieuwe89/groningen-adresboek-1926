@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PageData } from "@/lib/data";
 import ScanPanel from "@/components/ScanPanel";
 import { useSelection } from "@/lib/SelectionContext";
@@ -33,10 +33,26 @@ export default function Viewer({
     filter,
   } = useSelection();
 
-  // Sync initial selection from prop
+  // Sync initial selection immediately when stem or initialIdx changes.
+  // This avoids the "Render 1: new stem + old activeIdx" problem.
+  const [syncedStem, setSyncedStem] = useState<string | null>(null);
+  const [syncedInitialIdx, setSyncedInitialIdx] = useState<number | undefined>(undefined);
+
+  if (stem !== syncedStem || initialIdx !== syncedInitialIdx) {
+    setSyncedStem(stem);
+    setSyncedInitialIdx(initialIdx);
+  }
+
+  const displayIdx = (stem !== syncedStem || (initialIdx !== undefined && initialIdx !== syncedInitialIdx)) 
+    ? (initialIdx ?? 0) 
+    : activeIdx;
+
+  // Also keep the effect for safety/HMR
   useEffect(() => {
-    setActiveIdx(initialIdx);
-  }, [initialIdx, setActiveIdx]);
+    if (initialIdx !== undefined) {
+      setActiveIdx(initialIdx);
+    }
+  }, [initialIdx, stem, setActiveIdx]);
 
   // Sync local entries for the search panel
   const filtered = useMemo(() => {
@@ -65,7 +81,7 @@ export default function Viewer({
   }, [setActiveIdx, setScanOpen, setOnSelectLocal]);
 
   // Update map focus building
-  const activeEntry = data.entries[activeIdx];
+  const activeEntry = data.entries[displayIdx];
   useEffect(() => {
     setActivePandId(activeEntry?.pand_id ?? null);
   }, [activeEntry, setActivePandId]);
@@ -78,7 +94,7 @@ export default function Viewer({
       page={data.page_number}
       entries={data.entries}
       activeEntry={activeEntry}
-      activeIdx={activeIdx}
+      activeIdx={displayIdx}
       prev={prev}
       next={next}
       editMode={editMode}

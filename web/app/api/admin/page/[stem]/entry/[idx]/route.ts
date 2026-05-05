@@ -101,25 +101,114 @@ export async function PATCH(
 
   overrides[id] = next;
   await writeOverrides(stem, overrides);
-  
-  // Also update the database so search hits match immediately
-  try {
-    const { getDb } = await import("@/lib/db");
-    const db = getDb();
-    db.prepare(`
-      UPDATE entries 
-      SET entry_bbox = ?, edited_at = ?
-      WHERE stable_id = ?
-    `).run(
-      bboxIn ? JSON.stringify(bboxIn) : null,
-      next.edited_at,
-      id
-    );
-  } catch (err) {
-    console.warn("Failed to update database with new bbox:", err);
+
+  // Detect whether address fields changed — if so, re-geocode via PDOK
+  const ADDRESS_FIELDS = new Set(["address_street", "address_street_expanded", "address_number"]);
+  const addressChanged = fields
+    ? Object.keys(fields).some((k) => ADDRESS_FIELDS.has(k))
+    : false;
+
+  let geocodeInfo: Record<string, unknown> | null = null;
+
+  // Build the merged entry so we can compute address_full and update the DB
+  const merged = { ...baseEntry, ...(prev.fields || {}), ...(fields || {}) };
+  const street = merged.address_street_expanded || merged.address_street || "";
+  const num = merged.address_number || "";
+  const addressFull = [street, num].filter(Boolean).join(" ");
+
+  if (addressChanged && addressFull.trim()) {
+    try {
+      const { pdokGeocode } = await import("@/lib/geocode");
+      const geo = await pdokGeocode(addressFull);
+      geocodeInfo = geo as unknown as Record<string, unknown>;
+
+      const { getWritableDb } = await import("@/lib/db");
+      const db = getWritableDb();
+
+      if (geo.status === "ok" && geo.lat != null && geo.lng != null) {
+        db.prepare(`
+          UPDATE entries
+          SET lat = ?, lng = ?,
+              geocode_score = ?, geocode_type = ?,
+              geocode_matched = ?, geocode_flags = ?,
+              address_full = ?,
+              pand_id = NULL,
+              edited_at = ?
+          WHERE stable_id = ?
+        `).run(
+          geo.lat, geo.lng,
+          geo.score ?? null, geo.type ?? null,
+          geo.matched ?? null, geo.flags ? JSON.stringify(geo.flags) : null,
+          addressFull,
+          next.edited_at,
+          id
+        );
+      } else {
+        // Geocode failed — clear old location data so stale pin disappears
+        db.prepare(`
+          UPDATE entries
+          SET lat = NULL, lng = NULL,
+              geocode_score = NULL, geocode_type = NULL,
+              geocode_matched = NULL, geocode_flags = ?,
+              address_full = ?,
+              pand_id = NULL,
+              edited_at = ?
+          WHERE stable_id = ?
+        `).run(
+          JSON.stringify(geo.flags || ["not_found"]),
+          addressFull,
+          next.edited_at,
+          id
+        );
+      }
+    } catch (err) {
+      console.warn("Re-geocode failed:", err);
+    }
+  } else {
+    // No address change — still update bbox / flags / address_full in DB
+    try {
+      const { getWritableDb } = await import("@/lib/db");
+      const db = getWritableDb();
+      const updates: string[] = ["edited_at = ?"];
+      const params: unknown[] = [next.edited_at];
+
+      if (bboxIn) {
+        updates.push("entry_bbox = ?");
+        params.push(JSON.stringify(bboxIn));
+      }
+      if (flagsIn) {
+        if ("verified" in flagsIn) {
+          updates.push("flag_verified = ?");
+          params.push(flagsIn.verified ? 1 : 0);
+        }
+        if ("needs_review" in flagsIn) {
+          updates.push("flag_needs_review = ?");
+          params.push(flagsIn.needs_review ? 1 : 0);
+        }
+        if ("bbox_unreliable" in flagsIn) {
+          updates.push("flag_bbox_unreliable = ?");
+          params.push(flagsIn.bbox_unreliable ? 1 : 0);
+        }
+      }
+      if (fields) {
+        for (const [k, v] of Object.entries(fields)) {
+          if (ALLOWED_FIELDS.has(k)) {
+            updates.push(`${k} = ?`);
+            params.push(v);
+          }
+        }
+      }
+
+      params.push(id);
+      db.prepare(`UPDATE entries SET ${updates.join(", ")} WHERE stable_id = ?`).run(
+        ...params
+      );
+    } catch (err) {
+      console.warn("Failed to update database:", err);
+    }
   }
 
-  return NextResponse.json({ ok: true, override: next });
+  return NextResponse.json({ ok: true, override: next, geocode: geocodeInfo });
 }
 
 export async function DELETE(
