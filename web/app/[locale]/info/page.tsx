@@ -119,6 +119,7 @@ const MAPS: MapProfile[] = [
 
 export default function InfoPage() {
   const locale = useLocale();
+  const { proxyPath } = useProxyUrl();
   return (
     <div className="h-full flex flex-col" style={{ position: "relative" }}>
       <GlobalGrid />
@@ -274,7 +275,7 @@ export default function InfoPage() {
 
               <div className="mt-6 flex flex-col gap-6">
                 {MAPS.map((m) => (
-                  <MapCard key={m.id} map={m} />
+                  <MapCard key={m.id} map={m} proxyPath={proxyPath} />
                 ))}
               </div>
             </Section>
@@ -363,7 +364,7 @@ function Rule() {
 }
 
 /* eslint-disable @next/next/no-img-element */
-function MapCard({ map }: { map: MapProfile }) {
+function MapCard({ map, proxyPath }: { map: MapProfile; proxyPath: (p: string) => string }) {
   return (
     <div
       style={{
