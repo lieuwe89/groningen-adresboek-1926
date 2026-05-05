@@ -30,6 +30,7 @@ interface Props {
   historicId: string | null; // id from HISTORIC_MAPS, or null = no overlay
   historicOpacity: number; // 0..1
   onBuildingClick: (pand_id: string) => void;
+  focusPandId?: string | null;
 }
 
 export default function MapView({
@@ -37,6 +38,7 @@ export default function MapView({
   historicId,
   historicOpacity,
   onBuildingClick,
+  focusPandId,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MLMap | null>(null);
@@ -44,6 +46,8 @@ export default function MapView({
 
   // Hover highlight: track hovered pand id via feature-state.
   const hoveredRef = useRef<string | null>(null);
+  const focusedRef = useRef<string | null>(null);
+  const buildingsDataRef = useRef<any>(null);
 
   // Initial map setup runs once.
   useEffect(() => {
@@ -98,6 +102,7 @@ export default function MapView({
       // Buildings: GeoJSON with a `pand_id` and `entry_count` per feature.
       const res = await fetch("/api/buildings");
       const data = await res.json();
+      buildingsDataRef.current = data;
       map.addSource("buildings", { type: "geojson", data, promoteId: "pand_id" });
 
       // Subtle amber outline so the user knows which footprints are clickable.
@@ -109,13 +114,13 @@ export default function MapView({
           "line-color": "#e8b84c",
           "line-width": [
             "case",
-            ["boolean", ["feature-state", "hover"], false],
+            ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]],
             2.0,
             0.6,
           ],
           "line-opacity": [
             "case",
-            ["boolean", ["feature-state", "hover"], false],
+            ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]],
             1.0,
             0.55,
           ],
@@ -132,7 +137,7 @@ export default function MapView({
           "fill-color": "#e8b84c",
           "fill-opacity": [
             "case",
-            ["boolean", ["feature-state", "hover"], false],
+            ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]],
             0.32,
             0.14,
           ],
@@ -183,6 +188,42 @@ export default function MapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Respond to focusPandId changes.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    if (focusedRef.current) {
+      map.setFeatureState(
+        { source: "buildings", id: focusedRef.current },
+        { focus: false },
+      );
+    }
+    focusedRef.current = focusPandId ?? null;
+    if (focusPandId) {
+      map.setFeatureState(
+        { source: "buildings", id: focusPandId },
+        { focus: true },
+      );
+
+      const feat = buildingsDataRef.current?.features.find(
+        (f: any) => f.properties.pand_id === focusPandId
+      );
+      if (feat) {
+        const bounds = new maplibregl.LngLatBounds();
+        const geom = feat.geometry;
+        if (geom.type === "Polygon") {
+          geom.coordinates[0].forEach((c: any) => bounds.extend(c));
+        } else if (geom.type === "MultiPolygon") {
+          geom.coordinates.forEach((poly: any) =>
+            poly[0].forEach((c: any) => bounds.extend(c))
+          );
+        }
+        map.fitBounds(bounds, { padding: 100, maxZoom: 19, duration: 1000 });
+      }
+    }
+  }, [focusPandId, ready]);
+
   // Respond to building visibility toggle.
   useEffect(() => {
     const map = mapRef.current;
@@ -209,14 +250,25 @@ export default function MapView({
     if (!historicId) return;
     const conf = HISTORIC_MAPS.find((m) => m.id === historicId);
     if (!conf) return;
+
     const sourceId = `historic-${conf.id}-src`;
     const layerId = `historic-${conf.id}`;
+
+    // Ensure absolute URL for the COG protocol
+    const fullUrl = new URL(conf.url, window.location.origin).href;
+
     map.addSource(sourceId, {
       type: "raster",
-      url: `cog://${window.location.origin}${conf.url}`,
+      // Using tiles array with {z}/{x}/{y} is often more reliable for custom protocols.
+      // Reverting to 256 as the geomatico protocol handler is hardcoded to this size.
+      tiles: [`cog://${fullUrl}/{z}/{x}/{y}`],
       tileSize: 256,
+      bounds: conf.bbox,
     });
-    // Insert under buildings-line so building outlines stay on top and clickable.
+
+    // Insert under buildings-line so building outlines stay on top.
+    // Fallback to undefined (top of stack) if buildings-line isn't ready.
+    const beforeId = map.getLayer("buildings-line") ? "buildings-line" : undefined;
     map.addLayer(
       {
         id: layerId,
@@ -224,7 +276,7 @@ export default function MapView({
         source: sourceId,
         paint: { "raster-opacity": historicOpacity },
       },
-      "buildings-line",
+      beforeId
     );
   }, [historicId, ready]);
 

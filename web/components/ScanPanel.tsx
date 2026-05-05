@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Entry } from "@/lib/data";
 import EditForm from "@/components/EditForm";
 import type { ScanViewerHandle } from "@/components/ScanViewer";
@@ -39,12 +39,21 @@ interface Props {
   wide?: boolean;
   focusMode?: boolean;
   onToggleFocus?: () => void;
+  entries?: Entry[];
 }
 
 export default function ScanPanel(p: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const viewerRef = useRef<ScanViewerHandle | null>(null);
   const [bboxEditMode, setBboxEditMode] = useState(false);
+
+  function handleSelectEntry(idx: number) {
+    const stableId = `${p.stem}:${idx}`;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("entry", stableId);
+    router.push(`/page/${p.stem}?${params.toString()}`);
+  }
 
   useEffect(() => {
     setBboxEditMode(false);
@@ -131,6 +140,15 @@ export default function ScanPanel(p: Props) {
           </div>
         </div>
 
+        {p.editMode && (
+          <div
+            className="bg-[#e8b84c15] border-b border-[#e8b84c44] flex items-center justify-center py-[3px]"
+            style={{ fontSize: 8, letterSpacing: "0.2em", fontWeight: 700, color: "#e8b84c" }}
+          >
+            ADMIN EDIT MODE
+          </div>
+        )}
+
         {!bboxEditMode && (
         <div className="flex flex-col gap-[4px]" style={{ padding: "9px 13px" }}>
           <span
@@ -150,12 +168,22 @@ export default function ScanPanel(p: Props) {
             <InfoCol label="Beroep" value={occ || "—"} />
           </div>
           <div className="flex flex-col gap-[2px] mt-[2px]">
-            <span
-              className="text-bp-ink-dim uppercase"
-              style={{ fontSize: 7.5, letterSpacing: "0.14em" }}
-            >
-              Adres
-            </span>
+            <div className="flex items-baseline justify-between">
+              <span
+                className="text-bp-ink-dim uppercase"
+                style={{ fontSize: 7.5, letterSpacing: "0.14em" }}
+              >
+                Adres
+              </span>
+              {p.activeEntry && !p.activeEntry.pand_id && (
+                <span
+                  className="text-bp-amber/50 italic"
+                  style={{ fontSize: 7.5, letterSpacing: "0.05em" }}
+                >
+                  Locatie nog niet gelinkt
+                </span>
+              )}
+            </div>
             <span
               className="text-bp-amber"
               style={{ fontSize: 10, letterSpacing: "0.1em" }}
@@ -190,7 +218,9 @@ export default function ScanPanel(p: Props) {
                 viewerRef.current = h;
               }}
               stem={p.stem}
-              bbox={bbox}
+              entries={p.entries}
+              activeIdx={p.activeIdx}
+              onSelectEntry={handleSelectEntry}
             />
 
             <div className="absolute flex flex-col gap-[2px]" style={{ right: 8, bottom: 8, zIndex: 5 }}>

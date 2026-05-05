@@ -328,8 +328,8 @@ export default function BboxEditor(p: Props) {
                     rotateEnabled={false}
                     flipEnabled={false}
                     keepRatio={false}
-                    anchorSize={10 / stageScale}
-                    anchorStrokeWidth={1 / stageScale}
+                    anchorSize={8 / Math.pow(stageScale, 0.6)}
+                    anchorStrokeWidth={1.5 / stageScale}
                     borderStrokeWidth={1 / stageScale}
                     anchorStroke="#e8b84c"
                     anchorFill="#182d5c"

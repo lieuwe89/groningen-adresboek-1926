@@ -101,6 +101,23 @@ export async function PATCH(
 
   overrides[id] = next;
   await writeOverrides(stem, overrides);
+  
+  // Also update the database so search hits match immediately
+  try {
+    const { getDb } = await import("@/lib/db");
+    const db = getDb();
+    db.prepare(`
+      UPDATE entries 
+      SET entry_bbox = ?, edited_at = ?
+      WHERE stable_id = ?
+    `).run(
+      bboxIn ? JSON.stringify(bboxIn) : null,
+      next.edited_at,
+      id
+    );
+  } catch (err) {
+    console.warn("Failed to update database with new bbox:", err);
+  }
 
   return NextResponse.json({ ok: true, override: next });
 }

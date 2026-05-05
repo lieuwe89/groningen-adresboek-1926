@@ -49,6 +49,9 @@ STREET_ALIASES = [
     ("helperwestsingel",   "helper westsingel"),
     ("helperoostsingel",   "helper oostsingel"),
     ("roodeweg",           "rodeweg"),
+    ("paulownastraat",     "anna paulownastraat"),
+    ("kooykerplein",       "kooijkerplein"),
+    ("hardewijkerstraat",  "hardewikerstraat"),
     ("verloren",           "verlengde"),   # systematic OCR misread of "Verlengde"
 ]
 

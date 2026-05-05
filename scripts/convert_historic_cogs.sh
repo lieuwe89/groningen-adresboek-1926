@@ -13,8 +13,8 @@ DST_DIR="$ROOT/web/public/maps"
 
 mkdir -p "$DST_DIR"
 
-if ! command -v gdal_translate >/dev/null 2>&1; then
-  echo "gdal_translate not found. Install GDAL (brew install gdal)." >&2
+if ! command -v gdalwarp >/dev/null 2>&1; then
+  echo "gdalwarp not found. Install GDAL (brew install gdal)." >&2
   exit 1
 fi
 
@@ -26,12 +26,12 @@ for src in "$SRC_DIR"/*.tif; do
     echo "skip (up to date): $base"
     continue
   fi
-  echo "converting: $base"
-  # JPEG compression is lossy but fine for scanned historic maps.
-  # PHOTOMETRIC=YCBCR + COMPRESS=JPEG halves size again on 3-band imagery.
-  gdal_translate -of COG \
-    -co COMPRESS=JPEG \
-    -co QUALITY=80 \
+  # LZW is lossless and has better support for alpha channels in geotiff.js.
+  # Reproject to EPSG:3857 (Web Mercator) as the protocol handler assumes it.
+  # We let gdalwarp determine the optimal resolution to avoid over/under-scaling.
+  gdalwarp -of COG \
+    -t_srs EPSG:3857 \
+    -co COMPRESS=LZW \
     -co BLOCKSIZE=512 \
     -co OVERVIEW_RESAMPLING=AVERAGE \
     "$src" "$dst"

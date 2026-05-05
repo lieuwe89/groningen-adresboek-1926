@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { Josefin_Sans, Special_Elite } from "next/font/google";
+import { SelectionProvider } from "@/lib/SelectionContext";
 import "./globals.css";
 
 const josefin = Josefin_Sans({
@@ -26,7 +26,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="nl" className={`${josefin.variable} ${specialElite.variable} h-full antialiased`}>
-      <body className="h-full">{children}</body>
+      <body className="h-full">
+        <SelectionProvider>
+          {children}
+        </SelectionProvider>
+      </body>
     </html>
   );
 }

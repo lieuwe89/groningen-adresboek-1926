@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import type { Entry } from "@/lib/data";
 
 export interface ScanViewerHandle {
   zoomBy: (factor: number) => void;
@@ -9,20 +10,30 @@ export interface ScanViewerHandle {
 
 interface Props {
   stem: string;
-  bbox?: number[] | null;
+  entries?: Entry[];
+  activeIdx?: number;
+  onSelectEntry?: (idx: number) => void;
 }
 
 const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
-  { stem, bbox },
+  { stem, entries, activeIdx, onSelectEntry },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<any>(null);
   const osdRef = useRef<any>(null);
-  const overlayElRef = useRef<HTMLDivElement | null>(null);
   const dimsRef = useRef<{ w: number; h: number } | null>(null);
-  const bboxRef = useRef<number[] | null | undefined>(bbox);
-  bboxRef.current = bbox;
+  const prevActiveIdxRef = useRef<number | undefined>(undefined);
+  const lastFocusedStemRef = useRef<string | null>(null);
+  const lastFocusedIdxRef = useRef<number | undefined>(undefined);
+  const entriesRef = useRef(entries);
+  entriesRef.current = entries;
+  const activeIdxRef = useRef(activeIdx);
+  activeIdxRef.current = activeIdx;
+  const stemRef = useRef(stem);
+  stemRef.current = stem;
+  const onSelectEntryRef = useRef(onSelectEntry);
+  onSelectEntryRef.current = onSelectEntry;
 
   useEffect(() => {
     let cancelled = false;
@@ -45,18 +56,42 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         tileSources: `/tiles/${stem}.dzi`,
       });
       viewerRef.current = viewer;
+
       viewer.addHandler("canvas-double-click", (ev: any) => {
         ev.preventDefaultAction = true;
         viewer.viewport.goHome();
       });
+
+      viewer.addHandler("canvas-click", (ev: any) => {
+        if (!ev.quick) return;
+        const v = viewerRef.current;
+        const ents = entriesRef.current;
+        if (!v || !ents) return;
+        const imgPt = v.viewport.viewerElementToImageCoordinates(ev.position);
+        const idx = ents.findIndex((e) => {
+          const bb = e.entry_bbox;
+          if (!bb) return false;
+          return (
+            imgPt.x >= bb[0] &&
+            imgPt.x <= bb[2] &&
+            imgPt.y >= bb[1] &&
+            imgPt.y <= bb[3]
+          );
+        });
+        if (idx >= 0) {
+          onSelectEntryRef.current?.(idx);
+        }
+      });
+
       viewer.addHandler("open", () => {
         const item = viewer.world.getItemAt(0);
         if (!item) return;
         const sz = item.getContentSize();
         dimsRef.current = { w: sz.x, h: sz.y };
-        applyBbox(bboxRef.current);
+        applyOverlays(true); // Force focus on open
       });
     })();
+
     return () => {
       cancelled = true;
       try {
@@ -65,7 +100,6 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         // ignore
       }
       viewerRef.current = null;
-      overlayElRef.current = null;
       dimsRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,60 +109,93 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
     const v = viewerRef.current;
     if (!v) return;
     dimsRef.current = null;
-    overlayElRef.current = null;
     v.open(`/tiles/${stem}.dzi`);
   }, [stem]);
 
-  const bboxKey = bbox ? bbox.join(",") : "";
   useEffect(() => {
-    applyBbox(bbox ?? null);
+    applyOverlays();
+    prevActiveIdxRef.current = activeIdx;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bboxKey]);
+  }, [entries, activeIdx]);
 
-  function applyBbox(bb: number[] | null | undefined) {
+  function applyOverlays(forceFocus = false) {
     const v = viewerRef.current;
     const OSD = osdRef.current;
-    const dim = dimsRef.current;
-    if (!v || !OSD || !dim) return;
+    const ents = entriesRef.current;
+    const aidx = activeIdxRef.current;
+    const curStem = stemRef.current;
 
-    if (overlayElRef.current) {
-      try {
-        v.removeOverlay(overlayElRef.current);
-      } catch {
-        // ignore
+    if (!v || !OSD || !ents) return;
+
+    v.clearOverlays();
+
+    ents.forEach((entry, i) => {
+      const bb = entry.entry_bbox;
+      if (!bb || bb.length < 4) return;
+      const [x0, y0, x1, y1] = bb;
+      const w = x1 - x0;
+      const h = y1 - y0;
+      if (w <= 0 || h <= 0) return;
+
+      const rect = v.viewport.imageToViewportRectangle(x0, y0, w, h);
+      const isActive = i === activeIdx;
+
+      const el = document.createElement("div");
+      el.style.cssText = `
+        box-sizing: border-box;
+        cursor: pointer;
+        pointer-events: auto;
+        transition: background 120ms, border 120ms;
+        border: ${isActive ? "2px solid #e8b84c" : "1px solid transparent"};
+        background: ${isActive ? "#e8b84c44" : "transparent"};
+      `;
+
+      el.addEventListener("mouseenter", () => {
+        if (!isActive) {
+          el.style.background = "#e8b84c1a";
+          el.style.border = "1px solid #e8b84c44";
+        }
+      });
+      el.addEventListener("mouseleave", () => {
+        if (!isActive) {
+          el.style.background = "transparent";
+          el.style.border = "1px solid transparent";
+        }
+      });
+      el.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        onSelectEntryRef.current?.(i);
+      });
+
+      v.addOverlay({ element: el, location: rect });
+      
+      const isNewSelection = i !== lastFocusedIdxRef.current || curStem !== lastFocusedStemRef.current;
+
+      if (isActive && (forceFocus || isNewSelection)) {
+        const view = v.viewport.getBounds();
+        const fits =
+          rect.x >= view.x &&
+          rect.y >= view.y &&
+          rect.x + rect.width <= view.x + view.width &&
+          rect.y + rect.height <= view.y + view.height;
+        
+        // Always focus if forced or if it doesn't fit
+        if (!fits || forceFocus) {
+          const padX = rect.width * 0.2;
+          const padY = rect.height * 0.2;
+          const padded = new OSD.Rect(
+            rect.x - padX,
+            rect.y - padY,
+            rect.width + 2 * padX,
+            rect.height + 2 * padY
+          );
+          v.viewport.fitBoundsWithConstraints(padded, false);
+          
+          lastFocusedIdxRef.current = i;
+          lastFocusedStemRef.current = stem;
+        }
       }
-      overlayElRef.current = null;
-    }
-    if (!bb || bb.length < 4) return;
-    const [x0, y0, x1, y1] = bb;
-    const w = x1 - x0;
-    const h = y1 - y0;
-    if (w <= 0 || h <= 0) return;
-
-    const rect = v.viewport.imageToViewportRectangle(x0, y0, w, h);
-    const el = document.createElement("div");
-    el.style.cssText =
-      "background:#e8b84c44;border:2px solid #e8b84c;pointer-events:none;box-sizing:border-box;";
-    overlayElRef.current = el;
-    v.addOverlay({ element: el, location: rect });
-
-    const view = v.viewport.getBounds();
-    const fits =
-      rect.x >= view.x &&
-      rect.y >= view.y &&
-      rect.x + rect.width <= view.x + view.width &&
-      rect.y + rect.height <= view.y + view.height;
-    if (!fits) {
-      const padX = rect.width * 0.2;
-      const padY = rect.height * 0.2;
-      const padded = new OSD.Rect(
-        rect.x - padX,
-        rect.y - padY,
-        rect.width + 2 * padX,
-        rect.height + 2 * padY
-      );
-      v.viewport.fitBoundsWithConstraints(padded, false);
-    }
+    });
   }
 
   useImperativeHandle(ref, () => ({

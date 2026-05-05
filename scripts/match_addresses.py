@@ -75,6 +75,10 @@ STREET_FIXUPS = [
     (r"\bkoning\.?\b", "koningin"),
     (r"\bsav\.?\b", "savornin"),
     (r"\bw\.?\s*a\.?\s*scholtenstraat", "w a scholtenstraat"),
+    (r"\bhardewijkerstraat\b", "hardewikerstraat"),
+    (r"\broodeweg\b", "rodeweg"),
+    (r"\bfriesche\s*straatweg\b", "friesestraatweg"),
+    (r"\bvisscherstraat\b", "visserstraat"),
 ]
 
 # 1947 spelling reform — pre-reform → post-reform stem.
@@ -267,6 +271,15 @@ def main() -> None:
                 pand_id = vbo_index.get((cand, num, L))
                 if pand_id:
                     break
+            
+            # Fallback for missing house numbers (merged/demolished buildings)
+            # Try same side of the street first (+/- 2), then adjacent (+/- 1)
+            if not pand_id:
+                for delta in [2, -2, 4, -4, 1, -1]:
+                    pand_id = vbo_index.get((cand, num + delta, ""))
+                    if pand_id:
+                        break
+
             if pand_id:
                 break
         if not pand_id:

@@ -26,7 +26,7 @@ const MAPS: MapProfile[] = [
     id: "1536_6133",
     thumb: "1536_6133.jpg",
     title: "Plattegrond van Groningen",
-    appLabel: "Stadsplattegrond — hoge resolutie",
+    appLabel: "Heeringa, circa 1919",
     date: "1918–1920",
     scale: "1 : 5.000",
     creator: "G. Heeringa, opzichter-teekenaar Gemeentewerken",
@@ -41,7 +41,7 @@ const MAPS: MapProfile[] = [
     id: "1536_6138",
     thumb: "1536_6138.jpg",
     title: "Gemeente Groningen",
-    appLabel: "Gemeentekaart — overzicht",
+    appLabel: "Darmer, 1935",
     date: "1935",
     scale: "1 : 10.000",
     creator: "H. Darmer, Dienst der Stadsuitbreiding en Volkshuisvesting",
@@ -56,7 +56,7 @@ const MAPS: MapProfile[] = [
     id: "1536_1237",
     thumb: "1536_1237.jpg",
     title: "Pharus plattegrond van Groningen",
-    appLabel: "Stadsplattegrond — gemeente",
+    appLabel: "Pharus, circa 1916",
     date: "ca. 1916",
     scale: "1 : 10.000",
     publisher: "P. Noordhoff, Groningen",
@@ -70,7 +70,7 @@ const MAPS: MapProfile[] = [
     id: "1536_1698",
     thumb: "1536_1698.jpg",
     title: "Plattegrond van Groningen",
-    appLabel: "Stadsplattegrond — kadastraal",
+    appLabel: "Edzes, circa 1920",
     date: "1918–1922",
     scale: "1 : 10.000",
     publisher: "H. Edzes jr., Groningen",
@@ -84,7 +84,7 @@ const MAPS: MapProfile[] = [
     id: "0817_00950",
     thumb: "0817_00950-1_0001.jpg",
     title: "Plattegrond van Groningen — 1 : 10.000",
-    appLabel: "Stadsplattegrond — historisch",
+    appLabel: "Bouma, circa 1922",
     date: "ca. 1920–1925",
     scale: "1 : 10.000 / 1 : 50.000",
     creator: "S.J. Bouma, teekenaar Gemeentewerken",
@@ -99,7 +99,7 @@ const MAPS: MapProfile[] = [
     id: "1536_1554",
     thumb: "1536_1554.jpg",
     title: "Groningen — Centrum",
-    appLabel: "Centrum — detail",
+    appLabel: "VVV, circa 1930",
     date: "ca. 1920–1940",
     scale: "1 : 10.000",
     publisher: "VVV Groningen",
@@ -136,7 +136,7 @@ export default function InfoPage() {
               <p>
                 Dit is een hobbyproject van{" "}
                 <strong className="text-bp-ink-bright">Lieuwe Jongsma</strong>,
-                ontwikkelaar en amateur-genealoog uit Groningen. Het doel is om
+                werkzaam bij de Groninger Archieven. Het doel is om
                 het adresboek van de Gemeente Groningen uit 1926 doorzoekbaar en
                 ruimtelijk verkenbaar te maken. De ~900 gescande pagina's zijn
                 verwerkt met een combinatie van OCR en een vision-taalmodel, dat
@@ -235,7 +235,7 @@ export default function InfoPage() {
                   <strong className="text-bp-ink-bright">Historische schrijfwijzen.</strong>{" "}
                   Straatnamen werden in 1926 soms anders gespeld (bijv.
                   "Heereweg" versus "Hereweg"). Zonder handmatig gecureerde
-                  vertaaltabel mist de automatische koppeling deze gevallen.
+                  vertaaltabel mist de automatische koppeling deze gevallen. Zo'n vertaaltabel is er al wel, maar nog niet compleet.
                 </li>
               </ul>
               <p>

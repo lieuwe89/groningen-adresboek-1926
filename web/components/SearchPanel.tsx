@@ -25,6 +25,7 @@ interface Props {
   globalLoading?: boolean;
   globalError?: string | null;
   currentStem?: string;
+  activeEntryId?: string;
   onSelectGlobal?: (hit: SearchHit) => void;
 }
 
@@ -121,8 +122,9 @@ export default function SearchPanel(p: Props) {
               results={p.globalResults || []}
               total={p.globalTotal || 0}
               loading={!!p.globalLoading}
-              error={p.globalError || null}
+              globalError={p.globalError || null}
               currentStem={p.currentStem}
+              activeEntryId={p.activeEntryId}
               onSelect={p.onSelectGlobal}
             />
           ) : (
@@ -280,6 +282,7 @@ function GlobalResults({
   loading,
   error,
   currentStem,
+  activeEntryId,
   onSelect,
 }: {
   results: SearchHit[];
@@ -287,6 +290,7 @@ function GlobalResults({
   loading: boolean;
   error: string | null;
   currentStem?: string;
+  activeEntryId?: string;
   onSelect?: (h: SearchHit) => void;
 }) {
   if (error) {
@@ -324,8 +328,8 @@ function GlobalResults({
             className="w-full text-left flex flex-col gap-[3px]"
             style={{
               padding: "10px 13px",
-              background: onCurrent ? "#e8b84c0c" : "transparent",
-              borderLeft: onCurrent ? "2px solid #e8b84c" : "2px solid transparent",
+              background: h.stable_id === activeEntryId ? "#e8b84c1a" : onCurrent ? "#e8b84c06" : "transparent",
+              borderLeft: h.stable_id === activeEntryId ? "2px solid #e8b84c" : onCurrent ? "2px solid #e8b84c44" : "2px solid transparent",
             }}
           >
             <span

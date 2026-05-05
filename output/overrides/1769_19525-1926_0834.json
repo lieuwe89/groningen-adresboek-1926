@@ -1,0 +1,114 @@
+{
+  "1769_19525-1926_0834:0": {
+    "fields": {},
+    "flags": {},
+    "fingerprint": "sha1:cac16a5a3192be07e6f43624882e701cd1fcfb0a",
+    "edited_at": "2026-05-05T06:12:36.865Z",
+    "bbox": {
+      "type": "rect",
+      "value": [
+        635,
+        314,
+        842,
+        337
+      ],
+      "source": "manual"
+    }
+  },
+  "1769_19525-1926_0834:4": {
+    "fields": {},
+    "flags": {},
+    "fingerprint": "sha1:ad8d8b706b6204a85fe250d449daca79d4d798f8",
+    "edited_at": "2026-05-05T06:15:42.946Z",
+    "bbox": {
+      "type": "rect",
+      "value": [
+        1029,
+        383,
+        1234,
+        406
+      ],
+      "source": "manual"
+    }
+  },
+  "1769_19525-1926_0834:1": {
+    "fields": {},
+    "flags": {},
+    "fingerprint": "sha1:df5594f11edfb001177932e86335d89dbc61c58b",
+    "edited_at": "2026-05-05T06:16:05.714Z",
+    "bbox": {
+      "type": "rect",
+      "value": [
+        628,
+        347,
+        772,
+        370
+      ],
+      "source": "manual"
+    }
+  },
+  "1769_19525-1926_0834:2": {
+    "fields": {},
+    "flags": {},
+    "fingerprint": "sha1:f7a628a1a03bdf5c5bace3bbe84abfffa54bbc06",
+    "edited_at": "2026-05-05T06:16:22.292Z",
+    "bbox": {
+      "type": "rect",
+      "value": [
+        1027,
+        315,
+        1274,
+        338
+      ],
+      "source": "manual"
+    }
+  },
+  "1769_19525-1926_0834:3": {
+    "fields": {},
+    "flags": {},
+    "fingerprint": "sha1:a0ab29fc7968329f247b215df3b86db67005a3dd",
+    "edited_at": "2026-05-05T06:16:41.279Z",
+    "bbox": {
+      "type": "rect",
+      "value": [
+        1020,
+        347,
+        1249,
+        370
+      ],
+      "source": "manual"
+    }
+  },
+  "1769_19525-1926_0834:8": {
+    "fields": {},
+    "flags": {},
+    "fingerprint": "sha1:944701f24d57ed725bfef13523c66465dcbef1d2",
+    "edited_at": "2026-05-05T06:17:11.193Z",
+    "bbox": {
+      "type": "rect",
+      "value": [
+        1024,
+        517,
+        1175,
+        540
+      ],
+      "source": "manual"
+    }
+  },
+  "1769_19525-1926_0834:40": {
+    "fields": {},
+    "flags": {},
+    "fingerprint": "sha1:33adf91b3f547a3ba38cb6ae42775f7ba79c1562",
+    "edited_at": "2026-05-05T06:19:12.335Z",
+    "bbox": {
+      "type": "rect",
+      "value": [
+        1018,
+        1614,
+        1287,
+        1637
+      ],
+      "source": "manual"
+    }
+  }
+}
