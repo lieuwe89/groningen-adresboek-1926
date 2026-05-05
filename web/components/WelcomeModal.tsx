@@ -96,7 +96,7 @@ export default function WelcomeModal({ onStartTour }: WelcomeModalProps) {
           <div className="space-y-4 text-bp-ink leading-relaxed text-sm mb-8">
             <p>
               {t.rich('body1', {
-                name: <span className="text-bp-ink-bright font-semibold">Lieuwe Jongsma</span>,
+                name: (chunks) => <span className="text-bp-ink-bright font-semibold">Lieuwe Jongsma{chunks}</span>,
                 important: (chunks) => <strong>{chunks}</strong>
               })}
             </p>
