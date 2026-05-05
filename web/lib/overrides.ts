@@ -32,7 +32,7 @@ export interface OverridesFile {
   [entryId: EntryId]: EntryOverride;
 }
 
-const OVERRIDES_DIR = path.resolve(process.cwd(), "..", "output", "overrides");
+const OVERRIDES_DIR = process.env.OVERRIDES_DIR ?? path.resolve(process.cwd(), "..", "output", "overrides");
 
 export async function loadOverrides(stem: string): Promise<OverridesFile> {
   const file = path.join(OVERRIDES_DIR, `${stem}.json`);

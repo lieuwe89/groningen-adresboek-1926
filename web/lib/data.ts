@@ -43,7 +43,7 @@ export interface PageData {
   entries: Entry[];
 }
 
-const JSON_DIR = path.resolve(process.cwd(), "..", "output", "json");
+const JSON_DIR = process.env.JSON_DIR ?? path.resolve(process.cwd(), "..", "output", "json");
 
 export async function loadPage(stem: string): Promise<PageData | null> {
   const file = path.join(JSON_DIR, `${stem}.json`);
