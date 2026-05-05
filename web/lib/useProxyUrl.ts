@@ -15,10 +15,28 @@ export function useProxyUrl() {
     // If window.location.pathname is /groningen-1926/en/info
     // and pathname is /en/info
     // Then prefix is /groningen-1926
+    
+    // We remove the trailing slash from the pathname for comparison
+    const cleanPathname = pathname === "/" ? "" : pathname;
     const fullPath = window.location.pathname;
-    if (fullPath.endsWith(pathname) && fullPath !== pathname) {
-      return fullPath.slice(0, fullPath.lastIndexOf(pathname));
+    
+    if (cleanPathname === "") {
+        // If we are at the root (relative to the app), check for the mount point
+        if (fullPath.includes("/groningen-1926")) {
+            return "/groningen-1926";
+        }
+        return "";
     }
+
+    if (fullPath.endsWith(cleanPathname) && fullPath !== cleanPathname) {
+      return fullPath.slice(0, fullPath.lastIndexOf(cleanPathname));
+    }
+    
+    // Fallback: check if /groningen-1926 is in the path at all
+    if (fullPath.includes("/groningen-1926")) {
+        return "/groningen-1926";
+    }
+    
     return "";
   };
 
