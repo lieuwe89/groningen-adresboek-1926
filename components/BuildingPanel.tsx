@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from 'next-intl';
 import { useProxyUrl } from "@/lib/useProxyUrl";
 
-type Entry = {
+type Mention = {
   stable_id: string;
   stem: string;
   page_number: number | null;
@@ -14,11 +14,19 @@ type Entry = {
   address_full: string | null;
 };
 
+type Person = {
+  cluster_id: string;
+  canonical_name: string | null;
+  canonical_occupation: string | null;
+  canonical_address: string | null;
+  mentions: Mention[];
+};
+
 type Detail = {
   pand_id: string;
   centroid: { lat: number; lng: number } | null;
   bbox: [number, number, number, number] | null;
-  addresses: Array<{ address_full: string; entries: Entry[] }>;
+  persons: Person[];
 };
 
 interface Props {
@@ -94,64 +102,75 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
         {error && (
           <div style={{ padding: "12px", color: "#e89e3b", fontSize: 9 }}>{error}</div>
         )}
-        {!loading && !error && data && data.addresses.length === 0 && (
+        {!loading && !error && data && data.persons.length === 0 && (
           <div style={{ padding: "12px", color: "#7a7054", fontSize: 9 }}>
             {t('noEntries')}
           </div>
         )}
         {!loading && !error && data &&
-          data.addresses.map((g) => (
-            <div key={g.address_full} style={{ marginBottom: 8 }}>
-              <div
-                style={{
-                  padding: "4px 12px",
-                  borderTop: "1px solid #cfc39a22",
-                  borderBottom: "1px solid #cfc39a22",
-                  background: "#0e1e44",
-                  color: "#e8b84c",
-                  fontSize: 10,
-                  letterSpacing: "0.06em",
-                  fontWeight: 700,
-                }}
-              >
-                {g.address_full || "—"}{" "}
-                <span style={{ color: "#7a7054", fontSize: 9 }}>
-                  ({g.entries.length})
-                </span>
-              </div>
-              {g.entries.map((e) => (
-                <button
-                  key={e.stable_id}
-                  type="button"
-                  onClick={() => onSelectEntry(e.stem, e.stable_id)}
-                  className="w-full text-left flex flex-col"
+          data.persons.map((p) => {
+            const headerName = p.canonical_name || [p.mentions[0].initials, p.mentions[0].name].filter(Boolean).join(" ") || "—";
+            const headerOcc = p.canonical_occupation || p.mentions[0].occupation || "";
+            const headerAddr = p.canonical_address || p.mentions[0].address_full || "";
+            
+            return (
+              <div key={p.cluster_id} style={{ marginBottom: 12 }}>
+                <div
                   style={{
-                    padding: "6px 12px",
-                    background: "transparent",
-                    borderLeft: "2px solid transparent",
-                    color: "#e6d9b0",
+                    padding: "4px 12px",
+                    borderTop: "1px solid #cfc39a22",
+                    borderBottom: "1px solid #cfc39a22",
+                    background: "#0e1e44",
+                    color: "#e8b84c",
                     fontSize: 10,
+                    letterSpacing: "0.06em",
+                    fontWeight: 700,
+                    display: "flex",
+                    flexDirection: "column",
                   }}
-                  onMouseEnter={(ev) =>
-                    (ev.currentTarget.style.background = "#e8b84c0c")
-                  }
-                  onMouseLeave={(ev) =>
-                    (ev.currentTarget.style.background = "transparent")
-                  }
                 >
-                  <span style={{ fontWeight: 700 }}>
-                    {[e.initials, e.name].filter(Boolean).join(" ") || "—"}
-                  </span>
-                  {e.occupation && (
-                    <span style={{ color: "#7a7054", fontSize: 9 }}>{e.occupation}</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>{headerName}</span>
+                    <span style={{ color: "#7a7054", fontSize: 9 }}>({p.mentions.length})</span>
+                  </div>
+                  {headerOcc && (
+                    <span style={{ color: "#e6d9b0", fontSize: 9, fontWeight: 400 }}>{headerOcc}</span>
                   )}
-                  {e.page_number != null && (
-                    <span style={{ color: "#7a7054", fontSize: 9 }}>{t('page')} {e.page_number}</span>
+                  {headerAddr && (
+                    <span style={{ color: "#7a7054", fontSize: 9, fontWeight: 400 }}>{headerAddr}</span>
                   )}
-                </button>
-              ))}
-            </div>
-          ))}
+                </div>
+                {p.mentions.map((m) => (
+                  <button
+                    key={m.stable_id}
+                    type="button"
+                    onClick={() => onSelectEntry(m.stem, m.stable_id)}
+                    className="w-full text-left flex flex-col"
+                    style={{
+                      padding: "6px 12px",
+                      background: "transparent",
+                      borderLeft: "2px solid transparent",
+                      color: "#e6d9b0",
+                      fontSize: 10,
+                    }}
+                    onMouseEnter={(ev) =>
+                      (ev.currentTarget.style.background = "#e8b84c0c")
+                    }
+                    onMouseLeave={(ev) =>
+                      (ev.currentTarget.style.background = "transparent")
+                    }
+                  >
+                    <span style={{ color: "#7a7054", fontSize: 9 }}>
+                      {m.occupation || "Vermelding"} {m.address_full ? `- ${m.address_full}` : ""}
+                    </span>
+                    {m.page_number != null && (
+                      <span style={{ color: "#7a7054", fontSize: 9 }}>{t('page')} {m.page_number}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
       </div>
     </div>
   );

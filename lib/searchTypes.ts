@@ -1,7 +1,7 @@
 // Client-shared types for /api/search.
 // Mirrors SearchRow in lib/db.ts (server-only via better-sqlite3 import).
 
-export type SearchHit = {
+export type SearchMention = {
   id: number;
   stable_id: string;
   stem: string;
@@ -24,9 +24,17 @@ export type SearchHit = {
   address_bbox: string | null;
 };
 
+export type PersonHit = {
+  cluster_id: string;
+  canonical_name: string | null;
+  canonical_occupation: string | null;
+  canonical_address: string | null;
+  mentions: SearchMention[];
+};
+
 export type SearchResponse = {
   total: number;
-  results: SearchHit[];
+  results: PersonHit[];
   q: string;
   limit: number;
   offset: number;

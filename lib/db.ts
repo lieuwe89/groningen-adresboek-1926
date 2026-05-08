@@ -50,7 +50,7 @@ export function getWritableDb(): DB {
   return _dbW;
 }
 
-export type SearchRow = {
+export type SearchMention = {
   id: number;
   stable_id: string;
   stem: string;
@@ -73,6 +73,14 @@ export type SearchRow = {
   address_bbox: string | null;
 };
 
+export type SearchRow = {
+  cluster_id: string;
+  canonical_name: string | null;
+  canonical_occupation: string | null;
+  canonical_address: string | null;
+  mentions: SearchMention[];
+};
+
 export type SearchResult = {
   total: number;
   results: SearchRow[];
@@ -80,22 +88,30 @@ export type SearchResult = {
 
 const SEARCH_SQL = `
   SELECT
-    e.id, e.stable_id, p.stem, p.page_number, p.section,
-    e.name, e.initials, e.occupation, e.occupation_expanded,
-    e.address_full, e.lat, e.lng, e.geocode_type, e.geocode_flags,
-    e.flag_verified, e.flag_needs_review, e.flag_bbox_unreliable,
-    e.entry_bbox, e.name_bbox, e.address_bbox
+    COALESCE(CAST(e.person_id AS TEXT), 'u-' || e.id) as cluster_id,
+    MIN(f.rank) as min_rank,
+    json_group_array(json_object(
+      'id', e.id, 'stable_id', e.stable_id, 'stem', p.stem, 'page_number', p.page_number, 'section', p.section,
+      'name', e.name, 'initials', e.initials, 'occupation', e.occupation, 'occupation_expanded', e.occupation_expanded,
+      'address_full', e.address_full, 'lat', e.lat, 'lng', e.lng, 'geocode_type', e.geocode_type, 'geocode_flags', e.geocode_flags,
+      'flag_verified', e.flag_verified, 'flag_needs_review', e.flag_needs_review, 'flag_bbox_unreliable', e.flag_bbox_unreliable,
+      'entry_bbox', e.entry_bbox, 'name_bbox', e.name_bbox, 'address_bbox', e.address_bbox
+    )) as mentions_json,
+    pr.canonical_name, pr.canonical_occupation, pr.canonical_address
   FROM entries_fts f
   JOIN entries e ON e.id = f.rowid
   JOIN pages p ON e.page_id = p.id
+  LEFT JOIN persons pr ON e.person_id = pr.id
   WHERE entries_fts MATCH ?
-  ORDER BY rank
+  GROUP BY cluster_id
+  ORDER BY min_rank
   LIMIT ? OFFSET ?
 `;
 
 const COUNT_SQL = `
-  SELECT COUNT(*) AS n
-  FROM entries_fts
+  SELECT COUNT(DISTINCT COALESCE(e.person_id, 'u-' || e.id)) AS n
+  FROM entries_fts f
+  JOIN entries e ON e.id = f.rowid
   WHERE entries_fts MATCH ?
 `;
 
@@ -196,7 +212,7 @@ export function listBuildings(): BuildingFeature[] {
   }));
 }
 
-export type BuildingEntry = {
+export type BuildingMention = {
   stable_id: string;
   stem: string;
   page_number: number | null;
@@ -206,14 +222,19 @@ export type BuildingEntry = {
   address_full: string | null;
 };
 
+export type BuildingPerson = {
+  cluster_id: string;
+  canonical_name: string | null;
+  canonical_occupation: string | null;
+  canonical_address: string | null;
+  mentions: BuildingMention[];
+};
+
 export type BuildingDetail = {
   pand_id: string;
   centroid: { lat: number; lng: number } | null;
   bbox: [number, number, number, number] | null;
-  addresses: Array<{
-    address_full: string;
-    entries: BuildingEntry[];
-  }>;
+  persons: BuildingPerson[];
 };
 
 export function getBuilding(pand_id: string): BuildingDetail | null {
@@ -234,21 +255,38 @@ export function getBuilding(pand_id: string): BuildingDetail | null {
       }
     | undefined;
   if (!b) return null;
-  const rows = db.prepare(
-    `SELECT e.stable_id, p.stem, p.page_number,
-            e.name, e.initials,
-            COALESCE(e.occupation_expanded, e.occupation) AS occupation,
-            e.address_full
-     FROM entries e JOIN pages p ON e.page_id = p.id
+  
+  const rawRows = db.prepare(
+    `SELECT
+      COALESCE(CAST(e.person_id AS TEXT), 'u-' || e.id) as cluster_id,
+      json_group_array(json_object(
+        'stable_id', e.stable_id, 'stem', p.stem, 'page_number', p.page_number,
+        'name', e.name, 'initials', e.initials, 'occupation', COALESCE(e.occupation_expanded, e.occupation),
+        'address_full', e.address_full
+      )) as mentions_json,
+      pr.canonical_name, pr.canonical_occupation, pr.canonical_address
+     FROM entries e 
+     JOIN pages p ON e.page_id = p.id
+     LEFT JOIN persons pr ON e.person_id = pr.id
      WHERE e.pand_id = ?
-     ORDER BY e.address_full, e.name`
-  ).all(pand_id) as BuildingEntry[];
-  const byAddress = new Map<string, BuildingEntry[]>();
-  for (const e of rows) {
-    const k = e.address_full ?? "";
-    if (!byAddress.has(k)) byAddress.set(k, []);
-    byAddress.get(k)!.push(e);
-  }
+     GROUP BY cluster_id
+     ORDER BY pr.canonical_name, e.name`
+  ).all(pand_id) as Array<{
+    cluster_id: string;
+    mentions_json: string;
+    canonical_name: string | null;
+    canonical_occupation: string | null;
+    canonical_address: string | null;
+  }>;
+  
+  const persons: BuildingPerson[] = rawRows.map(r => ({
+    cluster_id: r.cluster_id,
+    canonical_name: r.canonical_name,
+    canonical_occupation: r.canonical_occupation,
+    canonical_address: r.canonical_address,
+    mentions: JSON.parse(r.mentions_json),
+  }));
+
   return {
     pand_id: b.pand_id,
     centroid:
@@ -259,10 +297,7 @@ export function getBuilding(pand_id: string): BuildingDetail | null {
       b.bbox_west != null
         ? [b.bbox_west!, b.bbox_south!, b.bbox_east!, b.bbox_north!]
         : null,
-    addresses: Array.from(byAddress.entries()).map(([address_full, entries]) => ({
-      address_full,
-      entries,
-    })),
+    persons,
   };
 }
 
@@ -271,6 +306,15 @@ export function search(query: string, limit = 50, offset = 0): SearchResult {
   if (!fts) return { total: 0, results: [] };
   const db = getDb();
   const total = (db.prepare(COUNT_SQL).get(fts) as { n: number }).n;
-  const results = db.prepare(SEARCH_SQL).all(fts, limit, offset) as SearchRow[];
+  const rawResults = db.prepare(SEARCH_SQL).all(fts, limit, offset) as any[];
+  
+  const results: SearchRow[] = rawResults.map(r => ({
+    cluster_id: r.cluster_id,
+    canonical_name: r.canonical_name,
+    canonical_occupation: r.canonical_occupation,
+    canonical_address: r.canonical_address,
+    mentions: JSON.parse(r.mentions_json)
+  }));
+  
   return { total, results };
 }

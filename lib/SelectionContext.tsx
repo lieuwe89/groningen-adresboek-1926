@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
-import type { SearchHit } from "@/lib/searchTypes";
+import type { PersonHit } from "@/lib/searchTypes";
 
 interface SelectionContextType {
   activePandId: string | null;
@@ -12,8 +12,8 @@ interface SelectionContextType {
   setSearchOpen: (open: boolean) => void;
   scanOpen: boolean;
   setScanOpen: (open: boolean) => void;
-  globalResults: SearchHit[];
-  setGlobalResults: (results: SearchHit[]) => void;
+  globalResults: PersonHit[];
+  setGlobalResults: (results: PersonHit[]) => void;
   globalTotal: number;
   setGlobalTotal: (total: number) => void;
   globalLoading: boolean;
@@ -41,7 +41,7 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(true);
   const [scanOpen, setScanOpen] = useState(true);
-  const [globalResults, setGlobalResults] = useState<SearchHit[]>([]);
+  const [globalResults, setGlobalResults] = useState<PersonHit[]>([]);
   const [globalTotal, setGlobalTotal] = useState(0);
   const [globalLoading, setGlobalLoading] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);

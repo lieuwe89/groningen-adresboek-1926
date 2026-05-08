@@ -10,7 +10,8 @@ import GlobalGrid from "@/components/GlobalGrid";
 import { useSelection } from "@/lib/SelectionContext";
 import WelcomeModal from "@/components/WelcomeModal";
 import { useTour } from "@/lib/useTour";
-import type { SearchHit, SearchResponse } from "@/lib/searchTypes";
+import type { PersonHit, SearchMention, SearchResponse } from "@/lib/searchTypes";
+import type { BuildingDetail } from "@/lib/db";
 import { useLocale } from 'next-intl';
 import { useProxyUrl } from "@/lib/useProxyUrl";
 
@@ -103,7 +104,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [trimmedQuery, globalActive, setGlobalResults, setGlobalTotal, setGlobalLoading, setGlobalError]);
 
-  function handleSelectGlobal(hit: SearchHit) {
+  function handleSelectGlobal(hit: SearchMention) {
     const p = new URLSearchParams({ entry: hit.stable_id, q: trimmedQuery });
     const base = isAdmin ? `/${locale}/admin/page` : `/${locale}/page`;
     router.push(proxyPath(`${base}/${hit.stem}?${p.toString()}`));

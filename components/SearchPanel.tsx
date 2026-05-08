@@ -1,7 +1,7 @@
 "use client";
 
 import type { Entry } from "@/lib/data";
-import type { SearchHit } from "@/lib/searchTypes";
+import type { PersonHit, SearchMention } from "@/lib/searchTypes";
 import { useTranslations } from 'next-intl';
 
 export type StatusFilter = "all" | "verified" | "needs_review" | "unreviewed";
@@ -21,13 +21,13 @@ interface Props {
   // Global search mode: when query is non-empty, parent fetches /api/search
   // and passes results here. When undefined, render local page entries.
   globalMode?: boolean;
-  globalResults?: SearchHit[];
+  globalResults?: PersonHit[];
   globalTotal?: number;
   globalLoading?: boolean;
   globalError?: string | null;
   currentStem?: string;
   activeEntryId?: string;
-  onSelectGlobal?: (hit: SearchHit) => void;
+  onSelectGlobal?: (hit: SearchMention) => void;
 }
 
 export default function SearchPanel(p: Props) {
@@ -276,7 +276,7 @@ function formatName(e: Entry): string {
   return parts.join(" ");
 }
 
-function formatHitName(h: SearchHit): string {
+function formatMentionName(h: SearchMention): string {
   return [h.name, h.initials].filter(Boolean).join(" ");
 }
 
@@ -289,13 +289,13 @@ function GlobalResults({
   activeEntryId,
   onSelect,
 }: {
-  results: SearchHit[];
+  results: PersonHit[];
   total: number;
   loading: boolean;
   error: string | null;
   currentStem?: string;
   activeEntryId?: string;
-  onSelect?: (h: SearchHit) => void;
+  onSelect?: (h: SearchMention) => void;
 }) {
   if (error) {
     return (
@@ -320,51 +320,72 @@ function GlobalResults({
   }
   return (
     <>
-      {results.map((h) => {
-        const onCurrent = h.stem === currentStem;
-        const name = formatHitName(h) || "—";
-        const occ = h.occupation_expanded || h.occupation || "";
-        const addr = h.address_full || "";
+      {results.map((p) => {
+        // Find best name/occ/addr for this cluster to display as the header
+        // For unclustered entries (mentions.length === 1), use its own data.
+        const headerName = p.canonical_name || formatMentionName(p.mentions[0]) || "—";
+        const headerOcc = p.canonical_occupation || p.mentions[0].occupation_expanded || p.mentions[0].occupation || "";
+        const headerAddr = p.canonical_address || p.mentions[0].address_full || "";
+        
         return (
-          <button
-            key={h.id}
-            onClick={() => onSelect?.(h)}
-            className="w-full text-left flex flex-col gap-[3px]"
-            style={{
-              padding: "10px 13px",
-              background: h.stable_id === activeEntryId ? "#e8b84c1a" : onCurrent ? "#e8b84c06" : "transparent",
-              borderLeft: h.stable_id === activeEntryId ? "2px solid #e8b84c" : onCurrent ? "2px solid #e8b84c44" : "2px solid transparent",
-            }}
-          >
-            <span
-              className="flex items-center gap-[6px]"
-              style={{
-                fontSize: 11,
-                letterSpacing: "0.08em",
-                fontWeight: 700,
-                color: onCurrent ? "#e8b84c" : "#e6d9b0",
-              }}
-            >
-              {name}
-            </span>
-            <span
-              className="text-bp-ink-dim"
-              style={{ fontSize: 8.5, letterSpacing: "0.08em" }}
-            >
-              {occ}
-            </span>
-            <div className="flex items-center justify-between gap-[6px]">
-              <span className="text-bp-ink-dim truncate" style={{ fontSize: 8.5 }}>
-                {addr}
+          <div key={p.cluster_id} className="w-full flex flex-col mb-[8px] border-b border-bp-ink/15 pb-[8px]">
+            {/* Person Header */}
+            <div className="px-[13px] py-[6px] flex flex-col gap-[3px]">
+              <span
+                className="flex items-center gap-[6px]"
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.08em",
+                  fontWeight: 700,
+                  color: "#e6d9b0",
+                }}
+              >
+                {headerName}
               </span>
               <span
-                className="text-bp-amber flex-shrink-0 uppercase"
-                style={{ fontSize: 8, letterSpacing: "0.12em", fontWeight: 700 }}
+                className="text-bp-ink-dim"
+                style={{ fontSize: 8.5, letterSpacing: "0.08em" }}
               >
-                p. {h.page_number ?? "?"}
+                {headerOcc}
+              </span>
+              <span className="text-bp-ink-dim truncate" style={{ fontSize: 8.5 }}>
+                {headerAddr}
               </span>
             </div>
-          </button>
+            
+            {/* Mentions List */}
+            <div className="flex flex-col mt-[4px]">
+              {p.mentions.map((m) => {
+                const onCurrent = m.stem === currentStem;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => onSelect?.(m)}
+                    className="w-full text-left flex items-center justify-between"
+                    style={{
+                      padding: "6px 13px",
+                      background: m.stable_id === activeEntryId ? "#e8b84c1a" : onCurrent ? "#e8b84c06" : "transparent",
+                      borderLeft: m.stable_id === activeEntryId ? "2px solid #e8b84c" : onCurrent ? "2px solid #e8b84c44" : "2px solid transparent",
+                    }}
+                  >
+                    <span
+                      className="text-bp-ink-dim truncate"
+                      style={{ fontSize: 8.5, color: onCurrent ? "#e8b84c" : undefined }}
+                    >
+                      {/* Only show address and occ here if they differ or just show "Vermelding" */}
+                      {m.occupation || "Vermelding"} {m.address_full ? `- ${m.address_full}` : ""}
+                    </span>
+                    <span
+                      className="text-bp-amber flex-shrink-0 uppercase ml-[8px]"
+                      style={{ fontSize: 8, letterSpacing: "0.12em", fontWeight: 700 }}
+                    >
+                      p. {m.page_number ?? "?"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         );
       })}
       {total > results.length && (
@@ -372,7 +393,7 @@ function GlobalResults({
           className="px-[13px] py-[10px] text-bp-ink-dim text-center uppercase"
           style={{ fontSize: 8, letterSpacing: "0.18em" }}
         >
-          {results.length} van {total}
+          {results.length} van {total} clusters
         </div>
       )}
     </>
