@@ -17,6 +17,7 @@ env/
 .env
 .env.*
 !web/.env.local.example
+fly.toml
 
 # Pipeline — lives in its own repo (https://github.com/lieuwe89/tables-ocr-pipeline)
 pipeline/
