@@ -14,7 +14,6 @@ env/
 *.egg-info/
 
 # Project secrets — NEVER commit
-secrets.md
 .env
 .env.*
 !web/.env.local.example
@@ -27,14 +26,9 @@ viewer.py
 viewer/
 Dockerfile.dgx
 
-# Working documents (backlogs, handoffs, planning artefacts)
-HANDOFF.md
-HANDOFF_GEOCODE.md
-NEXT_STEPS.md
-PLAN-*.md
-DOCS_STABILIZATION.md
-docs/archive/
-docs/pipeline-v2.md
+# Documentation & Markdown
+*.md
+!README.md
 
 # Generated pipeline outputs (rebuildable from cached OCR + LLM raw + scans)
 # `output/overrides/` contains user-edited corrections and IS tracked.

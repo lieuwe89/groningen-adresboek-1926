@@ -28,9 +28,11 @@ Entries are geocoded via PDOK / BAG and linked to georeferenced historic maps.
 │   └── public/              Static assets (DZI tiles served from here)
 ├── docs/
 │   └── design-ref/          UI/UX reference HTML
-├── output/overrides/        Admin panel edits (tracked; all other output gitignored)
-└── CLAUDE.md                Architecture notes for AI assistants
+└── output/overrides/        Admin panel edits (tracked; all other output gitignored)
 ```
+
+> [!NOTE]
+> Internal documentation, handoffs, and architectural notes (`*.md`) are excluded from the repository to keep the codebase focused on implementation.
 
 ## Tech Stack & Architecture
 
