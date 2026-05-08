@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "build:db": "cd .. && .venv/bin/python scripts/build_db.py"
+    "build:db": "_pipeline/.venv/bin/python _pipeline/scripts/build_db.py"
   },
   "dependencies": {
     "@geomatico/maplibre-cog-protocol": "^0.8.0",
