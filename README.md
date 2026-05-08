@@ -25,8 +25,7 @@ Entries are geocoded via PDOK / BAG and linked to georeferenced historic maps.
 ├── components/          Shared React components
 ├── lib/                 DB access, geocoding helpers, types
 ├── public/              Static assets (DZI tiles served from here)
-└── _pipeline/           Internal pipeline scripts & raw data (gitignored)
-    └── output/overrides/ Admin panel edits (tracked)
+└── data/overrides/      Admin panel edits (tracked)
 ```
 
 > [!NOTE]

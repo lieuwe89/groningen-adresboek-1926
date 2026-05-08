@@ -10,8 +10,6 @@ fly.toml
 
 # Internal Pipeline & Assets (not for public repo)
 _pipeline/
-!_pipeline/output/
-!_pipeline/output/overrides/
 
 # Next.js / Node
 node_modules/
@@ -31,6 +29,7 @@ docs/
 
 # Application Data
 data/
+!data/overrides/
 public/tiles/
 public/maps/
 
