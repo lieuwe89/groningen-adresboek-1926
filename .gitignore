@@ -28,7 +28,7 @@ Dockerfile.dgx
 
 # Documentation & Markdown
 *.md
-!README.md
+!/README.md
 
 # Generated pipeline outputs (rebuildable from cached OCR + LLM raw + scans)
 # `output/overrides/` contains user-edited corrections and IS tracked.
