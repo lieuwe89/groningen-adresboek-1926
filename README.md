@@ -26,13 +26,11 @@ Entries are geocoded via PDOK / BAG and linked to georeferenced historic maps.
 │   ├── components/          Shared React components
 │   ├── lib/                 DB access, geocoding helpers, types
 │   └── public/              Static assets (DZI tiles served from here)
-├── docs/
-│   └── design-ref/          UI/UX reference HTML
 └── output/overrides/        Admin panel edits (tracked; all other output gitignored)
 ```
 
 > [!NOTE]
-> Internal documentation, handoffs, and architectural notes (`*.md`) are excluded from the repository to keep the codebase focused on implementation.
+> Internal documentation, design references, and architectural notes are excluded from the repository to keep the codebase focused on implementation.
 
 ## Tech Stack & Architecture
 
