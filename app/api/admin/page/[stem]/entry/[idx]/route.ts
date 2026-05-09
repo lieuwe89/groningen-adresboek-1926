@@ -258,6 +258,8 @@ export async function PATCH(
       `).run(JSON.stringify(["geocode_error"]), next.edited_at, id, next.edited_at);
     }
     syncEntryDerivedData(db, id);
+    const { linkToNearestBuilding } = await import("@/lib/adminDbSync");
+    linkToNearestBuilding(db, id);
   }
 
   let savedOverride: EntryOverride;
