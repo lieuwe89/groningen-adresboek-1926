@@ -52,6 +52,38 @@ export async function writeOverrides(stem: string, data: OverridesFile): Promise
   await fs.rename(tmp, file);
 }
 
+const overrideWriteLocks = new Map<string, Promise<void>>();
+
+export async function updateOverride(
+  stem: string,
+  id: EntryId,
+  update: (previous: EntryOverride | undefined) => EntryOverride
+): Promise<EntryOverride> {
+  const previousLock = overrideWriteLocks.get(stem) ?? Promise.resolve();
+
+  const operation = previousLock.catch(() => undefined).then(async () => {
+    const overrides = await loadOverrides(stem);
+    const next = update(overrides[id]);
+    overrides[id] = next;
+    await writeOverrides(stem, overrides);
+    return next;
+  });
+
+  const lock = operation.then(
+    () => undefined,
+    () => undefined
+  );
+  overrideWriteLocks.set(stem, lock);
+
+  try {
+    return await operation;
+  } finally {
+    if (overrideWriteLocks.get(stem) === lock) {
+      overrideWriteLocks.delete(stem);
+    }
+  }
+}
+
 export function entryFingerprint(e: Entry): string {
   const norm = (s: string | null | undefined) =>
     (s || "").toLowerCase().replace(/\s+/g, " ").trim();
