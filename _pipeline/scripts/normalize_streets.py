@@ -74,16 +74,26 @@ def clean(value):
 
 def normalized_street(address_street, address_street_expanded):
     for value in (address_street, address_street_expanded):
-        street = clean(value)
-        street_without_trailing_period = street.rstrip(".")
-        for old, new in sorted(NORMALIZATION_MAP.items(), key=lambda item: len(item[0]), reverse=True):
-            if street == old or street_without_trailing_period == old:
-                return new
-            for separator in (" ", " ("):
-                prefix = f"{old}{separator}"
-                if street.startswith(prefix):
-                    suffix = street[len(old):]
-                    return f"{new}{suffix}"
+        normalized = normalize_street_text(value)
+        if normalized:
+            return normalized
+    return None
+
+
+def normalize_street_text(value):
+    street = clean(value)
+    street_without_trailing_period = street.rstrip(".")
+    for old, new in sorted(NORMALIZATION_MAP.items(), key=lambda item: len(item[0]), reverse=True):
+        if street == old or street_without_trailing_period == old:
+            return new
+        for separator in (" ", " ("):
+            prefix = f"{old}{separator}"
+            if street.startswith(prefix):
+                suffix = street[len(old):]
+                return f"{new}{suffix}"
+        if street.startswith(f"{old}."):
+            suffix = street[len(old) + 1:].strip()
+            return " ".join(part for part in (new, suffix) if part)
     return None
 
 
@@ -103,7 +113,8 @@ def normalize():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    total_updated = 0
+    total_entries_updated = 0
+    total_persons_updated = 0
 
     print("Normalizing street names, display addresses, searchable text, and FTS...")
     cursor.execute(
@@ -146,13 +157,28 @@ def normalize():
                 row["id"],
             ),
         )
-        total_updated += cursor.rowcount
+        total_entries_updated += cursor.rowcount
+
+    cursor.execute("SELECT id, canonical_address FROM persons")
+    person_rows = cursor.fetchall()
+
+    for person_id, canonical_address in person_rows:
+        normalized_address = normalize_street_text(canonical_address)
+        if not normalized_address:
+            continue
+
+        cursor.execute(
+            "UPDATE persons SET canonical_address = ? WHERE id = ?",
+            (normalized_address, person_id),
+        )
+        total_persons_updated += cursor.rowcount
 
     cursor.execute("INSERT INTO entries_fts(entries_fts) VALUES ('rebuild')")
 
     conn.commit()
     conn.close()
-    print(f"Finished. Total entries updated (by street variation): {total_updated}")
+    print(f"Finished. Total entries updated (by street variation): {total_entries_updated}")
+    print(f"Finished. Total persons updated (canonical address): {total_persons_updated}")
 
 if __name__ == "__main__":
     normalize()
