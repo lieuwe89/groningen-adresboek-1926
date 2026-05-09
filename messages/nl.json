@@ -8,7 +8,9 @@
     "info": "Info",
     "admin": "Admin",
     "public": "Publiek",
-    "stats": "Stats"
+    "stats": "Stats",
+    "authRequired": "Authenticatie vereist",
+    "dismiss": "Sluiten"
   },
   "WelcomeModal": {
     "title": "Welkom bij het Adresboek 1926",

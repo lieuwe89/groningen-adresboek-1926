@@ -8,7 +8,9 @@
     "info": "Info",
     "admin": "Admin",
     "public": "Public",
-    "stats": "Stats"
+    "stats": "Stats",
+    "authRequired": "Authentication required",
+    "dismiss": "Dismiss"
   },
   "WelcomeModal": {
     "title": "Welcome to the 1926 Address Book",

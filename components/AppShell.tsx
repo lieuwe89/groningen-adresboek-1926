@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter, useSearchParams, useParams, usePathname } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SearchPanel, { type StatusFilter } from "@/components/SearchPanel";
@@ -20,9 +20,7 @@ const SEARCH_LIMIT = 50;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const params = useParams();
   const locale = useLocale();
-  const stem = params.stem as string;
   const pathname = usePathname() || "";
   const isAdmin = pathname.includes("/admin");
   const { proxyPath } = useProxyUrl();
@@ -147,7 +145,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           globalTotal={globalTotal}
           globalLoading={globalLoading}
           globalError={globalError}
-          currentStem={stem}
           activeEntryId={searchParams.get("entry") || undefined}
           onSelectGlobal={handleSelectGlobal}
         />

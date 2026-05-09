@@ -25,7 +25,6 @@ interface Props {
   globalTotal?: number;
   globalLoading?: boolean;
   globalError?: string | null;
-  currentStem?: string;
   activeEntryId?: string;
   onSelectGlobal?: (hit: SearchMention) => void;
 }
@@ -127,7 +126,6 @@ export default function SearchPanel(p: Props) {
               total={p.globalTotal || 0}
               loading={!!p.globalLoading}
               error={p.globalError || null}
-              currentStem={p.currentStem}
               activeEntryId={p.activeEntryId}
               onSelect={p.onSelectGlobal}
             />
@@ -285,7 +283,6 @@ function GlobalResults({
   total,
   loading,
   error,
-  currentStem,
   activeEntryId,
   onSelect,
 }: {
@@ -293,7 +290,6 @@ function GlobalResults({
   total: number;
   loading: boolean;
   error: string | null;
-  currentStem?: string;
   activeEntryId?: string;
   onSelect?: (h: SearchMention) => void;
 }) {
@@ -356,7 +352,7 @@ function GlobalResults({
             {/* Mentions List */}
             <div className="flex flex-col mt-[4px]">
               {p.mentions.map((m) => {
-                const onCurrent = m.stem === currentStem;
+                const active = m.stable_id === activeEntryId;
                 return (
                   <button
                     key={m.id}
@@ -364,13 +360,13 @@ function GlobalResults({
                     className="w-full text-left flex items-center justify-between"
                     style={{
                       padding: "6px 13px",
-                      background: m.stable_id === activeEntryId ? "#e8b84c1a" : onCurrent ? "#e8b84c06" : "transparent",
-                      borderLeft: m.stable_id === activeEntryId ? "2px solid #e8b84c" : onCurrent ? "2px solid #e8b84c44" : "2px solid transparent",
+                      background: active ? "#e8b84c1a" : "transparent",
+                      borderLeft: active ? "2px solid #e8b84c" : "2px solid transparent",
                     }}
                   >
                     <span
                       className="text-bp-ink-dim truncate"
-                      style={{ fontSize: 8.5, color: onCurrent ? "#e8b84c" : undefined }}
+                      style={{ fontSize: 8.5, color: active ? "#e8b84c" : undefined }}
                     >
                       {/* Only show address and occ here if they differ or just show "Vermelding" */}
                       {m.occupation || "Vermelding"} {m.address_full ? `- ${m.address_full}` : ""}

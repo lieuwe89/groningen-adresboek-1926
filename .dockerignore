@@ -1,15 +1,16 @@
 # Large assets — not baked into the image (live on a Fly volume)
-web/public/tiles/
-web/public/maps/
-web/public/scans
+public/tiles/
+public/maps/
+public/scans/
 
 # Generated / local-only
-web/data/
-web/.env.local
-web/node_modules/
-web/.next/
+data/
+.env.local
+node_modules/
+.next/
 
 # Pipeline (separate repo)
+_pipeline/
 pipeline/
 scripts/
 scans/
