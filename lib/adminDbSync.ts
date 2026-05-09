@@ -180,9 +180,9 @@ function findOrCreatePersonId(db: DB, entry: EntryRow): number | null {
       SELECT id FROM entries 
       WHERE person_id = ? 
         AND (
-          (address_full IS NOT NULL AND ? <> "" AND address_full LIKE ?) OR
-          (occupation_expanded IS NOT NULL AND ? <> "" AND occupation_expanded = ?) OR
-          (pand_id IS NOT NULL AND ? <> "" AND pand_id = ?)
+          (address_full IS NOT NULL AND ? <> '' AND address_full LIKE ?) OR
+          (occupation_expanded IS NOT NULL AND ? <> '' AND occupation_expanded = ?) OR
+          (pand_id IS NOT NULL AND ? <> '' AND pand_id = ?)
         )
       LIMIT 1
     `).get(
@@ -201,7 +201,7 @@ function findOrCreatePersonId(db: DB, entry: EntryRow): number | null {
       INSERT INTO persons (canonical_name, entry_count) 
       VALUES (?, 1)
     `).run(compactJoin([entry.initials, entry.name_prefix_expanded, entry.name]));
-    return res.lastrowid as number;
+    return res.lastInsertRowid as number;
   }
 
   return entry.person_id;

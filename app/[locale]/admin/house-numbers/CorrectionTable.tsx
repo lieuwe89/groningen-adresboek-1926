@@ -76,7 +76,7 @@ export default function CorrectionTable({ candidates }: { candidates: Candidate[
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    defaultValue={item.address_number}
+                    defaultValue={item.address_number ?? ""}
                     className="border rounded px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     disabled={isSuccess || isSaving}
                     onKeyDown={(e) => {
@@ -85,7 +85,7 @@ export default function CorrectionTable({ candidates }: { candidates: Candidate[
                       }
                     }}
                     onBlur={(e) => {
-                      if (e.target.value !== item.address_number) {
+                      if (e.target.value !== (item.address_number ?? "")) {
                          handleSave(item.stable_id, e.target.value);
                       }
                     }}

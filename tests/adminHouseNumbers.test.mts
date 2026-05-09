@@ -1,12 +1,8 @@
 import assert from "node:assert/strict";
+import path from "node:path";
 import test from "node:test";
+import { pathToFileURL } from "node:url";
 import Database from "better-sqlite3";
-
-// @ts-expect-error Node 25 can strip TypeScript for this focused node:test file.
-import {
-  houseNumberCorrectionPayload,
-  listHouseNumberCandidates,
-} from "../lib/adminHouseNumbers.ts";
 
 function createDb() {
   const db = new Database(":memory:");
@@ -42,18 +38,27 @@ function createDb() {
   return db;
 }
 
-test("listHouseNumberCandidates excludes already verified corrections", () => {
+test("listHouseNumberCandidates excludes already verified corrections", async () => {
   const db = createDb();
+  const moduleUrl = pathToFileURL(
+    path.join(process.cwd(), "lib", "adminHouseNumbers.ts")
+  ).href;
+  const { listHouseNumberCandidates } = await import(moduleUrl);
 
   const candidates = listHouseNumberCandidates(db);
 
   assert.deepEqual(
-    candidates.map((candidate) => candidate.stable_id),
+    (candidates as Array<{ stable_id: string }>).map((candidate) => candidate.stable_id),
     ["page:0"]
   );
 });
 
-test("houseNumberCorrectionPayload marks a saved correction as verified", () => {
+test("houseNumberCorrectionPayload marks a saved correction as verified", async () => {
+  const moduleUrl = pathToFileURL(
+    path.join(process.cwd(), "lib", "adminHouseNumbers.ts")
+  ).href;
+  const { houseNumberCorrectionPayload } = await import(moduleUrl);
+
   assert.deepEqual(houseNumberCorrectionPayload("522"), {
     fields: { address_number: "522" },
     flags: { verified: true, needs_review: false },
