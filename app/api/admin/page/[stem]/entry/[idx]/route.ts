@@ -173,8 +173,11 @@ export async function PATCH(
       syncEntryDerivedData(db, id);
     }
   } catch (err) {
-    console.warn("Failed to update database:", err);
-    return NextResponse.json({ error: "failed to update database" }, { status: 500 });
+    console.error(`[Admin API] Database update failed for ${id}:`, err);
+    return NextResponse.json(
+      { error: `Database update failed: ${err instanceof Error ? err.message : String(err)}` },
+      { status: 500 }
+    );
   }
 
   if (addressChanged) {
@@ -257,21 +260,30 @@ export async function PATCH(
     syncEntryDerivedData(db, id);
   }
 
-  const savedOverride = await updateOverride(stem, id, (latest) => {
-    const updated: EntryOverride = {
-      ...latest,
-      fields: { ...(latest?.fields || {}), ...(fields || {}) },
-      flags: { ...(latest?.flags || {}), ...(flagsIn || {}) },
-      fingerprint: entryFingerprint(baseEntry),
-      edited_at: next.edited_at,
-    };
-    if (bboxIn) {
-      updated.bbox = { type: "rect", value: bboxIn, source: "manual" };
-    } else if (latest?.bbox) {
-      updated.bbox = latest.bbox;
-    }
-    return updated;
-  });
+  let savedOverride: EntryOverride;
+  try {
+    savedOverride = await updateOverride(stem, id, (latest) => {
+      const updated: EntryOverride = {
+        ...latest,
+        fields: { ...(latest?.fields || {}), ...(fields || {}) },
+        flags: { ...(latest?.flags || {}), ...(flagsIn || {}) },
+        fingerprint: entryFingerprint(baseEntry),
+        edited_at: next.edited_at,
+      };
+      if (bboxIn) {
+        updated.bbox = { type: "rect", value: bboxIn, source: "manual" };
+      } else if (latest?.bbox) {
+        updated.bbox = latest.bbox;
+      }
+      return updated;
+    });
+  } catch (err) {
+    console.error(`[Admin API] Override update failed for ${id}:`, err);
+    return NextResponse.json(
+      { error: `Failed to save override: ${err instanceof Error ? err.message : String(err)}` },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ ok: true, override: savedOverride, geocode: geocodeInfo });
 }

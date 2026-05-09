@@ -1,22 +1,12 @@
+import { listHouseNumberCandidates } from "@/lib/adminHouseNumbers";
 import { getDb } from "@/lib/db";
-import CorrectionTable, { type Candidate } from "./CorrectionTable";
+import CorrectionTable from "./CorrectionTable";
 
 export const dynamic = "force-dynamic";
 
 export default function HouseNumbersPage() {
   const db = getDb();
-  const candidates = db.prepare(`
-    SELECT e.stable_id, e.name, e.address_street, e.address_number, e.address_full, e.entry_bbox, p.page_number
-    FROM entries e
-    JOIN pages p ON e.page_id = p.id
-    WHERE e.pand_id IS NULL
-      AND length(e.address_number) > 2
-      AND e.address_number GLOB '*[0-9]*'
-      AND e.address_number NOT GLOB '*[^0-9]*'
-      AND e.entry_bbox IS NOT NULL
-    ORDER BY e.address_street, e.address_number
-    LIMIT 25
-  `).all() as Candidate[];
+  const candidates = listHouseNumberCandidates(db);
 
   return (
     <main className="h-full overflow-y-auto bg-gray-50">

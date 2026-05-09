@@ -2,18 +2,14 @@
 
 import { useState } from "react";
 import ScanViewer from "@/components/ScanViewer";
+import {
+  houseNumberCorrectionPayload,
+  type HouseNumberCandidate,
+} from "@/lib/adminHouseNumbers";
 import type { Bbox } from "@/lib/data";
 import { useProxyUrl } from "@/lib/useProxyUrl";
 
-export interface Candidate {
-  stable_id: string;
-  name: string;
-  address_street: string;
-  address_number: string;
-  address_full: string;
-  entry_bbox: string;
-  page_number: number;
-}
+export type Candidate = HouseNumberCandidate;
 
 export default function CorrectionTable({ candidates }: { candidates: Candidate[] }) {
   const [items, setItems] = useState<Candidate[]>(candidates);
@@ -32,14 +28,12 @@ export default function CorrectionTable({ candidates }: { candidates: Candidate[
       const res = await fetch(proxyPath(`/api/admin/page/${stem}/entry/${idx}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fields: { address_number: newNumber } }),
+        body: JSON.stringify(houseNumberCorrectionPayload(newNumber)),
       });
       if (!res.ok) throw new Error("Save failed");
 
       setSuccessIds((prev) => new Set(prev).add(id));
-
-      // Keep it in the list but marked success, or remove it?
-      // Leaving it marked success is better feedback.
+      setItems((prev) => prev.filter((item) => item.stable_id !== id));
     } catch (e) {
       console.error(e);
       alert("Failed to save correction.");
