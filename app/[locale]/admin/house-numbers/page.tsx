@@ -1,6 +1,8 @@
 import { getDb } from "@/lib/db";
 import CorrectionTable, { type Candidate } from "./CorrectionTable";
 
+export const dynamic = "force-dynamic";
+
 export default function HouseNumbersPage() {
   const db = getDb();
   const candidates = db.prepare(`
