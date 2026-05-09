@@ -26,6 +26,11 @@ function longestValue(current: string | null, candidate: string | null | undefin
   return !current || candidate.length > current.length ? candidate : current;
 }
 
+function normalize(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 export function searchableTextForEntry(entry: Partial<EntryRow>): string {
   const parts = [
     entry.name,
@@ -52,6 +57,13 @@ export function syncEntryDerivedData(db: DB, stableId: string): void {
   `).get(stableId) as EntryRow | undefined;
 
   if (!edited) return;
+
+  // 1. Try to find/assign a person_id if missing or if name/address changed
+  const pid = findOrCreatePersonId(db, edited);
+  if (pid !== edited.person_id) {
+    db.prepare("UPDATE entries SET person_id = ? WHERE id = ?").run(pid, edited.id);
+    edited.person_id = pid;
+  }
 
   // Consistency: if address_street changed but expanded wasn't updated, 
   // we should probably clear or update the expanded one to avoid stale search hits.
@@ -138,4 +150,59 @@ export function linkToNearestBuilding(db: DB, stableId: string): void {
   if (nearest) {
     db.prepare("UPDATE entries SET pand_id = ? WHERE id = ?").run(nearest.pand_id, entry.id);
   }
+}
+
+/**
+ * Finds an existing person record that matches the entry, or creates a new one.
+ * Uses the same logic as cluster_persons.py: Name + Initials match AND (Address OR Occupation).
+ */
+function findOrCreatePersonId(db: DB, entry: EntryRow): number | null {
+  const nName = normalize(entry.name);
+  const nInits = normalize(entry.initials);
+  if (!nName) return null;
+
+  const nAddr = normalize(entry.address_full);
+  const nOcc = normalize(entry.occupation_expanded || entry.occupation);
+  const pandId = entry.pand_id;
+
+  // Find candidates with matching name/initials
+  const candidates = db.prepare(`
+    SELECT DISTINCT person_id 
+    FROM entries 
+    WHERE person_id IS NOT NULL 
+      AND id <> ?
+      AND (name = ? OR (name IS NOT NULL AND initials = ?))
+  `).all(entry.id, entry.name, entry.initials) as Array<{ person_id: number }>;
+
+  // For each candidate person, check if they share an address or occupation with the current entry
+  for (const cand of candidates) {
+    const matches = db.prepare(`
+      SELECT id FROM entries 
+      WHERE person_id = ? 
+        AND (
+          (address_full IS NOT NULL AND ? <> "" AND address_full LIKE ?) OR
+          (occupation_expanded IS NOT NULL AND ? <> "" AND occupation_expanded = ?) OR
+          (pand_id IS NOT NULL AND ? <> "" AND pand_id = ?)
+        )
+      LIMIT 1
+    `).get(
+      cand.person_id, 
+      nAddr, `%${entry.address_full}%`,
+      nOcc, entry.occupation_expanded || entry.occupation,
+      pandId || "", pandId || ""
+    );
+
+    if (matches) return cand.person_id;
+  }
+
+  // If no match found, and entry currently has no person_id, create a new one
+  if (entry.person_id == null) {
+    const res = db.prepare(`
+      INSERT INTO persons (canonical_name, entry_count) 
+      VALUES (?, 1)
+    `).run(compactJoin([entry.initials, entry.name_prefix_expanded, entry.name]));
+    return res.lastrowid as number;
+  }
+
+  return entry.person_id;
 }
