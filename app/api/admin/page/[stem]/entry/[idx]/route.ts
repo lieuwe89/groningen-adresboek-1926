@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { syncEntryDerivedData } from "@/lib/adminDbSync";
 import { loadAdminBaseEntry, type Bbox } from "@/lib/adminEntryLookup";
+import { saveOverrideBestEffort } from "@/lib/adminOverrideSave";
 import { getWritableDb } from "@/lib/db";
 import {
   loadOverrides,
-  updateOverride,
   writeOverrides,
   entryFingerprint,
   entryId,
@@ -262,9 +262,11 @@ export async function PATCH(
     linkToNearestBuilding(db, id);
   }
 
-  let savedOverride: EntryOverride;
-  try {
-    savedOverride = await updateOverride(stem, id, (latest) => {
+  const overrideResult = await saveOverrideBestEffort(
+    stem,
+    id,
+    next,
+    (latest) => {
       const updated: EntryOverride = {
         ...latest,
         fields: { ...(latest?.fields || {}), ...(fields || {}) },
@@ -278,16 +280,15 @@ export async function PATCH(
         updated.bbox = latest.bbox;
       }
       return updated;
-    });
-  } catch (err) {
-    console.error(`[Admin API] Override update failed for ${id}:`, err);
-    return NextResponse.json(
-      { error: `Failed to save override: ${err instanceof Error ? err.message : String(err)}` },
-      { status: 500 }
-    );
-  }
+    }
+  );
 
-  return NextResponse.json({ ok: true, override: savedOverride, geocode: geocodeInfo });
+  return NextResponse.json({
+    ok: true,
+    override: overrideResult.override,
+    geocode: geocodeInfo,
+    warning: overrideResult.warning,
+  });
 }
 
 export async function DELETE(

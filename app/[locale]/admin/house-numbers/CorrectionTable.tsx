@@ -30,13 +30,13 @@ export default function CorrectionTable({ candidates }: { candidates: Candidate[
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(houseNumberCorrectionPayload(newNumber)),
       });
-      if (!res.ok) throw new Error("Save failed");
+      if (!res.ok) throw new Error(await res.text());
 
       setSuccessIds((prev) => new Set(prev).add(id));
       setItems((prev) => prev.filter((item) => item.stable_id !== id));
     } catch (e) {
       console.error(e);
-      alert("Failed to save correction.");
+      alert(e instanceof Error ? e.message : "Failed to save correction.");
     } finally {
       setSavingId(null);
     }
