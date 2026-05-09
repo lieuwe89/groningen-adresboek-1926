@@ -21,6 +21,7 @@ import re
 import sqlite3
 import sys
 import time
+import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -49,6 +50,130 @@ def display_path(path: Path) -> str:
         return str(path.relative_to(PROJECT_ROOT))
     except ValueError:
         return str(path)
+
+
+def strip_accents(value: str) -> str:
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", value) if not unicodedata.combining(c)
+    )
+
+
+SIDE_MARKER_RE = re.compile(
+    r"(?:^|\s|\()"
+    r"(?:"
+    r"(?:n|noord|noordelijk(?:e)?|noordzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"(?:z|zuid|zuidelijk(?:e)?|zuidzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"(?:o|oost|oostelijk(?:e)?|oostzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"(?:w|west|westelijk(?:e)?|westzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"nz|zz|oz|wz|"
+    r"noordzijde|zuidzijde|oostzijde|westzijde|"
+    r"noordelijke|zuidelijke|oostelijke|westelijke"
+    r")"
+    r"(?:\)|$|\s)",
+)
+
+DISPLAY_STREET_CORRECTIONS = {
+    "musschengang": "Mussengang",
+    "cortinglaan": "Cortinghlaan",
+    "h l wicherstraat": "H. L. Wichersstraat",
+    "driehovensteeg": "Driehovenstraat",
+    "j w fristostraat": "Johan Willem Frisostraat",
+    "j w frisostraat": "Johan Willem Frisostraat",
+    "joh w frisostraat": "Johan Willem Frisostraat",
+    "frans straatweg": "Friesestraatweg",
+    "hoornschediep": "Hoornsediep",
+    "hoornsche diep": "Hoornsediep",
+    "hoornsche-diep": "Hoornsediep",
+    "hoornschedijk": "Hoornsedijk",
+    "hoornsche dijk": "Hoornsedijk",
+    "hoornsche-dijk": "Hoornsedijk",
+    "l henriettestraat": "Louise Henriëttestraat",
+    "noorderstationstraat": "Noorderstationsstraat",
+    "helperwestsingel": "Helper Westsingel",
+    "helperoostsingel": "Helper Oostsingel",
+    "helperweststraat": "Helper Weststraat",
+    "helperbrink": "Helper Brink",
+    "bleekerstraat": "Blekerstraat",
+    "stationstraat": "Stationsstraat",
+    "roodeweeshuisstraat": "Rodeweeshuisstraat",
+    "a-kerkstraat": "Akerkstraat",
+    "a kerkstraat": "Akerkstraat",
+    "a-kerkhof": "Akerkhof",
+    "a kerkhof": "Akerkhof",
+    "a-straat": "Astraat",
+    "a straat": "Astraat",
+    "petrus hendrikz straat": "Petrus Hendrikszstraat",
+    "petrus hendrikz-straat": "Petrus Hendrikszstraat",
+    "petrus hendrikzstraat": "Petrus Hendrikszstraat",
+    "petrus hendriksstraat": "Petrus Hendrikszstraat",
+    "zaagmulderswegje": "Zaagmuldersweg",
+    "loopendediep": "Lopendediep",
+    "schuitemakerstraat": "Schuitemakersstraat",
+    "sterreboschstraat": "Sterrebosstraat",
+    "van speijkstraat": "Van Speykstraat",
+    "van julsingastraat": "Van Julsinghastraat",
+    "koninginelaan": "Koninginnelaan",
+    "j goeverneurstraat": "Jan Goeverneurstraat",
+    "jan gouverneurstraat": "Jan Goeverneurstraat",
+    "tusschen beide markten": "Tussen beide Markten",
+    "u emmiussingel": "Ubbo Emmiussingel",
+    "fokkingedwarsstraat": "Folkingedwarsstraat",
+    "gerebrant bakkerstraat": "Gerbrand Bakkerstraat",
+}
+
+
+def normalize_street_key(value: str | None) -> str:
+    if not value:
+        return ""
+    key = raw_street_key(value)
+    previous = None
+    while previous != key:
+        previous = key
+        key = SIDE_MARKER_RE.sub(" ", key)
+        key = re.sub(r"\s+", " ", key).strip()
+    return key
+
+
+def raw_street_key(value: str | None) -> str:
+    if not value:
+        return ""
+    key = strip_accents(value).lower().strip()
+    key = re.sub(r"[^a-z0-9 \-']", " ", key)
+    key = re.sub(r"\s+", " ", key).strip()
+    return key
+
+
+def corrected_street_name(value: str | None) -> str | None:
+    if not value:
+        return value
+    key = normalize_street_key(value)
+    corrected = DISPLAY_STREET_CORRECTIONS.get(key)
+    if corrected:
+        return corrected
+    if key != raw_street_key(value):
+        return key.title()
+    return value.strip()
+
+
+def correct_entry_address(entry: dict) -> dict:
+    merged = dict(entry)
+    street_source = (
+        merged.get("address_street_expanded")
+        or merged.get("address_street")
+        or ""
+    )
+    corrected = corrected_street_name(street_source)
+    if not corrected or corrected == street_source:
+        return merged
+
+    if merged.get("address_street"):
+        merged["address_street"] = corrected
+    if merged.get("address_street_expanded") is not None:
+        merged["address_street_expanded"] = corrected
+
+    number = merged.get("address_number") or ""
+    merged["address_full"] = " ".join([s for s in (corrected, number) if s]).strip()
+    return merged
 
 
 SCHEMA = """
@@ -310,10 +435,14 @@ def main() -> None:
             if ov:
                 n_overridden += 1
 
+            original_address_norm = normalize_address(entry.get("address_full"))
+            entry = correct_entry_address(entry)
             address_full = entry.get("address_full")
             address_norm = normalize_address(address_full)
 
             geo = geocoded.get(address_norm) if address_norm else None
+            if not geo and original_address_norm and original_address_norm != address_norm:
+                geo = geocoded.get(original_address_norm)
             geo_lat = geo.get("lat") if geo and geo.get("status") == "ok" else None
             geo_lng = geo.get("lng") if geo and geo.get("status") == "ok" else None
             if geo_lat is not None:
