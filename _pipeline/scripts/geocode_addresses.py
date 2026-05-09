@@ -29,10 +29,74 @@ HAS_NUMBER = re.compile(r"\d")
 _DIR_PREFIX = re.compile(r"^(noord(?:elijke|zijde)|zuid(?:elijke|zijde)|oost(?:elijke|zijde)|west(?:elijke|zijde))\s+")
 # "Kerkstraat" in 1926 Groningen = Helper Kerkstraat (Helpman); must not affect "A-Kerkstraat" etc.
 _BARE_KERKSTRAAT = re.compile(r"(?<![a-z-])kerkstraat")
+_SIDE_MARKER = re.compile(
+    r"(?:^|\s|\()"
+    r"(?:"
+    r"(?:n|noord|noordelijk(?:e)?|noordzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"(?:z|zuid|zuidelijk(?:e)?|zuidzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"(?:o|oost|oostelijk(?:e)?|oostzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"(?:w|west|westelijk(?:e)?|westzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"nz|zz|oz|wz|"
+    r"noordzijde|zuidzijde|oostzijde|westzijde|"
+    r"noordelijke|zuidelijke|oostelijke|westelijke"
+    r")"
+    r"(?:\)|$|\s)",
+)
 
 # Historical → current name corrections applied to the PDOK query only (not the key).
 # Phrases before single words so longer patterns are substituted first.
 STREET_ALIASES = [
+    ("musschengang",       "mussengang"),
+    ("cortinglaan",        "cortinghlaan"),
+    ("h.l. wicherstraat",  "h.l. wichersstraat"),
+    ("h l wicherstraat",   "h l wichersstraat"),
+    ("driehovensteeg",     "driehovenstraat"),
+    ("j.w. fristostraat",  "johan willem frisostraat"),
+    ("j w fristostraat",   "johan willem frisostraat"),
+    ("j.w. frisostraat",   "johan willem frisostraat"),
+    ("j w frisostraat",    "johan willem frisostraat"),
+    ("joh. w. frisostraat", "johan willem frisostraat"),
+    ("frans straatweg",    "friesestraatweg"),
+    ("noorderstationstraat", "noorderstationsstraat"),
+    ("l. henriëttestraat", "louise henriëttestraat"),
+    ("l henriëttestraat",  "louise henriëttestraat"),
+    ("helperwestsingel",   "helper westsingel"),
+    ("helperoostsingel",   "helper oostsingel"),
+    ("helperweststraat",   "helper weststraat"),
+    ("helperbrink",        "helper brink"),
+    ("bleekerstraat",      "blekerstraat"),
+    ("stationstraat",      "stationsstraat"),
+    ("roodeweeshuisstraat", "rodeweeshuisstraat"),
+    ("a-kerkstraat",       "akerkstraat"),
+    ("a kerkstraat",       "akerkstraat"),
+    ("a-kerkhof",          "akerkhof"),
+    ("a kerkhof",          "akerkhof"),
+    ("a-straat",           "astraat"),
+    ("a straat",           "astraat"),
+    ("petrus hendrikz.straat", "petrus hendrikszstraat"),
+    ("petrus hendrikz-straat", "petrus hendrikszstraat"),
+    ("petrus hendrikz straat", "petrus hendrikszstraat"),
+    ("petrus hendrikzstraat", "petrus hendrikszstraat"),
+    ("petrus hendriksstraat", "petrus hendrikszstraat"),
+    ("zaagmulderswegje",   "zaagmuldersweg"),
+    ("loopendediep",       "lopendediep"),
+    ("hoornsche dijk",     "hoornsedijk"),
+    ("hoornsche-dijk",     "hoornsedijk"),
+    ("hoornsche diep",     "hoornsediep"),
+    ("hoornsche-diep",     "hoornsediep"),
+    ("schuitemakerstraat", "schuitemakersstraat"),
+    ("sterreboschstraat",  "sterrebosstraat"),
+    ("van speijkstraat",   "van speykstraat"),
+    ("van julsingastraat", "van julsinghastraat"),
+    ("koninginelaan",      "koninginnelaan"),
+    ("j. goeverneurstraat", "jan goeverneurstraat"),
+    ("j goeverneurstraat", "jan goeverneurstraat"),
+    ("jan gouverneurstraat", "jan goeverneurstraat"),
+    ("tusschen beide markten", "tussen beide markten"),
+    ("u. emmiussingel",    "ubbo emmiussingel"),
+    ("u emmiussingel",     "ubbo emmiussingel"),
+    ("fokkingedwarsstraat", "folkingedwarsstraat"),
+    ("gerebrant bakkerstraat", "gerbrand bakkerstraat"),
     ("verloren heereweg",  "verlengde hereweg"),
     ("verloren hereweg",   "verlengde hereweg"),
     ("friesche straatweg", "friesestraatweg"),
@@ -65,11 +129,23 @@ STREET_ALIASES = [
 ]
 
 
+def strip_side_markers(query: str) -> str:
+    previous = None
+    while previous != query:
+        previous = query
+        query = _SIDE_MARKER.sub(" ", query)
+        query = re.sub(r"\s+", " ", query).strip()
+    return query
+
+
 def normalize_query(address: str) -> str:
-    q = _DIR_PREFIX.sub("", address)
+    q = address.lower()
+    q = _DIR_PREFIX.sub("", q)
+    q = strip_side_markers(q)
     for old, new in STREET_ALIASES:
         q = q.replace(old, new)
     q = _BARE_KERKSTRAAT.sub("helper kerkstraat", q)
+    q = re.sub(r"\s+", " ", q).strip()
     return q
 
 

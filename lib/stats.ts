@@ -1,9 +1,10 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { loadOverrides } from "./overrides";
+import { getJsonDir } from "./projectPaths.js";
 import type { PageData } from "./data";
 
-const JSON_DIR = path.resolve(process.cwd(), "..", "output", "json");
+const JSON_DIR = getJsonDir();
 
 export interface PageStats {
   stem: string;

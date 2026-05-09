@@ -57,6 +57,43 @@ def strip_accents(s: str) -> str:
 # Many of these encode the 1947 Marchant spelling reform (oo→o, ee→e in
 # closed syllables, sch→s in some cases) and Dutch abbreviation conventions.
 STREET_FIXUPS = [
+    (r"\bmusschengang\b", "mussengang"),
+    (r"\bcortinglaan\b", "cortinghlaan"),
+    (r"\bh\s*l\s*wicherstraat\b", "h l wichersstraat"),
+    (r"\bdriehovensteeg\b", "driehovenstraat"),
+    (r"\bj\s*w\s*fristostraat\b", "johan willem frisostraat"),
+    (r"\bj\s*w\s*frisostraat\b", "johan willem frisostraat"),
+    (r"\bjoh\.?\s*w\.?\s*frisostraat\b", "johan willem frisostraat"),
+    (r"\bfrans\s+straatweg\b", "friesestraatweg"),
+    (r"\bnoorderstationstraat\b", "noorderstationsstraat"),
+    (r"\bl\s*henriettestraat\b", "louise henriettestraat"),
+    (r"\bhelperwestsingel\b", "helper westsingel"),
+    (r"\bhelperoostsingel\b", "helper oostsingel"),
+    (r"\bhelperweststraat\b", "helper weststraat"),
+    (r"\bhelperbrink\b", "helper brink"),
+    (r"\bbleekerstraat\b", "blekerstraat"),
+    (r"\bstationstraat\b", "stationsstraat"),
+    (r"\broodeweeshuisstraat\b", "rodeweeshuisstraat"),
+    (r"\ba\s*-\s*kerkstraat\b", "akerkstraat"),
+    (r"\ba\s*-\s*kerkhof\b", "akerkhof"),
+    (r"\ba\s*-\s*straat\b", "astraat"),
+    (r"\bpetrus\s+hendrikz(?:\s|-)?straat\b", "petrus hendrikszstraat"),
+    (r"\bpetrus\s+hendriksstraat\b", "petrus hendrikszstraat"),
+    (r"\bzaagmulderswegje\b", "zaagmuldersweg"),
+    (r"\bloopendediep\b", "lopendediep"),
+    (r"\bhoornsche\s*-?\s*dijk\b", "hoornsedijk"),
+    (r"\bhoornsche\s*-?\s*diep\b", "hoornsediep"),
+    (r"\bschuitemakerstraat\b", "schuitemakersstraat"),
+    (r"\bsterreboschstraat\b", "sterrebosstraat"),
+    (r"\bvan\s+speijkstraat\b", "van speykstraat"),
+    (r"\bvan\s+julsingastraat\b", "van julsinghastraat"),
+    (r"\bkoninginelaan\b", "koninginnelaan"),
+    (r"\bj\s*goeverneurstraat\b", "jan goeverneurstraat"),
+    (r"\bjan\s+gouverneurstraat\b", "jan goeverneurstraat"),
+    (r"\btusschen\s+beide\s+markten\b", "tussen beide markten"),
+    (r"\bu\s*emmiussingel\b", "ubbo emmiussingel"),
+    (r"\bfokkingedwarsstraat\b", "folkingedwarsstraat"),
+    (r"\bgerebrant\s+bakkerstraat\b", "gerbrand bakkerstraat"),
     (r"\bst\.?\b", "sint"),
     (r"\bgr\.?\b", "groote"),
     (r"\bn\.?\b", "noorder"),
@@ -86,6 +123,29 @@ STREET_FIXUPS = [
     (r"\bgr(?:ote)?\.?\s*adolfstraat\b", "graaf adolfstraat"),
 ]
 
+SIDE_MARKER_RE = re.compile(
+    r"(?:^|\s|\()"
+    r"(?:"
+    r"(?:n|noord|noordelijk(?:e)?|noordzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"(?:z|zuid|zuidelijk(?:e)?|zuidzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"(?:o|oost|oostelijk(?:e)?|oostzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"(?:w|west|westelijk(?:e)?|westzijde)\s*\.?\s*z(?:ijde)?\.?|"
+    r"nz|zz|oz|wz|"
+    r"noordzijde|zuidzijde|oostzijde|westzijde|"
+    r"noordelijke|zuidelijke|oostelijke|westelijke"
+    r")"
+    r"(?:\)|$|\s)",
+)
+
+
+def strip_side_markers(s: str) -> str:
+    previous = None
+    while previous != s:
+        previous = s
+        s = SIDE_MARKER_RE.sub(" ", s)
+        s = re.sub(r"\s+", " ", s).strip()
+    return s
+
 # 1947 spelling reform — pre-reform → post-reform stem.
 # Only word fragments where the reform actually applies in Groningen street
 # names (encoded as substring replacements; both directions tried at lookup).
@@ -108,6 +168,7 @@ def normalise_street(name: str | None) -> str:
     s = strip_accents(name).lower().strip()
     s = re.sub(r"[^a-z0-9 \-']", " ", s)
     s = re.sub(r"\s+", " ", s).strip()
+    s = strip_side_markers(s)
     # Try fixups but always also keep the raw form — match against either.
     return s
 

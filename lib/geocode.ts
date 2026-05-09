@@ -11,6 +11,57 @@ const PDOK_URL =
 
 // Historical → modern street name aliases (same as geocode_addresses.py)
 const STREET_ALIASES: [string, string][] = [
+  ["musschengang", "mussengang"],
+  ["cortinglaan", "cortinghlaan"],
+  ["h.l. wicherstraat", "h.l. wichersstraat"],
+  ["h l wicherstraat", "h l wichersstraat"],
+  ["driehovensteeg", "driehovenstraat"],
+  ["j.w. fristostraat", "johan willem frisostraat"],
+  ["j w fristostraat", "johan willem frisostraat"],
+  ["j.w. frisostraat", "johan willem frisostraat"],
+  ["j w frisostraat", "johan willem frisostraat"],
+  ["joh. w. frisostraat", "johan willem frisostraat"],
+  ["frans straatweg", "friesestraatweg"],
+  ["noorderstationstraat", "noorderstationsstraat"],
+  ["l. henriëttestraat", "louise henriëttestraat"],
+  ["l henriëttestraat", "louise henriëttestraat"],
+  ["helperwestsingel", "helper westsingel"],
+  ["helperoostsingel", "helper oostsingel"],
+  ["helperweststraat", "helper weststraat"],
+  ["helperbrink", "helper brink"],
+  ["bleekerstraat", "blekerstraat"],
+  ["stationstraat", "stationsstraat"],
+  ["roodeweeshuisstraat", "rodeweeshuisstraat"],
+  ["a-kerkstraat", "akerkstraat"],
+  ["a kerkstraat", "akerkstraat"],
+  ["a-kerkhof", "akerkhof"],
+  ["a kerkhof", "akerkhof"],
+  ["a-straat", "astraat"],
+  ["a straat", "astraat"],
+  ["petrus hendrikz.straat", "petrus hendrikszstraat"],
+  ["petrus hendrikz-straat", "petrus hendrikszstraat"],
+  ["petrus hendrikz straat", "petrus hendrikszstraat"],
+  ["petrus hendrikzstraat", "petrus hendrikszstraat"],
+  ["petrus hendriksstraat", "petrus hendrikszstraat"],
+  ["zaagmulderswegje", "zaagmuldersweg"],
+  ["loopendediep", "lopendediep"],
+  ["hoornsche dijk", "hoornsedijk"],
+  ["hoornsche-dijk", "hoornsedijk"],
+  ["hoornsche diep", "hoornsediep"],
+  ["hoornsche-diep", "hoornsediep"],
+  ["schuitemakerstraat", "schuitemakersstraat"],
+  ["sterreboschstraat", "sterrebosstraat"],
+  ["van speijkstraat", "van speykstraat"],
+  ["van julsingastraat", "van julsinghastraat"],
+  ["koninginelaan", "koninginnelaan"],
+  ["j. goeverneurstraat", "jan goeverneurstraat"],
+  ["j goeverneurstraat", "jan goeverneurstraat"],
+  ["jan gouverneurstraat", "jan goeverneurstraat"],
+  ["tusschen beide markten", "tussen beide markten"],
+  ["u. emmiussingel", "ubbo emmiussingel"],
+  ["u emmiussingel", "ubbo emmiussingel"],
+  ["fokkingedwarsstraat", "folkingedwarsstraat"],
+  ["gerebrant bakkerstraat", "gerbrand bakkerstraat"],
   ["verloren heereweg", "verlengde hereweg"],
   ["verloren hereweg", "verlengde hereweg"],
   ["friesche straatweg", "friesestraatweg"],
@@ -37,7 +88,18 @@ const STREET_ALIASES: [string, string][] = [
 ];
 
 const DIR_PREFIX = /^(noord(?:elijke|zijde)|zuid(?:elijke|zijde)|oost(?:elijke|zijde)|west(?:elijke|zijde))\s+/;
+const SIDE_MARKER =
+  /(?:^|\s|\()(?:(?:n|noord|noordelijk(?:e)?|noordzijde)\s*\.?\s*z(?:ijde)?\.?|(?:z|zuid|zuidelijk(?:e)?|zuidzijde)\s*\.?\s*z(?:ijde)?\.?|(?:o|oost|oostelijk(?:e)?|oostzijde)\s*\.?\s*z(?:ijde)?\.?|(?:w|west|westelijk(?:e)?|westzijde)\s*\.?\s*z(?:ijde)?\.?|nz|zz|oz|wz|noordzijde|zuidzijde|oostzijde|westzijde|noordelijke|zuidelijke|oostelijke|westelijke)(?:\)|$|\s)/g;
 const BARE_KERKSTRAAT = /(?<![a-z-])kerkstraat/;
+
+function stripSideMarkers(query: string): string {
+  let previous: string | null = null;
+  while (previous !== query) {
+    previous = query;
+    query = query.replace(SIDE_MARKER, " ").replace(/\s+/g, " ").trim();
+  }
+  return query;
+}
 
 function normalizeQuery(address: string): string {
   let q = address.toLowerCase();
@@ -46,10 +108,12 @@ function normalizeQuery(address: string): string {
   q = q.replace(/(.+)\s+\(verlengde\)/, "verlengde $1");
 
   q = q.replace(DIR_PREFIX, "");
+  q = stripSideMarkers(q);
   for (const [old, repl] of STREET_ALIASES) {
     q = q.replace(old, repl);
   }
   q = q.replace(BARE_KERKSTRAAT, "helper kerkstraat");
+  q = q.replace(/\s+/g, " ").trim();
   return q;
 }
 

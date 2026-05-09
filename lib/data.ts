@@ -3,6 +3,7 @@ import path from "path";
 import { loadOverrides, mergeOverrides } from "./overrides";
 import { flattenPageEntries } from "./flatten";
 import { getDb } from "./db";
+import { getJsonDir } from "./projectPaths.js";
 
 export type Bbox = [number, number, number, number];
 
@@ -43,7 +44,7 @@ export interface PageData {
   entries: Entry[];
 }
 
-const JSON_DIR = process.env.JSON_DIR ?? path.resolve(process.cwd(), "..", "output", "json");
+const JSON_DIR = getJsonDir();
 
 export async function loadPage(stem: string): Promise<PageData | null> {
   const file = path.join(JSON_DIR, `${stem}.json`);

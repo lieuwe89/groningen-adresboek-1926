@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { createHash } from "crypto";
+import { getOverridesDir } from "./projectPaths.js";
 import type { Bbox, Entry, PageData } from "./data";
 
 export type EntryId = string; // `<stem>:<index>`
@@ -32,7 +33,7 @@ export interface OverridesFile {
   [entryId: EntryId]: EntryOverride;
 }
 
-const OVERRIDES_DIR = process.env.OVERRIDES_DIR ?? path.resolve(process.cwd(), "..", "output", "overrides");
+const OVERRIDES_DIR = getOverridesDir();
 
 export async function loadOverrides(stem: string): Promise<OverridesFile> {
   const file = path.join(OVERRIDES_DIR, `${stem}.json`);

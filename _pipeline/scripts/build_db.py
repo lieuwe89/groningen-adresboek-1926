@@ -24,6 +24,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = ROOT.parent
 sys.path.insert(0, str(ROOT))
 
 from pipeline.json_export import _collect_entries_for_index  # noqa: E402
@@ -33,7 +34,7 @@ OVERRIDES_DIR = ROOT / "output" / "overrides"
 GEOCODED_PATH = ROOT / "output" / "geocoded" / "addresses.json"
 BAG_BUILDINGS_PATH = ROOT / "output" / "bag" / "buildings.geojson"
 BAG_MATCH_PATH = ROOT / "output" / "bag" / "match.json"
-DB_PATH = ROOT.parent / "data" / "adresboek.sqlite"
+DB_PATH = PROJECT_ROOT / "data" / "adresboek.sqlite"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,6 +42,13 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 log = logging.getLogger("build_db")
+
+
+def display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(path)
 
 
 SCHEMA = """
@@ -452,7 +460,7 @@ def main() -> None:
     log.info(f"  buildings:   {n_buildings}")
     log.info(f"  overridden:  {n_overridden}")
     log.info(f"  xrefs:       {n_xrefs}")
-    log.info(f"  output:      {DB_PATH.relative_to(ROOT)} ({size_mb:.1f} MB)")
+    log.info(f"  output:      {display_path(DB_PATH)} ({size_mb:.1f} MB)")
 
 
 if __name__ == "__main__":
