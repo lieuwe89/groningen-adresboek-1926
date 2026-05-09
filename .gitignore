@@ -8,8 +8,14 @@ Thumbs.db
 !.env.local.example
 fly.toml
 
-# Internal Pipeline & Assets (not for public repo)
-_pipeline/
+# Internal pipeline generated assets
+_pipeline/.venv/
+_pipeline/Maps/
+_pipeline/output/
+_pipeline/scans/
+_pipeline/tessdata/
+_pipeline/pipeline/config_local.py
+_pipeline/**/*.pyc
 
 # Next.js / Node
 node_modules/
