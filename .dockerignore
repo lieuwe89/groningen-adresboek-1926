@@ -2,6 +2,9 @@
 public/tiles/
 public/maps/
 public/scans/
+**/public/tiles/**
+**/public/maps/**
+**/public/scans/**
 
 # Generated / local-only
 data/
@@ -11,6 +14,7 @@ node_modules/
 
 # Pipeline (separate repo)
 _pipeline/
+**/_pipeline/**
 pipeline/
 scripts/
 scans/
