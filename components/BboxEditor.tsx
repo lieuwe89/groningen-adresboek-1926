@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { Stage, Layer, Image as KImage, Rect, Transformer } from "react-konva";
-import type Konva from "konva";
+import { useEffect, useRef, useState } from "react";
 import type { Bbox } from "@/lib/data";
 import { useProxyUrl } from "@/lib/useProxyUrl";
 
@@ -20,223 +11,266 @@ interface Props {
   onSaved: () => void;
 }
 
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 10;
-const SCALE_BY = 1.0015; // wheel
 const MIN_RECT = 5; // image-coord pixels
+const HANDLE_SIZE = 10; // px in screen space
+
+type Handle = "nw" | "ne" | "sw" | "se" | "n" | "s" | "w" | "e";
 
 export default function BboxEditor(p: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<Konva.Stage>(null);
-  const rectRef = useRef<Konva.Rect>(null);
-  const trRef = useRef<Konva.Transformer>(null);
+  const viewerRef = useRef<any>(null);
+  const osdRef = useRef<any>(null);
+  const dimsRef = useRef<{ w: number; h: number } | null>(null);
 
-  const [container, setContainer] = useState({ w: 0, h: 0 });
-  const [img, setImg] = useState<HTMLImageElement | null>(null);
-  const [dim, setDim] = useState<{ w: number; h: number } | null>(null);
-  const [stageScale, setStageScale] = useState(1);
-  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [rect, setRect] = useState<Bbox | null>(p.initialBbox);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [zoomDisplay, setZoomDisplay] = useState(1);
   const { proxyPath } = useProxyUrl();
-  const initRefocusedFor = useRef<string | null>(null);
 
-  // Track container size
-  useLayoutEffect(() => {
-    const c = containerRef.current;
-    if (!c) return;
-    const update = () => setContainer({ w: c.clientWidth, h: c.clientHeight });
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(c);
-    return () => ro.disconnect();
+  const tilesBase = proxyPath("");
+  const refocusedFor = useRef<string | null>(null);
+  const rectRef = useRef<Bbox | null>(p.initialBbox);
+  rectRef.current = rect;
+
+  // Init OSD viewer
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const OSD = (await import("openseadragon")).default;
+      if (cancelled || !containerRef.current) return;
+      osdRef.current = OSD;
+      const viewer = OSD({
+        element: containerRef.current,
+        showNavigationControl: false,
+        showNavigator: false,
+        immediateRender: false,
+        animationTime: 0.2,
+        blendTime: 0.05,
+        visibilityRatio: 1,
+        constrainDuringPan: true,
+        minZoomImageRatio: 1,
+        maxZoomPixelRatio: 4,
+        gestureSettingsMouse: { clickToZoom: false, dblClickToZoom: false },
+        tileSources: `${tilesBase}/tiles/${p.stem}.dzi`,
+      });
+      viewerRef.current = viewer;
+
+      viewer.addHandler("open", () => {
+        const item = viewer.world.getItemAt(0);
+        if (!item) return;
+        const sz = item.getContentSize();
+        dimsRef.current = { w: sz.x, h: sz.y };
+        focusOnRect(true);
+        renderOverlay();
+      });
+
+      viewer.addHandler("animation", () => {
+        renderOverlay();
+        setZoomDisplay(viewer.viewport.getZoom(true));
+      });
+      viewer.addHandler("update-viewport", renderOverlay);
+      viewer.addHandler("resize", renderOverlay);
+
+      viewer.addHandler("canvas-double-click", (ev: any) => {
+        ev.preventDefaultAction = true;
+        viewer.viewport.goHome();
+      });
+
+      // Drawing new rect when none exists
+      viewer.addHandler("canvas-drag", (ev: any) => {
+        // handled by overlay element; nothing here
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+      try {
+        viewerRef.current?.destroy();
+      } catch {
+        // ignore
+      }
+      viewerRef.current = null;
+      dimsRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load scan
+  // Reload on stem/entry change
   useEffect(() => {
-    setImg(null);
-    setDim(null);
-    const im = new window.Image();
-    im.src = proxyPath(`/scans/${p.stem}.jpg`);
-    im.onload = () => {
-      setImg(im);
-      setDim({ w: im.naturalWidth, h: im.naturalHeight });
-    };
-  }, [p.stem]);
+    const v = viewerRef.current;
+    if (!v) return;
+    dimsRef.current = null;
+    refocusedFor.current = null;
+    v.open(`${tilesBase}/tiles/${p.stem}.dzi`);
+  }, [p.stem, tilesBase]);
 
-  // Reset rect when entry/initial changes
+  // Reset rect when initial changes
   useEffect(() => {
     setRect(p.initialBbox);
     setDirty(false);
     setError(null);
+    refocusedFor.current = null;
   }, [p.initialBbox, p.entryIdx, p.stem]);
 
-  // Cover-fit base scale (paper bg never visible)
-  const baseScale = useMemo(() => {
-    if (!dim || !container.w || !container.h) return 1;
-    return Math.max(container.w / dim.w, container.h / dim.h);
-  }, [dim, container]);
-
-  const dispW = dim ? dim.w * baseScale : 0;
-  const dispH = dim ? dim.h * baseScale : 0;
-
-  const clampPan = useCallback(
-    (px: number, py: number, z: number) => {
-      if (!container.w || !dispW) return { x: px, y: py };
-      const minX = container.w - dispW * z;
-      const minY = container.h - dispH * z;
-      return {
-        x: Math.min(0, Math.max(minX, px)),
-        y: Math.min(0, Math.max(minY, py)),
-      };
-    },
-    [container.w, container.h, dispW, dispH]
-  );
-
-  // Center on first sizing
   useEffect(() => {
-    if (!container.w || !dispW) return;
-    setStagePos((cur) =>
-      cur.x === 0 && cur.y === 0
-        ? { x: (container.w - dispW) / 2, y: (container.h - dispH) / 2 }
-        : cur
-    );
-  }, [container.w, container.h, dispW, dispH]);
-
-  // Auto-refocus on entry change if rect not visible
-  useEffect(() => {
-    if (!rect || !dim || !container.w || !dispW) return;
-    const key = `${p.stem}:${p.entryIdx}`;
-    if (initRefocusedFor.current === key) return;
-    initRefocusedFor.current = key;
-
-    const z = stageScale;
-    const pp = stagePos;
-    const sx = (n: number) => pp.x + n * baseScale * z;
-    const sy = (n: number) => pp.y + n * baseScale * z;
-    const left = sx(rect[0]);
-    const top = sy(rect[1]);
-    const right = sx(rect[2]);
-    const bottom = sy(rect[3]);
-    const visible =
-      left >= 0 && top >= 0 && right <= container.w && bottom <= container.h;
-    if (visible) return;
-
-    const bbDispW = (rect[2] - rect[0]) * baseScale;
-    const bbDispH = (rect[3] - rect[1]) * baseScale;
-    const FILL = 0.7;
-    const zFit = Math.min(
-      (container.w * FILL) / bbDispW,
-      (container.h * FILL) / bbDispH
-    );
-    let newZoom = Math.min(z, zFit);
-    newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
-
-    const cx = (rect[0] + rect[2]) / 2;
-    const cy = (rect[1] + rect[3]) / 2;
-    const tx = container.w / 2 - cx * baseScale * newZoom;
-    const ty = container.h / 2 - cy * baseScale * newZoom;
-    setStagePos(clampPan(tx, ty, newZoom));
-    setStageScale(newZoom);
+    renderOverlay();
+    focusOnRect(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.stem, p.entryIdx, dim, container.w, container.h, dispW, dispH, baseScale]);
+  }, [rect]);
 
-  // Attach transformer to rect node when rect ready
-  useEffect(() => {
-    if (rect && rectRef.current && trRef.current && img) {
-      trRef.current.nodes([rectRef.current]);
-      trRef.current.getLayer()?.batchDraw();
-    } else if (trRef.current) {
-      trRef.current.nodes([]);
-    }
-  }, [rect, img]);
+  function focusOnRect(force: boolean) {
+    const v = viewerRef.current;
+    const OSD = osdRef.current;
+    const r = rectRef.current;
+    if (!v || !OSD || !r || !dimsRef.current) return;
+    const key = `${p.stem}:${p.entryIdx}`;
+    if (!force && refocusedFor.current === key) return;
+    refocusedFor.current = key;
 
-  const onWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
-    e.evt.preventDefault();
-    const stage = stageRef.current;
-    if (!stage) return;
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
-    const oldScale = stageScale;
-    const factor = Math.pow(SCALE_BY, -e.evt.deltaY);
-    let newScale = oldScale * factor;
-    newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale));
-    if (newScale === oldScale) return;
-    const ix = (pointer.x - stagePos.x) / oldScale;
-    const iy = (pointer.y - stagePos.y) / oldScale;
-    const np = clampPan(pointer.x - ix * newScale, pointer.y - iy * newScale, newScale);
-    setStageScale(newScale);
-    setStagePos(np);
-  };
+    const [x0, y0, x1, y1] = r;
+    const w = x1 - x0;
+    const h = y1 - y0;
+    const padX = w * 0.4;
+    const padY = h * 0.4;
+    const vp = v.viewport.imageToViewportRectangle(
+      x0 - padX,
+      y0 - padY,
+      w + 2 * padX,
+      h + 2 * padY
+    );
+    v.viewport.fitBoundsWithConstraints(vp, false);
+  }
 
-  const onStageDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
-    if (e.target !== stageRef.current) return;
-    const np = clampPan(e.target.x(), e.target.y(), stageScale);
-    setStagePos(np);
-    e.target.position(np);
-  };
+  function renderOverlay() {
+    const v = viewerRef.current;
+    const OSD = osdRef.current;
+    const r = rectRef.current;
+    if (!v || !OSD) return;
 
-  // Constrain stage drag in real-time
-  const stageDragBound = useCallback(
-    (pos: { x: number; y: number }) => clampPan(pos.x, pos.y, stageScale),
-    [clampPan, stageScale]
-  );
+    v.clearOverlays();
+    if (!r) return;
+    const [x0, y0, x1, y1] = r;
+    const w = x1 - x0;
+    const h = y1 - y0;
+    if (w <= 0 || h <= 0) return;
 
-  const onRectTransformEnd = () => {
-    const node = rectRef.current;
-    if (!node) return;
-    const sx = node.scaleX();
-    const sy = node.scaleY();
-    node.scaleX(1);
-    node.scaleY(1);
-    const w = Math.max(MIN_RECT, node.width() * sx);
-    const h = Math.max(MIN_RECT, node.height() * sy);
-    node.width(w);
-    node.height(h);
-    commitRectFromNode();
-  };
+    const vpRect = v.viewport.imageToViewportRectangle(x0, y0, w, h);
 
-  const onRectDragEnd = () => commitRectFromNode();
+    const el = document.createElement("div");
+    el.style.cssText = `
+      box-sizing: border-box;
+      border: 1.5px solid #e8b84c;
+      background: #e8b84c22;
+      cursor: move;
+      pointer-events: auto;
+      position: relative;
+    `;
 
-  const commitRectFromNode = () => {
-    const node = rectRef.current;
-    if (!node || !dim) return;
-    const x1 = Math.max(0, node.x() / baseScale);
-    const y1 = Math.max(0, node.y() / baseScale);
-    const x2 = Math.min(dim.w, (node.x() + node.width()) / baseScale);
-    const y2 = Math.min(dim.h, (node.y() + node.height()) / baseScale);
-    if (x2 - x1 < MIN_RECT || y2 - y1 < MIN_RECT) return;
-    setRect([Math.round(x1), Math.round(y1), Math.round(x2), Math.round(y2)]);
-    setDirty(true);
-  };
+    // Drag body
+    attachDragHandlers(el, "move");
 
-  // Bound drag of rect inside image
-  const rectDragBound = useCallback(
-    (pos: { x: number; y: number }) => {
-      const node = rectRef.current;
-      if (!node || !dim) return pos;
-      const w = node.width();
-      const h = node.height();
-      return {
-        x: Math.min(dispW - w, Math.max(0, pos.x)),
-        y: Math.min(dispH - h, Math.max(0, pos.y)),
+    // Resize handles
+    const handles: Handle[] = ["nw", "ne", "sw", "se", "n", "s", "w", "e"];
+    handles.forEach((h) => {
+      const hEl = document.createElement("div");
+      hEl.style.cssText = handleStyle(h);
+      attachDragHandlers(hEl, h);
+      el.appendChild(hEl);
+    });
+
+    v.addOverlay({ element: el, location: vpRect });
+  }
+
+  function attachDragHandlers(
+    el: HTMLDivElement,
+    mode: Handle | "move"
+  ) {
+    el.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const v = viewerRef.current;
+      const dim = dimsRef.current;
+      if (!v || !dim) return;
+
+      el.setPointerCapture(ev.pointerId);
+      const startImg = v.viewport.viewerElementToImageCoordinates(
+        new (osdRef.current.Point)(
+          ev.clientX - v.element.getBoundingClientRect().left,
+          ev.clientY - v.element.getBoundingClientRect().top
+        )
+      );
+      const start: Bbox = rectRef.current
+        ? ([...rectRef.current] as Bbox)
+        : [0, 0, 0, 0];
+      // Disable OSD panning during drag
+      v.setMouseNavEnabled(false);
+
+      const onMove = (mev: PointerEvent) => {
+        const cur = v.viewport.viewerElementToImageCoordinates(
+          new (osdRef.current.Point)(
+            mev.clientX - v.element.getBoundingClientRect().left,
+            mev.clientY - v.element.getBoundingClientRect().top
+          )
+        );
+        const dx = cur.x - startImg.x;
+        const dy = cur.y - startImg.y;
+
+        let [x0, y0, x1, y1] = start;
+        if (mode === "move") {
+          const w = x1 - x0;
+          const h = y1 - y0;
+          x0 = clamp(x0 + dx, 0, dim.w - w);
+          y0 = clamp(y0 + dy, 0, dim.h - h);
+          x1 = x0 + w;
+          y1 = y0 + h;
+        } else {
+          if (mode.includes("w")) x0 = clamp(x0 + dx, 0, x1 - MIN_RECT);
+          if (mode.includes("e")) x1 = clamp(x1 + dx, x0 + MIN_RECT, dim.w);
+          if (mode.includes("n")) y0 = clamp(y0 + dy, 0, y1 - MIN_RECT);
+          if (mode.includes("s")) y1 = clamp(y1 + dy, y0 + MIN_RECT, dim.h);
+        }
+        const next: Bbox = [
+          Math.round(x0),
+          Math.round(y0),
+          Math.round(x1),
+          Math.round(y1),
+        ];
+        rectRef.current = next;
+        setRect(next);
+        setDirty(true);
       };
-    },
-    [dim, dispW, dispH]
-  );
+
+      const onUp = (uev: PointerEvent) => {
+        try {
+          el.releasePointerCapture(uev.pointerId);
+        } catch {
+          // ignore
+        }
+        v.setMouseNavEnabled(true);
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
+  }
 
   const onSave = async () => {
     if (!rect) return;
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(proxyPath(`/api/admin/page/${p.stem}/entry/${p.entryIdx}`), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bbox: rect }),
-      });
+      const res = await fetch(
+        proxyPath(`/api/admin/page/${p.stem}/entry/${p.entryIdx}`),
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bbox: rect }),
+        }
+      );
       if (!res.ok) throw new Error(await res.text());
       setDirty(false);
       p.onSaved();
@@ -253,102 +287,20 @@ export default function BboxEditor(p: Props) {
     setError(null);
   };
 
-  const reset = () => {
-    if (!container.w || !dispW) return;
-    setStageScale(1);
-    setStagePos({ x: (container.w - dispW) / 2, y: (container.h - dispH) / 2 });
-  };
-
   const zoomBy = (factor: number) => {
-    const newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, stageScale * factor));
-    if (newScale === stageScale) return;
-    const cx = container.w / 2;
-    const cy = container.h / 2;
-    const ix = (cx - stagePos.x) / stageScale;
-    const iy = (cy - stagePos.y) / stageScale;
-    const np = clampPan(cx - ix * newScale, cy - iy * newScale, newScale);
-    setStageScale(newScale);
-    setStagePos(np);
+    const v = viewerRef.current;
+    if (!v) return;
+    v.viewport.zoomBy(factor);
+    v.viewport.applyConstraints();
   };
-
-  const rectStage = rect
-    ? {
-        x: rect[0] * baseScale,
-        y: rect[1] * baseScale,
-        width: (rect[2] - rect[0]) * baseScale,
-        height: (rect[3] - rect[1]) * baseScale,
-      }
-    : null;
+  const reset = () => viewerRef.current?.viewport.goHome();
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <div
-        ref={containerRef}
-        className="relative flex-1 overflow-hidden select-none"
-        style={{ background: "#1a1208", touchAction: "none" }}
-      >
-        {img && container.w > 0 && (
-          <Stage
-            ref={stageRef}
-            width={container.w}
-            height={container.h}
-            scaleX={stageScale}
-            scaleY={stageScale}
-            x={stagePos.x}
-            y={stagePos.y}
-            draggable
-            dragBoundFunc={stageDragBound}
-            onDragEnd={onStageDragEnd}
-            onWheel={onWheel}
-            onDblClick={(e) => {
-              if (e.target === stageRef.current) reset();
-            }}
-          >
-            <Layer listening={false}>
-              <KImage image={img} width={dispW} height={dispH} />
-            </Layer>
-            <Layer>
-              {rectStage && (
-                <>
-                  <Rect
-                    ref={rectRef}
-                    x={rectStage.x}
-                    y={rectStage.y}
-                    width={rectStage.width}
-                    height={rectStage.height}
-                    fill="#e8b84c33"
-                    stroke="#e8b84c"
-                    strokeWidth={1 / stageScale}
-                    strokeScaleEnabled={false}
-                    draggable
-                    dragBoundFunc={rectDragBound}
-                    onDragEnd={onRectDragEnd}
-                    onTransformEnd={onRectTransformEnd}
-                  />
-                  <Transformer
-                    ref={trRef}
-                    rotateEnabled={false}
-                    flipEnabled={false}
-                    keepRatio={false}
-                    anchorSize={8 / Math.pow(stageScale, 0.6)}
-                    anchorStrokeWidth={1.5 / stageScale}
-                    borderStrokeWidth={1 / stageScale}
-                    anchorStroke="#e8b84c"
-                    anchorFill="#182d5c"
-                    borderStroke="#e8b84cbb"
-                    boundBoxFunc={(_oldBox, newBox) => {
-                      if (newBox.width < MIN_RECT * baseScale) return _oldBox;
-                      if (newBox.height < MIN_RECT * baseScale) return _oldBox;
-                      return newBox;
-                    }}
-                  />
-                </>
-              )}
-            </Layer>
-          </Stage>
-        )}
+      <div className="relative flex-1 overflow-hidden select-none" style={{ background: "#1a1208", touchAction: "none" }}>
+        <div ref={containerRef} className="absolute inset-0" />
 
-        <div className="absolute flex flex-col gap-[2px]" style={{ right: 8, bottom: 8 }}>
+        <div className="absolute flex flex-col gap-[2px]" style={{ right: 8, bottom: 8, zIndex: 5 }}>
           <ZoomBtn onClick={() => zoomBy(1.4)} label="+" />
           <ZoomBtn onClick={reset} label="⌖" small />
           <ZoomBtn onClick={() => zoomBy(1 / 1.4)} label="−" />
@@ -365,9 +317,10 @@ export default function BboxEditor(p: Props) {
             border: "1px solid #e8b84c55",
             background: "#182d5cee",
             color: "#7a7054",
+            zIndex: 5,
           }}
         >
-          Z {stageScale.toFixed(1)}× · BBOX EDIT
+          Z {zoomDisplay.toFixed(1)}× · BBOX EDIT
         </div>
       </div>
 
@@ -420,6 +373,25 @@ export default function BboxEditor(p: Props) {
       </div>
     </div>
   );
+}
+
+function clamp(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v));
+}
+
+function handleStyle(h: Handle): string {
+  const base = `position: absolute; width: ${HANDLE_SIZE}px; height: ${HANDLE_SIZE}px; background: #182d5c; border: 1.5px solid #e8b84c; box-sizing: border-box;`;
+  const off = -HANDLE_SIZE / 2;
+  switch (h) {
+    case "nw": return `${base} left: ${off}px; top: ${off}px; cursor: nwse-resize;`;
+    case "ne": return `${base} right: ${off}px; top: ${off}px; cursor: nesw-resize;`;
+    case "sw": return `${base} left: ${off}px; bottom: ${off}px; cursor: nesw-resize;`;
+    case "se": return `${base} right: ${off}px; bottom: ${off}px; cursor: nwse-resize;`;
+    case "n":  return `${base} left: 50%; top: ${off}px; margin-left: ${off}px; cursor: ns-resize;`;
+    case "s":  return `${base} left: 50%; bottom: ${off}px; margin-left: ${off}px; cursor: ns-resize;`;
+    case "w":  return `${base} left: ${off}px; top: 50%; margin-top: ${off}px; cursor: ew-resize;`;
+    case "e":  return `${base} right: ${off}px; top: 50%; margin-top: ${off}px; cursor: ew-resize;`;
+  }
 }
 
 function ZoomBtn({
