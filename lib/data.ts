@@ -12,6 +12,11 @@ export interface Entry {
   initials?: string | null;
   name_prefix?: string | null;
   name_prefix_expanded?: string | null;
+  entity_type?: string | null;
+  role?: string | null;
+  parent_organization?: string | null;
+  description?: string | null;
+  section?: string | null;
   occupation?: string | null;
   occupation_expanded?: string | null;
   address_street?: string | null;

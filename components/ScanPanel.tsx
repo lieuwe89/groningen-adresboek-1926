@@ -9,6 +9,7 @@ import EditForm from "@/components/EditForm";
 import type { ScanViewerHandle } from "@/components/ScanViewer";
 import { useTranslations, useLocale } from 'next-intl';
 import { useProxyUrl } from "@/lib/useProxyUrl";
+import { presentEntry } from "@/lib/entryPresentation";
 
 const ScanViewer = dynamic(() => import("@/components/ScanViewer"), {
   ssr: false,
@@ -33,6 +34,7 @@ interface Props {
   onClose: () => void;
   stem: string;
   page: number;
+  section?: string;
   activeEntry?: Entry;
   activeIdx?: number;
   prev?: string;
@@ -66,9 +68,7 @@ export default function ScanPanel(p: Props) {
   }, [p.stem]);
 
   const bbox = p.activeEntry?.entry_bbox;
-  const name = formatName(p.activeEntry);
-  const occ = p.activeEntry?.occupation_expanded || p.activeEntry?.occupation || "";
-  const addr = p.activeEntry?.address_full || "";
+  const display = presentEntry(p.activeEntry, p.section);
   const showBboxEditor =
     !!(p.editMode && p.activeEntry && p.activeIdx !== undefined && bboxEditMode);
 
@@ -162,7 +162,7 @@ export default function ScanPanel(p: Props) {
             className="text-bp-ink-dim"
             style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em" }}
           >
-            Alphabetisch Naamregister
+            {display.sectionLabel}
           </span>
           <span
             className="text-bp-amber uppercase"
@@ -171,8 +171,8 @@ export default function ScanPanel(p: Props) {
             Pagina {p.page}
           </span>
           <div className="flex gap-[16px] mt-[3px]">
-            <InfoCol label={tc('name')} value={name || "—"} />
-            <InfoCol label={tc('occupation')} value={occ || "—"} />
+            <InfoCol label={tc('name')} value={display.title} badge={display.badge} />
+            <InfoCol label={display.detailLabel} value={display.detail} />
           </div>
           <div className="flex flex-col gap-[2px] mt-[2px]">
             <div className="flex items-baseline justify-between">
@@ -182,7 +182,7 @@ export default function ScanPanel(p: Props) {
               >
                 {tc('address')}
               </span>
-              {p.activeEntry && !p.activeEntry.pand_id && (
+              {p.activeEntry && display.showMapStatus && !p.activeEntry.pand_id && (
                 <span
                   className="text-bp-amber/50 italic"
                   style={{ fontSize: 7.5, letterSpacing: "0.05em" }}
@@ -195,7 +195,7 @@ export default function ScanPanel(p: Props) {
               className="text-bp-amber"
               style={{ fontSize: 10, letterSpacing: "0.1em" }}
             >
-              {addr || "—"}
+              {display.address || "—"}
             </span>
           </div>
         </div>
@@ -303,15 +303,25 @@ function ZoomBtn({
   );
 }
 
-function InfoCol({ label, value }: { label: string; value: string }) {
+function InfoCol({ label, value, badge }: { label: string; value: string; badge?: string | null }) {
   return (
     <div className="flex flex-col gap-[2px] flex-1 min-w-0">
-      <span
-        className="text-bp-ink-dim uppercase"
-        style={{ fontSize: 7.5, letterSpacing: "0.14em" }}
-      >
-        {label}
-      </span>
+      <div className="flex items-center gap-[6px] min-w-0">
+        <span
+          className="text-bp-ink-dim uppercase"
+          style={{ fontSize: 7.5, letterSpacing: "0.14em" }}
+        >
+          {label}
+        </span>
+        {badge && (
+          <span
+            className="text-bp-amber uppercase"
+            style={{ fontSize: 7, letterSpacing: "0.1em", fontWeight: 700 }}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
       <span
         className="text-bp-ink-bright truncate"
         style={{ fontSize: 10, letterSpacing: "0.08em" }}
@@ -321,10 +331,4 @@ function InfoCol({ label, value }: { label: string; value: string }) {
       </span>
     </div>
   );
-}
-
-function formatName(e?: Entry): string {
-  if (!e) return "";
-  const parts = [e.name, e.initials, e.name_prefix].filter(Boolean);
-  return parts.join(" ");
 }

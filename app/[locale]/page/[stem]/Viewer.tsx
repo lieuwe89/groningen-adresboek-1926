@@ -58,6 +58,7 @@ export default function Viewer({
   const filtered = useMemo(() => {
     return data.entries
       .map((e, i) => ({ entry: e, idx: i }))
+      .map(({ entry, idx }) => ({ entry: { ...entry, section: data.section }, idx }))
       .filter(({ entry }) => {
         if (filter === "all") return true;
         const f = entry.flags || {};
@@ -92,6 +93,7 @@ export default function Viewer({
       onClose={() => setScanOpen(false)}
       stem={stem}
       page={data.page_number}
+      section={data.section}
       entries={data.entries}
       activeEntry={activeEntry}
       activeIdx={displayIdx}

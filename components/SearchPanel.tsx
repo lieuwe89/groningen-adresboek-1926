@@ -2,6 +2,7 @@
 
 import type { Entry } from "@/lib/data";
 import type { PersonHit, SearchMention } from "@/lib/searchTypes";
+import { formatEntryName, presentEntry } from "@/lib/entryPresentation";
 import { useTranslations } from 'next-intl';
 
 export type StatusFilter = "all" | "verified" | "needs_review" | "unreviewed";
@@ -132,9 +133,7 @@ export default function SearchPanel(p: Props) {
           ) : (
             p.entries.map(({ entry, idx }) => {
             const active = idx === p.activeIdx;
-            const name = formatName(entry);
-            const occ = entry.occupation_expanded || entry.occupation || "";
-            const addr = entry.address_full || "";
+            const display = presentEntry(entry);
             const statusColor = !p.showStatus
               ? null
               : entry.flags?.verified
@@ -174,20 +173,28 @@ export default function SearchPanel(p: Props) {
                       }}
                     />
                   )}
-                  {name || "—"}
+                  {display.badge && (
+                    <span
+                      className="text-bp-amber uppercase"
+                      style={{ fontSize: 7, letterSpacing: "0.12em", fontWeight: 700 }}
+                    >
+                      {display.badge}
+                    </span>
+                  )}
+                  {display.title}
                 </span>
                 <span
                   className="text-bp-ink-dim"
                   style={{ fontSize: 8.5, letterSpacing: "0.08em" }}
                 >
-                  {occ}
+                  {display.subtitle}
                 </span>
                 <div className="flex items-center justify-between">
                   <span
                     className="text-bp-ink-dim"
                     style={{ fontSize: 8.5 }}
                   >
-                    {addr}
+                    {display.address}
                   </span>
                 </div>
               </button>
@@ -269,13 +276,14 @@ function FilterBtn({
   );
 }
 
-function formatName(e: Entry): string {
-  const parts = [e.name, e.initials, e.name_prefix].filter(Boolean);
-  return parts.join(" ");
+function formatMentionName(h: SearchMention): string {
+  return formatEntryName(h);
 }
 
-function formatMentionName(h: SearchMention): string {
-  return [h.name, h.initials].filter(Boolean).join(" ");
+function mentionLine(m: SearchMention): string {
+  const display = presentEntry(m, m.section);
+  const detail = display.detail !== "-" ? display.detail : display.badge || "Vermelding";
+  return [detail, display.address].filter(Boolean).join(" - ");
 }
 
 function GlobalResults({
@@ -319,9 +327,10 @@ function GlobalResults({
       {results.map((p) => {
         // Find best name/occ/addr for this cluster to display as the header
         // For unclustered entries (mentions.length === 1), use its own data.
+        const firstDisplay = presentEntry(p.mentions[0], p.mentions[0].section);
         const headerName = p.canonical_name || formatMentionName(p.mentions[0]) || "—";
-        const headerOcc = p.canonical_occupation || p.mentions[0].occupation_expanded || p.mentions[0].occupation || "";
-        const headerAddr = p.canonical_address || p.mentions[0].address_full || "";
+        const headerOcc = p.canonical_occupation || firstDisplay.subtitle || "";
+        const headerAddr = p.canonical_address || firstDisplay.address || "";
         
         return (
           <div key={p.cluster_id} className="w-full flex flex-col mb-[8px] border-b border-bp-ink/15 pb-[8px]">
@@ -336,6 +345,14 @@ function GlobalResults({
                   color: "#e6d9b0",
                 }}
               >
+                {firstDisplay.badge && (
+                  <span
+                    className="text-bp-amber uppercase"
+                    style={{ fontSize: 7, letterSpacing: "0.12em", fontWeight: 700 }}
+                  >
+                    {firstDisplay.badge}
+                  </span>
+                )}
                 {headerName}
               </span>
               <span
@@ -369,7 +386,7 @@ function GlobalResults({
                       style={{ fontSize: 8.5, color: active ? "#e8b84c" : undefined }}
                     >
                       {/* Only show address and occ here if they differ or just show "Vermelding" */}
-                      {m.occupation || "Vermelding"} {m.address_full ? `- ${m.address_full}` : ""}
+                      {mentionLine(m)}
                     </span>
                     <span
                       className="text-bp-amber flex-shrink-0 uppercase ml-[8px]"

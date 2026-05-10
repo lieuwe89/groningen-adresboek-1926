@@ -77,6 +77,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         if (!v || !ents) return;
         const imgPt = v.viewport.viewerElementToImageCoordinates(ev.position);
         const idx = ents.findIndex((e) => {
+          if (!e.pand_id) return false;
           const bb = e.entry_bbox;
           if (!bb) return false;
           return (
@@ -147,21 +148,32 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
 
       const rect = v.viewport.imageToViewportRectangle(x0, y0, w, h);
       const isActive = i === aidx;
+      const canNavigateToAddress = !!entry.pand_id;
+      const linkedBorder = isActive ? "2px solid #e8b84c88" : "1px solid transparent";
+      const linkedBackground = isActive ? "#e8b84c22" : "transparent";
+      const unlinkedBorder = isActive ? "2px dashed #7a705488" : "1px solid transparent";
+      const unlinkedBackground = isActive ? "#cfc39a10" : "transparent";
 
       const el = document.createElement("div");
+      el.setAttribute(
+        "aria-label",
+        canNavigateToAddress ? "Open gekoppeld adres" : "Geen gekoppeld adres"
+      );
+      el.title = canNavigateToAddress ? "Open gekoppeld adres" : "Geen gekoppeld adres";
       el.style.cssText = `
         box-sizing: border-box;
-        cursor: pointer;
+        cursor: ${canNavigateToAddress ? "pointer" : "default"};
         pointer-events: auto;
         transition: background 120ms, border 120ms;
-        border: ${isActive ? "2px solid #e8b84c88" : "1px solid transparent"};
-        background: ${isActive ? "#e8b84c22" : "transparent"};
+        border: ${canNavigateToAddress ? linkedBorder : unlinkedBorder};
+        background: ${canNavigateToAddress ? linkedBackground : unlinkedBackground};
       `;
 
+      // If the muted state is still too subtle in use, upgrade toward hover micro-labels.
       el.addEventListener("mouseenter", () => {
         if (!isActive) {
-          el.style.background = "#e8b84c12";
-          el.style.border = "1px solid #e8b84c33";
+          el.style.background = canNavigateToAddress ? "#e8b84c12" : "#cfc39a0c";
+          el.style.border = canNavigateToAddress ? "1px solid #e8b84c33" : "1px dashed #7a705466";
         }
       });
       el.addEventListener("mouseleave", () => {
@@ -172,6 +184,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
       });
       el.addEventListener("click", (ev) => {
         ev.stopPropagation();
+        if (!canNavigateToAddress) return;
         onSelectEntryRef.current?.(i);
       });
 

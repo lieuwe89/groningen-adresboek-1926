@@ -58,6 +58,10 @@ export type SearchMention = {
   section: string;
   name: string | null;
   initials: string | null;
+  entity_type: string | null;
+  role: string | null;
+  parent_organization: string | null;
+  description: string | null;
   occupation: string | null;
   occupation_expanded: string | null;
   address_full: string | null;
@@ -92,7 +96,9 @@ const SEARCH_SQL = `
     MIN(f.rank) as min_rank,
     json_group_array(json_object(
       'id', e.id, 'stable_id', e.stable_id, 'stem', p.stem, 'page_number', p.page_number, 'section', p.section,
-      'name', e.name, 'initials', e.initials, 'occupation', e.occupation, 'occupation_expanded', e.occupation_expanded,
+      'name', e.name, 'initials', e.initials,
+      'entity_type', e.entity_type, 'role', e.role, 'parent_organization', e.parent_organization, 'description', e.description,
+      'occupation', e.occupation, 'occupation_expanded', e.occupation_expanded,
       'address_full', e.address_full, 'lat', e.lat, 'lng', e.lng, 'geocode_type', e.geocode_type, 'geocode_flags', e.geocode_flags,
       'flag_verified', e.flag_verified, 'flag_needs_review', e.flag_needs_review, 'flag_bbox_unreliable', e.flag_bbox_unreliable,
       'entry_bbox', e.entry_bbox, 'name_bbox', e.name_bbox, 'address_bbox', e.address_bbox
@@ -216,8 +222,13 @@ export type BuildingMention = {
   stable_id: string;
   stem: string;
   page_number: number | null;
+  section: string;
   name: string | null;
   initials: string | null;
+  entity_type: string | null;
+  role: string | null;
+  parent_organization: string | null;
+  description: string | null;
   occupation: string | null;
   address_full: string | null;
 };
@@ -260,8 +271,10 @@ export function getBuilding(pand_id: string): BuildingDetail | null {
     `SELECT
       COALESCE(CAST(e.person_id AS TEXT), 'u-' || e.id) as cluster_id,
       json_group_array(json_object(
-        'stable_id', e.stable_id, 'stem', p.stem, 'page_number', p.page_number,
-        'name', e.name, 'initials', e.initials, 'occupation', COALESCE(e.occupation_expanded, e.occupation),
+        'stable_id', e.stable_id, 'stem', p.stem, 'page_number', p.page_number, 'section', p.section,
+        'name', e.name, 'initials', e.initials,
+        'entity_type', e.entity_type, 'role', e.role, 'parent_organization', e.parent_organization, 'description', e.description,
+        'occupation', COALESCE(e.occupation_expanded, e.occupation),
         'address_full', e.address_full
       )) as mentions_json,
       pr.canonical_name, pr.canonical_occupation, pr.canonical_address

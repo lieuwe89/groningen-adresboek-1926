@@ -266,6 +266,10 @@ CREATE TABLE entries (
     initials TEXT,
     name_prefix TEXT,
     name_prefix_expanded TEXT,
+    entity_type TEXT,
+    role TEXT,
+    parent_organization TEXT,
+    description TEXT,
     occupation TEXT,
     occupation_expanded TEXT,
     address_street TEXT,
@@ -318,6 +322,7 @@ CREATE INDEX idx_buildings_bbox ON buildings(bbox_west, bbox_south, bbox_east, b
 
 CREATE VIRTUAL TABLE entries_fts USING fts5(
     name, initials, name_prefix_expanded,
+    entity_type, role, parent_organization, description,
     occupation, occupation_expanded,
     address_street, address_street_expanded, address_number, address_full,
     searchable_text,
@@ -337,20 +342,20 @@ CREATE INDEX idx_xref_source ON cross_references(source_entry_id);
 
 -- FTS5 triggers to keep entries_fts in sync with entries
 CREATE TRIGGER entries_ai AFTER INSERT ON entries BEGIN
-  INSERT INTO entries_fts(rowid, name, initials, name_prefix_expanded, occupation, occupation_expanded, address_street, address_street_expanded, address_number, address_full, searchable_text)
-  VALUES (new.id, new.name, new.initials, new.name_prefix_expanded, new.occupation, new.occupation_expanded, new.address_street, new.address_street_expanded, new.address_number, new.address_full, new.searchable_text);
+  INSERT INTO entries_fts(rowid, name, initials, name_prefix_expanded, entity_type, role, parent_organization, description, occupation, occupation_expanded, address_street, address_street_expanded, address_number, address_full, searchable_text)
+  VALUES (new.id, new.name, new.initials, new.name_prefix_expanded, new.entity_type, new.role, new.parent_organization, new.description, new.occupation, new.occupation_expanded, new.address_street, new.address_street_expanded, new.address_number, new.address_full, new.searchable_text);
 END;
 
 CREATE TRIGGER entries_ad AFTER DELETE ON entries BEGIN
-  INSERT INTO entries_fts(entries_fts, rowid, name, initials, name_prefix_expanded, occupation, occupation_expanded, address_street, address_street_expanded, address_number, address_full, searchable_text)
-  VALUES ('delete', old.id, old.name, old.initials, old.name_prefix_expanded, old.occupation, old.occupation_expanded, old.address_street, old.address_street_expanded, old.address_number, old.address_full, old.searchable_text);
+  INSERT INTO entries_fts(entries_fts, rowid, name, initials, name_prefix_expanded, entity_type, role, parent_organization, description, occupation, occupation_expanded, address_street, address_street_expanded, address_number, address_full, searchable_text)
+  VALUES ('delete', old.id, old.name, old.initials, old.name_prefix_expanded, old.entity_type, old.role, old.parent_organization, old.description, old.occupation, old.occupation_expanded, old.address_street, old.address_street_expanded, old.address_number, old.address_full, old.searchable_text);
 END;
 
 CREATE TRIGGER entries_au AFTER UPDATE ON entries BEGIN
-  INSERT INTO entries_fts(entries_fts, rowid, name, initials, name_prefix_expanded, occupation, occupation_expanded, address_street, address_street_expanded, address_number, address_full, searchable_text)
-  VALUES ('delete', old.id, old.name, old.initials, old.name_prefix_expanded, old.occupation, old.occupation_expanded, old.address_street, old.address_street_expanded, old.address_number, old.address_full, old.searchable_text);
-  INSERT INTO entries_fts(rowid, name, initials, name_prefix_expanded, occupation, occupation_expanded, address_street, address_street_expanded, address_number, address_full, searchable_text)
-  VALUES (new.id, new.name, new.initials, new.name_prefix_expanded, new.occupation, new.occupation_expanded, new.address_street, new.address_street_expanded, new.address_number, new.address_full, new.searchable_text);
+  INSERT INTO entries_fts(entries_fts, rowid, name, initials, name_prefix_expanded, entity_type, role, parent_organization, description, occupation, occupation_expanded, address_street, address_street_expanded, address_number, address_full, searchable_text)
+  VALUES ('delete', old.id, old.name, old.initials, old.name_prefix_expanded, old.entity_type, old.role, old.parent_organization, old.description, old.occupation, old.occupation_expanded, old.address_street, old.address_street_expanded, old.address_number, old.address_full, old.searchable_text);
+  INSERT INTO entries_fts(rowid, name, initials, name_prefix_expanded, entity_type, role, parent_organization, description, occupation, occupation_expanded, address_street, address_street_expanded, address_number, address_full, searchable_text)
+  VALUES (new.id, new.name, new.initials, new.name_prefix_expanded, new.entity_type, new.role, new.parent_organization, new.description, new.occupation, new.occupation_expanded, new.address_street, new.address_street_expanded, new.address_number, new.address_full, new.searchable_text);
 END;
 """
 
@@ -388,6 +393,10 @@ def apply_override(entry: dict, ov: dict | None) -> dict:
             "initials",
             "name_prefix",
             "name_prefix_expanded",
+            "entity_type",
+            "role",
+            "parent_organization",
+            "description",
             "occupation",
             "occupation_expanded",
             "address_street",
@@ -534,6 +543,7 @@ def main() -> None:
                 """INSERT INTO entries (
                        page_id, entry_index, stable_id,
                        name, initials, name_prefix, name_prefix_expanded,
+                       entity_type, role, parent_organization, description,
                        occupation, occupation_expanded,
                        address_street, address_street_expanded, address_number,
                        address_full, address_full_normalized,
@@ -545,7 +555,7 @@ def main() -> None:
                        fingerprint, edited_at, searchable_text,
                        pand_id)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                            ?, ?, ?, ?, ?, ?,
                            ?)""",
                 (
@@ -554,6 +564,10 @@ def main() -> None:
                     entry.get("initials"),
                     entry.get("name_prefix"),
                     entry.get("name_prefix_expanded"),
+                    entry.get("entity_type"),
+                    entry.get("role"),
+                    entry.get("parent_organization"),
+                    entry.get("description"),
                     entry.get("occupation"),
                     entry.get("occupation_expanded"),
                     entry.get("address_street"),

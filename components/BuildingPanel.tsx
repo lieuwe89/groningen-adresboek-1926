@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from 'next-intl';
 import { useProxyUrl } from "@/lib/useProxyUrl";
+import { formatEntryName, presentEntry } from "@/lib/entryPresentation";
 
 type Mention = {
   stable_id: string;
   stem: string;
   page_number: number | null;
+  section: string;
   name: string | null;
   initials: string | null;
+  entity_type: string | null;
+  role: string | null;
+  parent_organization: string | null;
+  description: string | null;
   occupation: string | null;
   address_full: string | null;
 };
@@ -28,6 +34,12 @@ type Detail = {
   bbox: [number, number, number, number] | null;
   persons: Person[];
 };
+
+function buildingMentionLine(mention: Mention): string {
+  const display = presentEntry(mention, mention.section);
+  const detail = display.detail !== "-" ? display.detail : display.badge || "Vermelding";
+  return [detail, display.address].filter(Boolean).join(" - ");
+}
 
 interface Props {
   pandId: string;
@@ -109,9 +121,10 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
         )}
         {!loading && !error && data &&
           data.persons.map((p) => {
-            const headerName = p.canonical_name || [p.mentions[0].initials, p.mentions[0].name].filter(Boolean).join(" ") || "—";
-            const headerOcc = p.canonical_occupation || p.mentions[0].occupation || "";
-            const headerAddr = p.canonical_address || p.mentions[0].address_full || "";
+            const firstDisplay = presentEntry(p.mentions[0], p.mentions[0].section);
+            const headerName = p.canonical_name || formatEntryName(p.mentions[0]) || "—";
+            const headerOcc = p.canonical_occupation || firstDisplay.subtitle || "";
+            const headerAddr = p.canonical_address || firstDisplay.address || "";
             
             return (
               <div key={p.cluster_id} style={{ marginBottom: 12 }}>
@@ -130,7 +143,10 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span>{headerName}</span>
+                    <span>
+                      {firstDisplay.badge ? `${firstDisplay.badge}: ` : ""}
+                      {headerName}
+                    </span>
                     <span style={{ color: "#7a7054", fontSize: 9 }}>({p.mentions.length})</span>
                   </div>
                   {headerOcc && (
@@ -161,7 +177,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
                     }
                   >
                     <span style={{ color: "#7a7054", fontSize: 9 }}>
-                      {m.occupation || "Vermelding"} {m.address_full ? `- ${m.address_full}` : ""}
+                      {buildingMentionLine(m)}
                     </span>
                     {m.page_number != null && (
                       <span style={{ color: "#7a7054", fontSize: 9 }}>{t('page')} {m.page_number}</span>

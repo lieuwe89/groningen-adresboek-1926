@@ -9,6 +9,10 @@ export type SearchMention = {
   section: string;
   name: string | null;
   initials: string | null;
+  entity_type: string | null;
+  role: string | null;
+  parent_organization: string | null;
+  description: string | null;
   occupation: string | null;
   occupation_expanded: string | null;
   address_full: string | null;
