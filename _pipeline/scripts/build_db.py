@@ -121,6 +121,33 @@ DISPLAY_STREET_CORRECTIONS = {
     "gerebrant bakkerstraat": "Gerbrand Bakkerstraat",
 }
 
+NIEUWE_EBBINGESTRAAT_COMPACT_KEYS = {
+    f"{prefix}{suffix}"
+    for prefix in (
+        "n",
+        "nw",
+        "nieuwe",
+        "noord",
+        "noordzijde",
+        "noorder",
+        "noordelijke",
+    )
+    for suffix in (
+        "ebbingestraat",
+        "ebbingestr",
+        "ebbingestra",
+        "ebbingestaat",
+        "ebbstr",
+        "ebbstraat",
+    )
+}
+NIEUWE_EBBINGESTRAAT_MENTION_RE = re.compile(
+    r"\b(?:(?:n|nw)\.?\s*|nieuwe[-\s]+|noord(?:zijde|er|elijke)?[-\s]*)"
+    r"ebb(?:\.?\s*|(?:ing|inge)[-\s]*)"
+    r"(?:estraat|estr\.?|str\.?|straat|estaat)",
+    re.IGNORECASE,
+)
+
 
 def normalize_street_key(value: str | None) -> str:
     if not value:
@@ -143,9 +170,30 @@ def raw_street_key(value: str | None) -> str:
     return key
 
 
+def compact_street_key(value: str | None) -> str:
+    if not isinstance(value, str) or not value:
+        return ""
+    return re.sub(r"[^a-z0-9]", "", strip_accents(value).lower())
+
+
+def special_street_correction(value: str | None) -> str | None:
+    if compact_street_key(value) in NIEUWE_EBBINGESTRAAT_COMPACT_KEYS:
+        return "Nieuwe Ebbingestraat"
+    return None
+
+
+def replace_nieuwe_ebbingestraat_mentions(value: str | None) -> str | None:
+    if not isinstance(value, str) or not value:
+        return value
+    return NIEUWE_EBBINGESTRAAT_MENTION_RE.sub("Nieuwe Ebbingestraat", value)
+
+
 def corrected_street_name(value: str | None) -> str | None:
     if not value:
         return value
+    special = special_street_correction(value)
+    if special:
+        return special
     key = normalize_street_key(value)
     corrected = DISPLAY_STREET_CORRECTIONS.get(key)
     if corrected:
@@ -163,16 +211,30 @@ def correct_entry_address(entry: dict) -> dict:
         or ""
     )
     corrected = corrected_street_name(street_source)
-    if not corrected or corrected == street_source:
-        return merged
+    street_source_special = special_street_correction(street_source)
+    explicit_street_correction = special_street_correction(merged.get("address_street"))
+    if corrected and (corrected != street_source or explicit_street_correction):
+        corrected = explicit_street_correction or corrected
 
-    if merged.get("address_street"):
-        merged["address_street"] = corrected
-    if merged.get("address_street_expanded") is not None:
-        merged["address_street_expanded"] = corrected
+        if merged.get("address_street"):
+            merged["address_street"] = corrected
+        if merged.get("address_street_expanded") is not None:
+            merged["address_street_expanded"] = corrected
 
-    number = merged.get("address_number") or ""
-    merged["address_full"] = " ".join([s for s in (corrected, number) if s]).strip()
+        number = merged.get("address_number") or ""
+        if not (street_source_special or explicit_street_correction) or not merged.get("address_full"):
+            merged["address_full"] = " ".join(str(s) for s in (corrected, number) if s).strip()
+
+    for field in (
+        "address_street",
+        "address_street_expanded",
+        "address_number",
+        "address_full",
+    ):
+        replaced = replace_nieuwe_ebbingestraat_mentions(merged.get(field))
+        if replaced != merged.get(field):
+            merged[field] = replaced
+
     return merged
 
 
