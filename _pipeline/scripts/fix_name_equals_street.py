@@ -152,6 +152,13 @@ def fix_name_equals_street(dry_run: bool = False) -> None:
             else:
                 correct_street = None  # Ambiguous or no anchor found.
 
+            # Never infer a street that is identical to the person's own name —
+            # these are surnames (Groeneveld, Zanting, Wagter, Tongeren, …)
+            # that appeared in "established" due to other OCR errors on the same
+            # street section, not real Groningen street names.
+            if correct_street and correct_street.strip().lower() == (entry["name"] or "").strip().lower():
+                correct_street = None
+
             entry_id = entry["id"]
             num = entry["address_number"]
 
