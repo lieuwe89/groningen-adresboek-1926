@@ -24,6 +24,6 @@ jobs:
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy
-        run: flyctl deploy --remote-only --config fly.toml
+        run: flyctl deploy --remote-only --config fly.toml --app groningen-1926
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
