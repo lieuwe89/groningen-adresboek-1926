@@ -6,7 +6,6 @@ Thumbs.db
 .env
 .env.*
 !.env.local.example
-fly.toml
 
 # Internal pipeline generated assets
 _pipeline/.venv/
