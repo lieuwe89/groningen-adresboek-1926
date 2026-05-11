@@ -3,6 +3,7 @@ import path from "path";
 import { loadOverrides, mergeOverrides } from "./overrides.ts";
 import { flattenPageEntries } from "./flatten.ts";
 import { getDb } from "./db.ts";
+import { mergePageEntryDbInfo, type PageEntryDbInfo } from "./pageDbMerge.ts";
 import { getJsonDir } from "./projectPaths.js";
 
 export type Bbox = [number, number, number, number];
@@ -78,33 +79,8 @@ export async function loadPage(stem: string): Promise<PageData | null> {
            FROM entries e JOIN pages p ON e.page_id = p.id
            WHERE p.stem = ?`
         )
-        .all(stem) as Array<{
+        .all(stem) as Array<PageEntryDbInfo & {
           stable_id: string;
-          name: string | null;
-          initials: string | null;
-          name_prefix: string | null;
-          name_prefix_expanded: string | null;
-          entity_type: string | null;
-          role: string | null;
-          parent_organization: string | null;
-          description: string | null;
-          occupation: string | null;
-          occupation_expanded: string | null;
-          address_street: string | null;
-          address_street_expanded: string | null;
-          address_number: string | null;
-          phone: string | null;
-          notes: string | null;
-          address_full: string | null;
-          searchable_text: string | null;
-          lat: number | null;
-          lng: number | null;
-          pand_id: string | null;
-          entry_bbox: string | null;
-          name_bbox: string | null;
-          address_bbox: string | null;
-          flag_verified: number;
-          flag_needs_review: number;
         }>;
       const dbMap = new Map(rows.map((r) => [r.stable_id, r]));
 
@@ -112,45 +88,7 @@ export async function loadPage(stem: string): Promise<PageData | null> {
         const sid = `${stem}:${i}`;
         const dbInfo = dbMap.get(sid);
         if (dbInfo) {
-          const parseBbox = (s: string | null): Bbox | null => {
-            if (!s) return null;
-            try {
-              return JSON.parse(s);
-            } catch {
-              return null;
-            }
-          };
-          return {
-            ...e,
-            name: dbInfo.name,
-            initials: dbInfo.initials,
-            name_prefix: dbInfo.name_prefix,
-            name_prefix_expanded: dbInfo.name_prefix_expanded,
-            entity_type: dbInfo.entity_type,
-            role: dbInfo.role,
-            parent_organization: dbInfo.parent_organization,
-            description: dbInfo.description,
-            occupation: dbInfo.occupation,
-            occupation_expanded: dbInfo.occupation_expanded,
-            address_street: dbInfo.address_street,
-            address_street_expanded: dbInfo.address_street_expanded,
-            address_number: dbInfo.address_number,
-            phone: dbInfo.phone,
-            notes: dbInfo.notes,
-            address_full: dbInfo.address_full ?? undefined,
-            searchable_text: dbInfo.searchable_text ?? undefined,
-            lat: dbInfo.lat,
-            lng: dbInfo.lng,
-            pand_id: dbInfo.pand_id,
-            entry_bbox: e.entry_bbox ?? parseBbox(dbInfo.entry_bbox),
-            name_bbox: e.name_bbox ?? parseBbox(dbInfo.name_bbox),
-            address_bbox: e.address_bbox ?? parseBbox(dbInfo.address_bbox),
-            flags: {
-              ...e.flags,
-              verified: dbInfo.flag_verified === 1,
-              needs_review: dbInfo.flag_needs_review === 1,
-            },
-          };
+          return mergePageEntryDbInfo(e, dbInfo);
         }
         return e;
       });
