@@ -16,7 +16,8 @@ node_modules/
 _pipeline/
 **/_pipeline/**
 pipeline/
-scripts/
+# scripts/ kept in build context — apply-overrides.mjs is COPYed into runner.
+# Python scripts are dev-only and harmless to leave in the builder stage.
 scans/
 Maps/
 output/
