@@ -1,0 +1,98 @@
+{
+  "1769_19525-1926_0703:105": {
+    "fields": {
+      "address_number": "101"
+    },
+    "flags": {},
+    "fingerprint": "sha1:90763564eb35209a74be56c39efbd2633acc1842",
+    "edited_at": "2026-05-09T14:30:17.257Z"
+  },
+  "1769_19525-1926_0703:108": {
+    "fields": {
+      "address_number": "103"
+    },
+    "flags": {},
+    "fingerprint": "sha1:6ca01f28615eeb6af538e925a5d9f2ac4e68604e",
+    "edited_at": "2026-05-09T14:30:21.854Z"
+  },
+  "1769_19525-1926_0703:109": {
+    "fields": {
+      "address_number": "105"
+    },
+    "flags": {},
+    "fingerprint": "sha1:402610086fdb9422af18172cb6d8cc804215992a",
+    "edited_at": "2026-05-09T14:30:25.442Z"
+  },
+  "1769_19525-1926_0703:110": {
+    "fields": {
+      "address_number": "105"
+    },
+    "flags": {},
+    "fingerprint": "sha1:cce4cf232a65c0233d25823f9b09632cda8b9778",
+    "edited_at": "2026-05-09T08:07:57.791Z"
+  },
+  "1769_19525-1926_0703:111": {
+    "fields": {
+      "address_number": "107"
+    },
+    "flags": {},
+    "fingerprint": "sha1:c1d1ae2323cfddf1261c505f325c031403517952",
+    "edited_at": "2026-05-09T08:08:01.017Z"
+  },
+  "1769_19525-1926_0703:112": {
+    "fields": {
+      "address_number": "109"
+    },
+    "flags": {},
+    "fingerprint": "sha1:c16d80a74a352801072b88528e7d248f0982d3c2",
+    "edited_at": "2026-05-09T08:08:08.182Z"
+  },
+  "1769_19525-1926_0703:113": {
+    "fields": {
+      "address_number": "111"
+    },
+    "flags": {},
+    "fingerprint": "sha1:cf5c41d73abeb5f3d803e35eec85cecd4a2323b1",
+    "edited_at": "2026-05-09T08:08:10.988Z"
+  },
+  "1769_19525-1926_0703:114": {
+    "fields": {
+      "address_number": "113"
+    },
+    "flags": {},
+    "fingerprint": "sha1:b1e3c73c596d9d3e2efbfd46ea1ba967cf2adbd8",
+    "edited_at": "2026-05-09T06:44:25.991Z"
+  },
+  "1769_19525-1926_0703:115": {
+    "fields": {
+      "address_number": "115"
+    },
+    "flags": {},
+    "fingerprint": "sha1:b9c550f9218f4a141ea0bbd6f8391bf270bb6b51",
+    "edited_at": "2026-05-09T14:31:29.970Z"
+  },
+  "1769_19525-1926_0703:116": {
+    "fields": {
+      "address_number": "117"
+    },
+    "flags": {},
+    "fingerprint": "sha1:cc85d159c08f0100d7ecc2f54cbfb531db951795",
+    "edited_at": "2026-05-09T14:31:26.487Z"
+  },
+  "1769_19525-1926_0703:117": {
+    "fields": {
+      "address_number": "17"
+    },
+    "flags": {},
+    "fingerprint": "sha1:8f9cd509f00f275ef5daa1711a049d30aefe237e",
+    "edited_at": "2026-05-09T14:31:21.940Z"
+  },
+  "1769_19525-1926_0703:118": {
+    "fields": {
+      "address_number": "119"
+    },
+    "flags": {},
+    "fingerprint": "sha1:dee5e29e66422f6b2197bb4d91e3ff877953d55f",
+    "edited_at": "2026-05-09T06:44:48.423Z"
+  }
+}

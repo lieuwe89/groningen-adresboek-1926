@@ -1,0 +1,160 @@
+{
+  "1769_19525-1926_0630:80": {
+    "fields": {
+      "address_street_expanded": "Boterdiep",
+      "address_street": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:58fe09b31943681be3593a058703ccd7c3bb7770",
+    "edited_at": "2026-05-11T18:59:07.479Z"
+  },
+  "1769_19525-1926_0630:91": {
+    "fields": {
+      "address_street": "Boterdiep",
+      "address_street_expanded": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:dbeb2a20c9022ae443367ebfcc541a54072d5fc5",
+    "edited_at": "2026-05-11T18:59:54.738Z"
+  },
+  "1769_19525-1926_0630:106": {
+    "fields": {
+      "name": "Draijer",
+      "initials": "H",
+      "name_prefix": "Mej.",
+      "entity_type": "person",
+      "occupation": "Corresp.",
+      "occupation_expanded": "Correspondent",
+      "address_street": "Boterdiep",
+      "address_street_expanded": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:4d0c623017010515a628c785fb81a6d6c050979b",
+    "edited_at": "2026-05-11T19:00:55.072Z"
+  },
+  "1769_19525-1926_0630:118": {
+    "fields": {
+      "name": "Sigarenfabr. firma F. Weling & zn.",
+      "entity_type": "organization",
+      "address_street": "Boterdiep",
+      "address_street_expanded": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:ade959382532f207b0ead3562904b58982daef4a",
+    "edited_at": "2026-05-11T19:01:58.446Z"
+  },
+  "1769_19525-1926_0630:120": {
+    "fields": {
+      "name": "Confectiefabriek Fa. Hertz & Co",
+      "entity_type": "organization",
+      "address_street": "Boterdiep",
+      "address_street_expanded": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:7c5e860dbed58f54b99571ae161614a69b8fee69",
+    "edited_at": "2026-05-11T19:02:55.677Z"
+  },
+  "1769_19525-1926_0630:125": {
+    "fields": {
+      "name": "Meubelpakh. Fa. D.T. Rodenberg",
+      "entity_type": "organization",
+      "address_street": "Boterdiep",
+      "address_street_expanded": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:5a34cdf6d25e457bd9feb5378001a1852a716144",
+    "edited_at": "2026-05-11T19:03:36.371Z"
+  },
+  "1769_19525-1926_0630:36": {
+    "fields": {
+      "address_street_expanded": "Nieuwe Boteringestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:7157fb4adc31bff3218ef6c02a3c071b082934f4",
+    "edited_at": "2026-05-11T19:04:32.058Z"
+  },
+  "1769_19525-1926_0630:35": {
+    "fields": {
+      "address_street_expanded": "Nieuwe Boteringestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:521bc4b3219655b813b5b6da99af7b8e20da23fd",
+    "edited_at": "2026-05-11T19:04:45.275Z"
+  },
+  "1769_19525-1926_0630:37": {
+    "fields": {
+      "address_street_expanded": "Nieuwe Boteringestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:8ce4a472a9b3a624518c2ba3e37d543c924bae81",
+    "edited_at": "2026-05-11T19:04:52.287Z"
+  },
+  "1769_19525-1926_0630:130": {
+    "fields": {
+      "occupation": "Piano Repar.",
+      "occupation_expanded": "Pianoreparateur ",
+      "address_street": "Boterdiep",
+      "address_street_expanded": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:d4e748131321a54a7f500a18c69cb16d232f80eb",
+    "edited_at": "2026-05-11T19:07:28.657Z"
+  },
+  "1769_19525-1926_0630:141": {
+    "fields": {
+      "address_street": "Boterdiep",
+      "address_street_expanded": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:837b65777741fee95a7c1a3c87a0b6fdddf7c94c",
+    "edited_at": "2026-05-11T19:07:54.266Z"
+  },
+  "1769_19525-1926_0630:32": {
+    "fields": {
+      "address_street_expanded": "Nieuwe Boteringestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:aa52d3f1461582390ab0c348f528a41ebe770250",
+    "edited_at": "2026-05-11T19:08:28.279Z"
+  },
+  "1769_19525-1926_0630:34": {
+    "fields": {
+      "address_street_expanded": "Nieuwe Boteringestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:7630036442cfac87df4e7dda80b5b505d8e5f2c7",
+    "edited_at": "2026-05-11T19:09:02.810Z"
+  },
+  "1769_19525-1926_0630:101": {
+    "fields": {
+      "address_street": "Boterdiep",
+      "address_street_expanded": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:b35e859007886e6e1376d13470b58b4a408b02a3",
+    "edited_at": "2026-05-11T19:09:28.780Z"
+  },
+  "1769_19525-1926_0630:167": {
+    "fields": {
+      "name": "Schoenenmagazijn van H. Noorman",
+      "initials": "",
+      "entity_type": "organization",
+      "address_street": "Boterdiep",
+      "address_street_expanded": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:584feaa4f120ad332ded8730f9e11041a9bdb27b",
+    "edited_at": "2026-05-11T19:10:14.266Z"
+  },
+  "1769_19525-1926_0630:108": {
+    "fields": {
+      "address_street_expanded": "Boterdiep",
+      "name": "Rijtuig- en wagenmakerij van G. Visser",
+      "initials": "",
+      "address_street": "Boterdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:dc557aa2047854e15f8a9749c9a9178d220bcc04",
+    "edited_at": "2026-05-11T19:11:28.015Z"
+  }
+}

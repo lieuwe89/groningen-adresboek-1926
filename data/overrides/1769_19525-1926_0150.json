@@ -2,9 +2,18 @@
   "1769_19525-1926_0150:1": {
     "fields": {},
     "flags": {
-      "bbox_unreliable": true
+      "bbox_unreliable": false,
+      "verified": true
     },
     "fingerprint": "sha1:1ceba53ea79602aada4de59429e186473231e558",
-    "edited_at": "2026-05-03T13:37:24.166Z"
+    "edited_at": "2026-05-10T19:13:51.007Z"
+  },
+  "1769_19525-1926_0150:13": {
+    "fields": {
+      "address_street_expanded": "Nieuwe Sint Jansstraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:b68069146f80a3bc03d57337680e7fe9509b8eb8",
+    "edited_at": "2026-05-09T13:54:09.330Z"
   }
 }

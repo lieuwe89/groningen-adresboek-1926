@@ -28,6 +28,13 @@ Entries are geocoded via PDOK / BAG and linked to georeferenced historic maps.
 └── data/overrides/      Admin panel edits (tracked)
 ```
 
+## Syncing edits between local and Fly
+
+`data/overrides/*.json` is the canonical store of edits; SQLite columns
+are a derived cache. Run `npm run sync` to LWW-merge local + every Fly
+machine's overrides, push the result back, and rebuild every cache.
+See [docs/sync-overrides.md](docs/sync-overrides.md) for details.
+
 > [!NOTE]
 > Internal documentation, design references, and architectural notes are excluded from the repository to keep the codebase focused on implementation.
 

@@ -1,0 +1,18 @@
+{
+  "1769_19525-1926_0232:63": {
+    "fields": {
+      "address_number": "23"
+    },
+    "flags": {},
+    "fingerprint": "sha1:e25b436782c3abe0e0632cf6b7bf1d03abd261ea",
+    "edited_at": "2026-05-09T14:30:55.399Z"
+  },
+  "1769_19525-1926_0232:85": {
+    "fields": {
+      "address_number": "41"
+    },
+    "flags": {},
+    "fingerprint": "sha1:ede44838a766a7452f744a661fefc66a73cdb48b",
+    "edited_at": "2026-05-09T14:30:37.046Z"
+  }
+}

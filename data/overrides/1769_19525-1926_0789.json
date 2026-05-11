@@ -1,0 +1,26 @@
+{
+  "1769_19525-1926_0789:46": {
+    "fields": {
+      "address_number": "23"
+    },
+    "flags": {},
+    "fingerprint": "sha1:16dbec9a3755b79eaa92ab904120514db4812719",
+    "edited_at": "2026-05-09T14:31:03.407Z"
+  },
+  "1769_19525-1926_0789:47": {
+    "fields": {
+      "address_number": "23"
+    },
+    "flags": {},
+    "fingerprint": "sha1:76254c60f4f24ca2d166511c3062ea432901a37e",
+    "edited_at": "2026-05-09T14:30:59.678Z"
+  },
+  "1769_19525-1926_0789:48": {
+    "fields": {
+      "address_number": "23"
+    },
+    "flags": {},
+    "fingerprint": "sha1:5a030c83230ca819287a69e15c1ac7ffcc921493",
+    "edited_at": "2026-05-09T14:30:57.847Z"
+  }
+}

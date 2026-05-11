@@ -1,0 +1,18 @@
+{
+  "1769_19525-1926_0216:56": {
+    "fields": {
+      "address_street_expanded": "Ubbo Emmiussingel"
+    },
+    "flags": {},
+    "fingerprint": "sha1:9ee753259bf53379e99bf1279e24aaa45faf551c",
+    "edited_at": "2026-05-09T08:02:42.248Z"
+  },
+  "1769_19525-1926_0216:55": {
+    "fields": {
+      "address_street_expanded": "Ubbo Emmiussingel"
+    },
+    "flags": {},
+    "fingerprint": "sha1:37fefa61d76ba14e5723db0f57028ccf898ed06c",
+    "edited_at": "2026-05-09T08:02:55.213Z"
+  }
+}

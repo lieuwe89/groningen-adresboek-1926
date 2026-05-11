@@ -1,0 +1,60 @@
+{
+  "1769_19525-1926_0121:2": {
+    "fields": {
+      "address_street_expanded": "Praediniussingel",
+      "address_number": "39"
+    },
+    "flags": {},
+    "fingerprint": "sha1:70c63ea3fea24598b1821c4dd76073419cf80d92",
+    "edited_at": "2026-05-11T05:51:31.900Z"
+  },
+  "1769_19525-1926_0121:14": {
+    "fields": {
+      "address_number": "17"
+    },
+    "flags": {},
+    "fingerprint": "sha1:06636241cc4194f1b94972204b2eaef67815a514",
+    "edited_at": "2026-05-09T15:19:22.673Z"
+  },
+  "1769_19525-1926_0121:0": {
+    "fields": {
+      "address_street_expanded": "Herestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:9cbaf5c5debf148d0a4c5a656d45629c2329d4f0",
+    "edited_at": "2026-05-11T05:43:39.061Z"
+  },
+  "1769_19525-1926_0121:17": {
+    "fields": {
+      "address_street_expanded": "Gorechtkade"
+    },
+    "flags": {},
+    "fingerprint": "sha1:f1dac18138ce26201faa7c25b032bf3a412a4fb9",
+    "edited_at": "2026-05-11T05:49:26.803Z"
+  },
+  "1769_19525-1926_0121:20": {
+    "fields": {
+      "address_street_expanded": "Tweede Willemstraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:296d8e27241201fbfead5ee969261c60e3114566",
+    "edited_at": "2026-05-11T05:50:01.779Z"
+  },
+  "1769_19525-1926_0121:21": {
+    "fields": {
+      "address_street_expanded": "Nieuwe Ebbingestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:6c1281c14da71ee0ea1039490154af5a9b02c73b",
+    "edited_at": "2026-05-11T05:50:16.582Z"
+  },
+  "1769_19525-1926_0121:24": {
+    "fields": {
+      "address_street_expanded": "Hoornsedijk",
+      "address_number": "106"
+    },
+    "flags": {},
+    "fingerprint": "sha1:ee80b74da743c57fe19ed1abad1d6a1aeb7273e1",
+    "edited_at": "2026-05-11T05:50:38.410Z"
+  }
+}

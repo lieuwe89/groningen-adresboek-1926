@@ -30,11 +30,14 @@ yarn-error.log*
 # Documentation & Markdown
 *.md
 !/README.md
-docs/
+/docs/*
+!/docs/sync-overrides.md
 
 # Application Data
-data/
-!data/overrides/
+# Use /data/* (not data/) so the dir itself isn't excluded — that would
+# block re-including data/overrides/. See man gitignore.
+/data/*
+!/data/overrides/
 public/tiles/
 public/maps/
 

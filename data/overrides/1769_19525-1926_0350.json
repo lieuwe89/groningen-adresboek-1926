@@ -6,5 +6,14 @@
     "flags": {},
     "fingerprint": "sha1:5bd98eca0fd99c39ecfa841dac37dd4093025a49",
     "edited_at": "2026-05-05T10:41:49.912Z"
+  },
+  "1769_19525-1926_0350:85": {
+    "fields": {
+      "address_street": "N. Boteringestraat",
+      "address_street_expanded": "Nieuwe Boteringestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:732a4627702dbde48382df99024e63614c5c03ec",
+    "edited_at": "2026-05-11T19:08:21.636Z"
   }
 }

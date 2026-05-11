@@ -18,6 +18,8 @@ ENV HOSTNAME=::
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+# Sync tooling: rebuild SQLite cache from overrides after `sync-overrides` push.
+COPY --from=builder /app/scripts/apply-overrides.mjs ./scripts/apply-overrides.mjs
 
 # Tiles and maps are on a Fly volume mounted at /data.
 # Create symlinks so Next.js serves them as static assets.
