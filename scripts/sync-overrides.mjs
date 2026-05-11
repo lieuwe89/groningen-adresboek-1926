@@ -81,12 +81,18 @@ function pullMachine(app, machineId, destDir) {
 }
 
 function pushFile(app, machineId, localFile, remotePath) {
-  // sftp shell: rm -f then put (the shell refuses to overwrite silently).
-  const cmds = `rm -f ${remotePath}\nput ${localFile} ${remotePath}\n`;
+  // The sftp shell only knows cd/ls/get/put/chmod and refuses to overwrite,
+  // so delete first via ssh, then put. Two round-trips per file is fine —
+  // we only push files that actually changed (see writeMergedLocally caller).
+  execFileSync(
+    "fly",
+    ["ssh", "console", "-a", app, "--machine", machineId, "-C", `rm -f ${remotePath}`],
+    { stdio: ["ignore", "ignore", "inherit"] }
+  );
   const res = spawnSync(
     "fly",
     ["sftp", "shell", "-a", app, "--machine", machineId],
-    { input: cmds, stdio: ["pipe", "inherit", "inherit"] }
+    { input: `put ${localFile} ${remotePath}\n`, stdio: ["pipe", "inherit", "inherit"] }
   );
   if (res.status !== 0) throw new Error(`sftp push failed for ${remotePath}`);
 }
@@ -173,14 +179,28 @@ async function main() {
     return;
   }
 
-  // 4. Push merged set back to every machine + rebuild cache.
+  // 4. Push only files that differ from what each machine already has.
+  //    Then rebuild the cache. Skip-if-identical means a no-op `npm run sync`
+  //    after a clean sync touches nothing on the wire.
   for (const id of machines) {
-    console.log(`pushing to ${id}…`);
-    for (const stem of Object.keys(byStem)) {
+    const pulledDir = path.join(tmpRoot, id);
+    let pushed = 0;
+    for (const [stem, data] of Object.entries(byStem)) {
       const local = path.join(OVERRIDES_DIR, `${stem}.json`);
+      const remoteCopy = path.join(pulledDir, `${stem}.json`);
+      const localBytes = readFileSync(local, "utf8");
+      let remoteBytes = null;
+      try { remoteBytes = readFileSync(remoteCopy, "utf8"); } catch { /* new file on remote */ }
+      // Compare semantically: re-parse both and stringify with the same formatter.
+      const localCanon = JSON.stringify(JSON.parse(localBytes));
+      const remoteCanon = remoteBytes ? JSON.stringify(JSON.parse(remoteBytes)) : null;
+      if (localCanon === remoteCanon) continue;
       pushFile(app, id, local, `/data/overrides/${stem}.json`);
+      pushed++;
     }
-    rebuildOnMachine(app, id);
+    console.log(`pushed ${pushed} file(s) to ${id}.`);
+    if (pushed > 0) rebuildOnMachine(app, id);
+    else console.log(`  no changes for ${id}, skipping rebuild.`);
   }
 
   console.log("done. review `git status data/overrides/` and commit when ready.");
