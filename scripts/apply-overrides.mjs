@@ -113,7 +113,7 @@ function main() {
     console.error(`Cannot read ${OVERRIDES_DIR}:`, err.message);
     process.exit(1);
   }
-  files = files.filter((f) => f.endsWith(".json"));
+  files = files.filter((f) => f.endsWith(".json") && !f.startsWith("._"));
   if (ONLY_STEM) files = files.filter((f) => f === `${ONLY_STEM}.json`);
 
   let pages = 0, applied = 0, missing = 0;
