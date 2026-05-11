@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-// @ts-expect-error Node 25 can strip TypeScript for this focused node:test file.
 import { presentEntry } from "../lib/entryPresentation.ts";
 
 test("presentEntry keeps normal residents in the person display model", () => {
@@ -50,6 +49,33 @@ test("presentEntry treats business-like name register entries as organizations",
   assert.equal(display.badge, "Organisatie");
   assert.equal(display.detailLabel, "Context");
   assert.equal(display.detail, "voorheen Firma Stein & Takken");
+});
+
+test("presentEntry does not promote people to organizations from occupation text alone", () => {
+  const display = presentEntry({
+    section: "name_register",
+    name: "Berge",
+    initials: "Jan",
+    occupation: "Firma H. L. Swarte",
+    address_full: "A-straat 1",
+  });
+
+  assert.equal(display.kind, "person");
+  assert.equal(display.badge, null);
+  assert.equal(display.detailLabel, "Beroep");
+  assert.equal(display.detail, "Firma H. L. Swarte");
+});
+
+test("presentEntry honors explicit admin organization corrections", () => {
+  const display = presentEntry({
+    section: "name_register",
+    entity_type: "organization",
+    name: "Eerste Gron. Betonbouw (N.V.)",
+    address_full: "Damsterdiep 1",
+  });
+
+  assert.equal(display.kind, "organization");
+  assert.equal(display.badge, "Organisatie");
 });
 
 test("presentEntry gives advertisements their own display model", () => {

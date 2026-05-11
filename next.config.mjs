@@ -13,6 +13,25 @@ const nextConfig = {
   // assetPrefix makes the *browser* fetch all _next/ resources and RSC
   // payloads from /groningen-1926/_next/... so they go through the proxy.
   assetPrefix: '/groningen-1926',
+  async headers() {
+    const longLivedAssetHeaders = [
+      {
+        key: 'Cache-Control',
+        value: 'public, max-age=31536000, immutable',
+      },
+    ];
+
+    return [
+      {
+        source: '/tiles/:path*',
+        headers: longLivedAssetHeaders,
+      },
+      {
+        source: '/maps/:path*',
+        headers: longLivedAssetHeaders,
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

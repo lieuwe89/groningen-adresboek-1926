@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { useProxyUrl } from "@/lib/useProxyUrl";
+import { resolvePublicAssetUrl } from "@/lib/publicAssetUrls";
 import type { Entry } from "@/lib/data";
 
 export interface ScanViewerHandle {
@@ -35,13 +36,18 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
   stemRef.current = stem;
   const onSelectEntryRef = useRef(onSelectEntry);
   onSelectEntryRef.current = onSelectEntry;
-  const { proxyPath } = useProxyUrl();
+  const { prefix } = useProxyUrl();
 
   const applyOverlaysRef = useRef<((force?: boolean) => void) | null>(null);
 
-  // Path prefix for /tiles/ — handles reverse-proxy deployments (e.g. /groningen-1926).
-  // We use proxyPath("") to get the base prefix.
-  const tilesBase = proxyPath("");
+  const tileSourceUrl = (currentStem: string) =>
+    resolvePublicAssetUrl({
+      assetPath: `/tiles/${currentStem}.dzi`,
+      proxyPrefix: prefix,
+      cdnBaseUrl:
+        process.env.NEXT_PUBLIC_TILES_BASE_URL ||
+        process.env.NEXT_PUBLIC_STATIC_ASSETS_BASE_URL,
+    });
 
   useEffect(() => {
     let cancelled = false;
@@ -61,7 +67,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         minZoomImageRatio: 1,
         maxZoomPixelRatio: 4,
         gestureSettingsMouse: { clickToZoom: false, dblClickToZoom: false },
-        tileSources: `${tilesBase}/tiles/${stem}.dzi`,
+        tileSources: tileSourceUrl(stem),
       });
       viewerRef.current = viewer;
 
@@ -118,7 +124,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
     const v = viewerRef.current;
     if (!v) return;
     dimsRef.current = null;
-    v.open(`${tilesBase}/tiles/${stem}.dzi`);
+    v.open(tileSourceUrl(stem));
   }, [stem]);
 
   useEffect(() => {

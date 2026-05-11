@@ -21,6 +21,7 @@ interface FieldState {
   name: string;
   initials: string;
   name_prefix: string;
+  entity_type: string;
   occupation: string;
   occupation_expanded: string;
   address_street: string;
@@ -34,6 +35,7 @@ function fromEntry(e: Entry): FieldState {
     name: e.name || "",
     initials: e.initials || "",
     name_prefix: e.name_prefix || "",
+    entity_type: e.entity_type || "",
     occupation: e.occupation || "",
     occupation_expanded: e.occupation_expanded || "",
     address_street: e.address_street || "",
@@ -187,6 +189,29 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
         <Field label="Init." value={state.initials} onChange={(v) => set("initials", v)} />
       </div>
       <Field label="Voorvoegsel" value={state.name_prefix} onChange={(v) => set("name_prefix", v)} />
+      <label className="flex flex-col gap-[2px]">
+        <span
+          className="text-bp-ink-dim uppercase"
+          style={{ fontSize: 7.5, letterSpacing: "0.14em" }}
+        >
+          Type
+        </span>
+        <select
+          value={state.entity_type}
+          onChange={(e) => set("entity_type", e.target.value)}
+          className="bg-bp-ink-faint outline-none focus:border-bp-amber"
+          style={{
+            fontSize: 10,
+            color: "#e6d9b0",
+            border: "1px solid #cfc39a55",
+            padding: "4px 6px",
+          }}
+        >
+          <option value="">Auto</option>
+          <option value="person">Persoon</option>
+          <option value="organization">Organisatie</option>
+        </select>
+      </label>
       <Field label="Beroep (afk.)" value={state.occupation} onChange={(v) => set("occupation", v)} />
       <Field
         label="Beroep (volledig)"

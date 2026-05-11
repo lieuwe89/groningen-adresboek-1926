@@ -41,3 +41,17 @@ test("updateOverride preserves concurrent updates to the same page file", async 
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("applyOverride can persist an admin entity type correction", async () => {
+  const moduleUrl = `${pathToFileURL(
+    path.join(process.cwd(), "lib", "overrides.ts")
+  ).href}?test=${Date.now()}`;
+  const { applyOverride } = await import(moduleUrl);
+
+  const merged = applyOverride(
+    { name: "Eerste Gron. Betonbouw", initials: "" },
+    { fields: { entity_type: "organization" } }
+  );
+
+  assert.equal(merged.entity_type, "organization");
+});

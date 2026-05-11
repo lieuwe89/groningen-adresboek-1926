@@ -58,6 +58,13 @@ const BUSINESS_PATTERNS = [
   /\b(apotheek|drukkerij|garage|hotel|magazijn|slagerij|verzekering)\b/i,
 ];
 
+const ORGANIZATION_ENTITY_TYPES = new Set([
+  "organization",
+  "facility",
+  "service",
+  "country",
+]);
+
 export function formatEntryName(entry: PresentableEntry | undefined): string {
   if (!entry) return "";
   const parts = [entry.name, entry.initials, entry.name_prefix].filter(Boolean);
@@ -153,17 +160,20 @@ function classifyEntry(
   if (!entry) return "person";
   if (section === "advertisement") return "advertisement";
   if (section === "other") return "text";
-  if (entry.entity_type === "organization") return "organization";
-  if (section === "institutional") return entry.entity_type === "person" ? "institutional" : "organization";
+  if (ORGANIZATION_ENTITY_TYPES.has(entry.entity_type || "")) return "organization";
+  if (entry.entity_type === "person") {
+    return section === "institutional" ? "institutional" : "person";
+  }
+  if (section === "institutional") {
+    return entry.role ? "institutional" : "organization";
+  }
   if (looksLikeBusiness(entry)) return "organization";
   return "person";
 }
 
 function looksLikeBusiness(entry: PresentableEntry): boolean {
-  const text = [entry.name, entry.initials, entry.occupation, entry.occupation_expanded]
-    .filter(Boolean)
-    .join(" ");
-  return BUSINESS_PATTERNS.some((pattern) => pattern.test(text));
+  const name = entry.name || "";
+  return BUSINESS_PATTERNS.some((pattern) => pattern.test(name));
 }
 
 function sectionLabel(section: EntrySection): string {

@@ -6,6 +6,7 @@ import { cogProtocol } from "@geomatico/maplibre-cog-protocol";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { HISTORIC_MAPS } from "@/lib/historicMaps";
+import { resolvePublicAssetUrl } from "@/lib/publicAssetUrls";
 import { useProxyUrl } from "@/lib/useProxyUrl";
 
 const GRONINGEN_CENTER: [number, number] = [6.5665, 53.2194];
@@ -44,7 +45,7 @@ export default function MapView({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MLMap | null>(null);
   const [ready, setReady] = useState(false);
-  const { proxyPath } = useProxyUrl();
+  const { prefix, proxyPath } = useProxyUrl();
 
   // Hover highlight: track hovered pand id via feature-state.
   const hoveredRef = useRef<string | null>(null);
@@ -256,8 +257,14 @@ export default function MapView({
     const sourceId = `historic-${conf.id}-src`;
     const layerId = `historic-${conf.id}`;
 
-    // Ensure absolute URL for the COG protocol
-    const fullUrl = new URL(conf.url, window.location.origin).href;
+    const assetUrl = resolvePublicAssetUrl({
+      assetPath: conf.url,
+      proxyPrefix: prefix,
+      cdnBaseUrl:
+        process.env.NEXT_PUBLIC_MAPS_BASE_URL ||
+        process.env.NEXT_PUBLIC_STATIC_ASSETS_BASE_URL,
+    });
+    const fullUrl = new URL(assetUrl, window.location.origin).href;
 
     map.addSource(sourceId, {
       type: "raster",
@@ -298,4 +305,3 @@ export default function MapView({
     </div>
   );
 }
-

@@ -6,6 +6,7 @@ type EntryRow = {
   initials: string | null;
   name_prefix: string | null;
   name_prefix_expanded: string | null;
+  entity_type: string | null;
   occupation: string | null;
   occupation_expanded: string | null;
   address_street: string | null;
@@ -37,6 +38,7 @@ export function searchableTextForEntry(entry: Partial<EntryRow>): string {
     entry.initials,
     entry.name_prefix,
     entry.name_prefix_expanded,
+    entry.entity_type,
     entry.occupation,
     entry.occupation_expanded,
     entry.address_street,
@@ -50,6 +52,7 @@ export function searchableTextForEntry(entry: Partial<EntryRow>): string {
 export function syncEntryDerivedData(db: DB, stableId: string): void {
   const edited = db.prepare(`
     SELECT id, name, initials, name_prefix, name_prefix_expanded,
+           entity_type,
            occupation, occupation_expanded, address_street, address_street_expanded,
            address_number, address_full, pand_id, person_id
     FROM entries
@@ -59,10 +62,12 @@ export function syncEntryDerivedData(db: DB, stableId: string): void {
   if (!edited) return;
 
   // 1. Try to find/assign a person_id if missing or if name/address changed
+  const previousPersonId = edited.person_id;
   const pid = findOrCreatePersonId(db, edited);
   if (pid !== edited.person_id) {
     db.prepare("UPDATE entries SET person_id = ? WHERE id = ?").run(pid, edited.id);
     edited.person_id = pid;
+    if (previousPersonId != null) refreshPersonCanonical(db, previousPersonId);
   }
 
   // Consistency: if address_street changed but expanded wasn't updated, 
@@ -78,52 +83,54 @@ export function syncEntryDerivedData(db: DB, stableId: string): void {
     edited.id
   );
 
-  if (edited.person_id != null) {
-    const rows = db.prepare(`
-      SELECT id, name, initials, name_prefix, name_prefix_expanded,
-             occupation, occupation_expanded, address_full, pand_id
-      FROM entries
-      WHERE person_id = ?
-      ORDER BY id
-    `).all(edited.person_id) as EntryRow[];
-
-    let canonicalName: string | null = null;
-    let canonicalOccupation: string | null = null;
-    let canonicalAddress: string | null = null;
-    let canonicalPandId: string | null = null;
-
-    for (const row of rows) {
-      canonicalName = longestValue(
-        canonicalName,
-        compactJoin([row.initials, row.name_prefix_expanded, row.name])
-      );
-      canonicalOccupation = longestValue(
-        canonicalOccupation,
-        row.occupation_expanded || row.occupation
-      );
-      canonicalAddress = longestValue(canonicalAddress, row.address_full);
-      if (!canonicalPandId && row.pand_id) canonicalPandId = row.pand_id;
-    }
-
-    db.prepare(`
-      UPDATE persons
-      SET canonical_name = ?,
-          canonical_occupation = ?,
-          canonical_address = ?,
-          canonical_pand_id = ?,
-          entry_count = ?
-      WHERE id = ?
-    `).run(
-      canonicalName,
-      canonicalOccupation,
-      canonicalAddress,
-      canonicalPandId,
-      rows.length,
-      edited.person_id
-    );
-  }
+  if (edited.person_id != null) refreshPersonCanonical(db, edited.person_id);
 
   db.prepare("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')").run();
+}
+
+function refreshPersonCanonical(db: DB, personId: number): void {
+  const rows = db.prepare(`
+    SELECT id, name, initials, name_prefix, name_prefix_expanded,
+           occupation, occupation_expanded, address_full, pand_id
+    FROM entries
+    WHERE person_id = ?
+    ORDER BY id
+  `).all(personId) as EntryRow[];
+
+  let canonicalName: string | null = null;
+  let canonicalOccupation: string | null = null;
+  let canonicalAddress: string | null = null;
+  let canonicalPandId: string | null = null;
+
+  for (const row of rows) {
+    canonicalName = longestValue(
+      canonicalName,
+      compactJoin([row.initials, row.name_prefix_expanded, row.name])
+    );
+    canonicalOccupation = longestValue(
+      canonicalOccupation,
+      row.occupation_expanded || row.occupation
+    );
+    canonicalAddress = longestValue(canonicalAddress, row.address_full);
+    if (!canonicalPandId && row.pand_id) canonicalPandId = row.pand_id;
+  }
+
+  db.prepare(`
+    UPDATE persons
+    SET canonical_name = ?,
+        canonical_occupation = ?,
+        canonical_address = ?,
+        canonical_pand_id = ?,
+        entry_count = ?
+    WHERE id = ?
+  `).run(
+    canonicalName,
+    canonicalOccupation,
+    canonicalAddress,
+    canonicalPandId,
+    rows.length,
+    personId
+  );
 }
 
 /**
@@ -157,6 +164,8 @@ export function linkToNearestBuilding(db: DB, stableId: string): void {
  * Uses the same logic as cluster_persons.py: Name + Initials match AND (Address OR Occupation).
  */
 function findOrCreatePersonId(db: DB, entry: EntryRow): number | null {
+  if (entry.entity_type === "organization") return null;
+
   const nName = normalize(entry.name);
   const nInits = normalize(entry.initials);
   if (!nName) return null;

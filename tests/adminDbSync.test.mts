@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import Database from "better-sqlite3";
 
-// @ts-expect-error Node 25 can strip TypeScript for this focused node:test file.
 import { syncEntryDerivedData } from "../lib/adminDbSync.ts";
 
 function createDb() {
@@ -31,6 +30,7 @@ function createDb() {
       initials TEXT,
       name_prefix TEXT,
       name_prefix_expanded TEXT,
+      entity_type TEXT,
       occupation TEXT,
       occupation_expanded TEXT,
       address_street TEXT,
@@ -44,6 +44,7 @@ function createDb() {
     );
     CREATE VIRTUAL TABLE entries_fts USING fts5(
       name, initials, name_prefix_expanded,
+      entity_type,
       occupation, occupation_expanded,
       address_street, address_street_expanded, address_number, address_full,
       searchable_text,
@@ -60,11 +61,11 @@ function createDb() {
   db.prepare(`
     INSERT INTO entries (
       id, page_id, entry_index, stable_id, name, initials, name_prefix_expanded,
-      occupation_expanded, address_full, searchable_text, pand_id, person_id
+      entity_type, occupation_expanded, address_full, searchable_text, pand_id, person_id
     )
     VALUES
-      (1, 1, 0, 'page:0', 'Smoth', 'J.', NULL, 'smid', 'A straat 1', 'Smoth J. smid A straat 1', 'pand-a', 1),
-      (2, 1, 1, 'page:1', 'Smoth', 'J.', NULL, 'smid', 'A straat 1', 'Smoth J. smid A straat 1', 'pand-a', 1)
+      (1, 1, 0, 'page:0', 'Smoth', 'J.', NULL, NULL, 'smid', 'A straat 1', 'Smoth J. smid A straat 1', 'pand-a', 1),
+      (2, 1, 1, 'page:1', 'Smoth', 'J.', NULL, NULL, 'smid', 'A straat 1', 'Smoth J. smid A straat 1', 'pand-a', 1)
   `).run();
   db.exec("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')");
   return db;
@@ -96,4 +97,28 @@ test("syncEntryDerivedData refreshes person canonicals and FTS after an admin ed
     n: number;
   };
   assert.equal(correctedHits.n, 1);
+});
+
+test("syncEntryDerivedData removes explicit organizations from person clusters", () => {
+  const db = createDb();
+  db.prepare(`
+    UPDATE entries
+    SET entity_type = 'organization',
+        edited_at = '2026-05-09T10:00:00.000Z'
+    WHERE stable_id = 'page:0'
+  `).run();
+
+  syncEntryDerivedData(db, "page:0");
+
+  const entry = db.prepare("SELECT person_id FROM entries WHERE stable_id = 'page:0'").get() as {
+    person_id: number | null;
+  };
+  assert.equal(entry.person_id, null);
+
+  const person = db.prepare("SELECT entry_count, canonical_name FROM persons WHERE id = 1").get() as {
+    entry_count: number;
+    canonical_name: string;
+  };
+  assert.equal(person.entry_count, 1);
+  assert.equal(person.canonical_name, "J. Smoth");
 });

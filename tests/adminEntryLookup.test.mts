@@ -24,6 +24,7 @@ function createDb(file: string) {
       initials TEXT,
       name_prefix TEXT,
       name_prefix_expanded TEXT,
+      entity_type TEXT,
       occupation TEXT,
       occupation_expanded TEXT,
       address_street TEXT,
@@ -46,12 +47,12 @@ function createDb(file: string) {
   db.prepare("INSERT INTO pages (id, stem, section) VALUES (1, 'page-missing-json', 'name_register')").run();
   db.prepare(`
     INSERT INTO entries (
-      id, page_id, entry_index, stable_id, name, initials, occupation,
+      id, page_id, entry_index, stable_id, name, initials, entity_type, occupation,
       address_street, address_street_expanded, address_number, address_full,
       notes, entry_bbox, flag_verified, flag_needs_review, flag_bbox_unreliable
     )
     VALUES (
-      1, 1, 7, 'page-missing-json:7', 'Jansen', 'P.', 'bakker',
+      1, 1, 7, 'page-missing-json:7', 'Jansen', 'P.', 'person', 'bakker',
       'A straat', 'A-straat', '521', 'A-straat 521',
       'check scan', '[1,2,3,4]', 1, 0, 1
     )
@@ -79,6 +80,7 @@ test("loadAdminBaseEntry falls back to SQLite when page JSON is absent", async (
     db.close();
 
     assert.equal(entry?.name, "Jansen");
+    assert.equal(entry?.entity_type, "person");
     assert.equal(entry?.address_number, "521");
     assert.equal(entry?.address_full, "A-straat 521");
     assert.deepEqual(entry?.entry_bbox, [1, 2, 3, 4]);

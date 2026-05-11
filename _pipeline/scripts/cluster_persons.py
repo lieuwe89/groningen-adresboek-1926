@@ -40,6 +40,7 @@ def cluster(conn: sqlite3.Connection):
         SELECT id, name, initials, occupation_expanded, address_street_expanded, address_number, pand_id
         FROM entries
         WHERE name IS NOT NULL AND name != ''
+          AND (entity_type IS NULL OR entity_type = '' OR entity_type = 'person')
     """)
     rows = cur.fetchall()
 

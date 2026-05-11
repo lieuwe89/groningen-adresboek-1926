@@ -2,7 +2,7 @@ import {
   updateOverride,
   type EntryId,
   type EntryOverride,
-} from "@/lib/overrides";
+} from "./overrides.ts";
 
 type OverrideSaveResult = {
   override: EntryOverride;

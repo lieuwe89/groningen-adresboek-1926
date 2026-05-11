@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { normalizeProxyPrefix } from "./publicAssetUrls";
 
 /**
  * Hook to detect the proxy prefix (e.g. /groningen-1926) from window.location.
@@ -40,7 +41,7 @@ export function useProxyUrl() {
     return "";
   };
 
-  const prefix = getPrefix();
+  const prefix = normalizeProxyPrefix(getPrefix());
 
   /**
    * Prepends the detected proxy prefix to a given path.
@@ -48,8 +49,8 @@ export function useProxyUrl() {
    */
   const proxyPath = (path: string) => {
     if (!prefix) return path;
-    if (path.startsWith(prefix)) return path;
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    if (cleanPath === prefix || cleanPath.startsWith(`${prefix}/`)) return cleanPath;
     return `${prefix}${cleanPath}`;
   };
 

@@ -16,6 +16,7 @@ const ALLOWED_FIELDS = new Set([
   "initials",
   "name_prefix",
   "name_prefix_expanded",
+  "entity_type",
   "occupation",
   "occupation_expanded",
   "address_street",
@@ -26,11 +27,14 @@ const ALLOWED_FIELDS = new Set([
   "notes",
 ]);
 
+const ALLOWED_ENTITY_TYPES = new Set(["person", "organization"]);
+
 const DB_FIELD_COLUMNS: Partial<Record<keyof NonNullable<EntryOverride["fields"]>, string>> = {
   name: "name",
   initials: "initials",
   name_prefix: "name_prefix",
   name_prefix_expanded: "name_prefix_expanded",
+  entity_type: "entity_type",
   occupation: "occupation",
   occupation_expanded: "occupation_expanded",
   address_street: "address_street",
@@ -46,6 +50,14 @@ function sanitizeFields(input: unknown): EntryOverride["fields"] | null {
   const out: Record<string, string | null> = {};
   for (const [k, v] of Object.entries(input as Record<string, unknown>)) {
     if (!ALLOWED_FIELDS.has(k)) continue;
+    if (k === "entity_type") {
+      if (v === "" || v === null) {
+        out[k] = null;
+      } else if (typeof v === "string" && ALLOWED_ENTITY_TYPES.has(v)) {
+        out[k] = v;
+      }
+      continue;
+    }
     if (v === null || typeof v === "string") out[k] = v;
   }
   return out as EntryOverride["fields"];

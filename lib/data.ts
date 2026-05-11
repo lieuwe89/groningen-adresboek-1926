@@ -1,8 +1,8 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { loadOverrides, mergeOverrides } from "./overrides";
-import { flattenPageEntries } from "./flatten";
-import { getDb } from "./db";
+import { loadOverrides, mergeOverrides } from "./overrides.ts";
+import { flattenPageEntries } from "./flatten.ts";
+import { getDb } from "./db.ts";
 import { getJsonDir } from "./projectPaths.js";
 
 export type Bbox = [number, number, number, number];
@@ -60,12 +60,19 @@ export async function loadPage(stem: string): Promise<PageData | null> {
     const overrides = await loadOverrides(stem);
     const data = mergeOverrides(stem, base, overrides);
 
-    // Merge DB info (geocoding, building links)
+    // Merge DB info. Page JSON carries scan geometry/word ids; SQLite carries
+    // normalized fields, admin edits, geocoding, and building links.
     try {
       const db = getDb();
       const rows = db
         .prepare(
-          `SELECT e.stable_id, e.lat, e.lng, e.pand_id,
+          `SELECT e.stable_id,
+                  e.name, e.initials, e.name_prefix, e.name_prefix_expanded,
+                  e.entity_type, e.role, e.parent_organization, e.description,
+                  e.occupation, e.occupation_expanded,
+                  e.address_street, e.address_street_expanded, e.address_number,
+                  e.phone, e.notes, e.address_full, e.searchable_text,
+                  e.lat, e.lng, e.pand_id,
                   e.entry_bbox, e.name_bbox, e.address_bbox,
                   e.flag_verified, e.flag_needs_review
            FROM entries e JOIN pages p ON e.page_id = p.id
@@ -73,6 +80,23 @@ export async function loadPage(stem: string): Promise<PageData | null> {
         )
         .all(stem) as Array<{
           stable_id: string;
+          name: string | null;
+          initials: string | null;
+          name_prefix: string | null;
+          name_prefix_expanded: string | null;
+          entity_type: string | null;
+          role: string | null;
+          parent_organization: string | null;
+          description: string | null;
+          occupation: string | null;
+          occupation_expanded: string | null;
+          address_street: string | null;
+          address_street_expanded: string | null;
+          address_number: string | null;
+          phone: string | null;
+          notes: string | null;
+          address_full: string | null;
+          searchable_text: string | null;
           lat: number | null;
           lng: number | null;
           pand_id: string | null;
@@ -98,6 +122,23 @@ export async function loadPage(stem: string): Promise<PageData | null> {
           };
           return {
             ...e,
+            name: dbInfo.name,
+            initials: dbInfo.initials,
+            name_prefix: dbInfo.name_prefix,
+            name_prefix_expanded: dbInfo.name_prefix_expanded,
+            entity_type: dbInfo.entity_type,
+            role: dbInfo.role,
+            parent_organization: dbInfo.parent_organization,
+            description: dbInfo.description,
+            occupation: dbInfo.occupation,
+            occupation_expanded: dbInfo.occupation_expanded,
+            address_street: dbInfo.address_street,
+            address_street_expanded: dbInfo.address_street_expanded,
+            address_number: dbInfo.address_number,
+            phone: dbInfo.phone,
+            notes: dbInfo.notes,
+            address_full: dbInfo.address_full ?? undefined,
+            searchable_text: dbInfo.searchable_text ?? undefined,
             lat: dbInfo.lat,
             lng: dbInfo.lng,
             pand_id: dbInfo.pand_id,

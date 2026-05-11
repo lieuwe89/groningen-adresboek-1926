@@ -13,6 +13,7 @@ export interface EntryOverride {
     | "initials"
     | "name_prefix"
     | "name_prefix_expanded"
+    | "entity_type"
     | "occupation"
     | "occupation_expanded"
     | "address_street"
@@ -130,6 +131,7 @@ export function applyOverride(entry: Entry, ov?: EntryOverride): Entry {
     merged.initials,
     merged.name_prefix,
     merged.name_prefix_expanded,
+    merged.entity_type,
     merged.occupation,
     merged.occupation_expanded,
     merged.address_street,

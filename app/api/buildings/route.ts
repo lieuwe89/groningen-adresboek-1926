@@ -1,20 +1,16 @@
-import { NextResponse } from "next/server";
-import { listBuildings } from "@/lib/db";
+import { getBuildingsGeoJsonPayload } from "@/lib/buildingsGeoJson";
 
 export const runtime = "nodejs";
 export const revalidate = 0;
 
 export async function GET() {
-  const features = listBuildings();
   const isDev = process.env.NODE_ENV === "development";
-  return NextResponse.json(
-    { type: "FeatureCollection" as const, features },
-    {
-      headers: {
-        "Cache-Control": isDev
-          ? "no-store"
-          : "public, max-age=3600, stale-while-revalidate=86400",
-      },
+  return new Response(getBuildingsGeoJsonPayload(), {
+    headers: {
+      "Content-Type": "application/geo+json; charset=utf-8",
+      "Cache-Control": isDev
+        ? "no-store"
+        : "public, max-age=86400, stale-while-revalidate=604800",
     },
-  );
+  });
 }

@@ -6,6 +6,7 @@ type AdminEntryRow = {
   initials: string | null;
   name_prefix: string | null;
   name_prefix_expanded: string | null;
+  entity_type: string | null;
   occupation: string | null;
   occupation_expanded: string | null;
   address_street: string | null;
@@ -40,6 +41,7 @@ function parseBbox(value: string | null): Bbox | null {
 export function loadAdminBaseEntryFromDb(db: DB, stem: string, index: number): Entry | null {
   const row = db.prepare(`
     SELECT e.name, e.initials, e.name_prefix, e.name_prefix_expanded,
+           e.entity_type,
            e.occupation, e.occupation_expanded,
            e.address_street, e.address_street_expanded,
            e.address_number, e.address_full, e.phone, e.notes,
@@ -58,6 +60,7 @@ export function loadAdminBaseEntryFromDb(db: DB, stem: string, index: number): E
     initials: row.initials,
     name_prefix: row.name_prefix,
     name_prefix_expanded: row.name_prefix_expanded,
+    entity_type: row.entity_type,
     occupation: row.occupation,
     occupation_expanded: row.occupation_expanded,
     address_street: row.address_street,
