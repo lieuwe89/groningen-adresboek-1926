@@ -1,17 +1,10 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { Stage, Layer, Image as KImage, Rect, Transformer } from "react-konva";
-import type Konva from "konva";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import type { Bbox } from "@/lib/data";
 import { useProxyUrl } from "@/lib/useProxyUrl";
+import { resolvePublicAssetUrl } from "@/lib/publicAssetUrls";
 
 interface Props {
   stem: string;
@@ -20,51 +13,148 @@ interface Props {
   onSaved: () => void;
 }
 
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 10;
-const SCALE_BY = 1.0015; // wheel
-const MIN_RECT = 5; // image-coord pixels
+const MIN_RECT = 5;
+
+type Handle = "move" | "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
 
 export default function BboxEditor(p: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<Konva.Stage>(null);
-  const rectRef = useRef<Konva.Rect>(null);
-  const trRef = useRef<Konva.Transformer>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const zoomLabelRef = useRef<HTMLSpanElement>(null);
+  const viewerRef = useRef<any>(null);
+  const osdRef = useRef<any>(null);
+  const contentSizeRef = useRef<{ w: number; h: number } | null>(null);
+  const initRefocusedFor = useRef<string | null>(null);
 
-  const [container, setContainer] = useState({ w: 0, h: 0 });
-  const [img, setImg] = useState<HTMLImageElement | null>(null);
-  const [dim, setDim] = useState<{ w: number; h: number } | null>(null);
-  const [stageScale, setStageScale] = useState(1);
-  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [rect, setRect] = useState<Bbox | null>(p.initialBbox);
+  const rectRef = useRef(rect);
+  rectRef.current = rect;
+
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { proxyPath } = useProxyUrl();
-  const initRefocusedFor = useRef<string | null>(null);
 
-  // Track container size
-  useLayoutEffect(() => {
-    const c = containerRef.current;
-    if (!c) return;
-    const update = () => setContainer({ w: c.clientWidth, h: c.clientHeight });
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(c);
-    return () => ro.disconnect();
+  const { prefix, proxyPath } = useProxyUrl();
+
+  const tileSourceUrl = useCallback(
+    (s: string) =>
+      resolvePublicAssetUrl({
+        assetPath: `/tiles/${s}.dzi`,
+        proxyPrefix: prefix,
+        cdnBaseUrl:
+          process.env.NEXT_PUBLIC_TILES_BASE_URL ||
+          process.env.NEXT_PUBLIC_STATIC_ASSETS_BASE_URL,
+      }),
+    [prefix]
+  );
+
+  const recalcOverlay = useCallback(() => {
+    const v = viewerRef.current;
+    const OSD = osdRef.current;
+    const r = rectRef.current;
+    const el = overlayRef.current;
+    if (!el) return;
+    if (!v || !OSD || !r || !contentSizeRef.current) {
+      el.style.display = "none";
+      return;
+    }
+    const tl = v.viewport.imageToViewerElementCoordinates(new OSD.Point(r[0], r[1]));
+    const br = v.viewport.imageToViewerElementCoordinates(new OSD.Point(r[2], r[3]));
+    el.style.display = "block";
+    el.style.left = `${tl.x}px`;
+    el.style.top = `${tl.y}px`;
+    el.style.width = `${Math.max(0, br.x - tl.x)}px`;
+    el.style.height = `${Math.max(0, br.y - tl.y)}px`;
   }, []);
 
-  // Load scan
+  const autoRefocus = useCallback(() => {
+    const v = viewerRef.current;
+    const OSD = osdRef.current;
+    const r = rectRef.current;
+    const cs = contentSizeRef.current;
+    if (!v || !OSD || !r || !cs) return;
+    const key = `${p.stem}:${p.entryIdx}`;
+    if (initRefocusedFor.current === key) return;
+    initRefocusedFor.current = key;
+    const w = r[2] - r[0];
+    const h = r[3] - r[1];
+    if (w <= 0 || h <= 0) return;
+    const vrect = v.viewport.imageToViewportRectangle(r[0], r[1], w, h);
+    const padX = vrect.width * 0.2;
+    const padY = vrect.height * 0.2;
+    v.viewport.fitBoundsWithConstraints(
+      new OSD.Rect(
+        vrect.x - padX,
+        vrect.y - padY,
+        vrect.width + 2 * padX,
+        vrect.height + 2 * padY
+      ),
+      false
+    );
+  }, [p.stem, p.entryIdx]);
+
+  // Init OSD once
   useEffect(() => {
-    setImg(null);
-    setDim(null);
-    const im = new window.Image();
-    im.src = proxyPath(`/scans/${p.stem}.jpg`);
-    im.onload = () => {
-      setImg(im);
-      setDim({ w: im.naturalWidth, h: im.naturalHeight });
+    let cancelled = false;
+    (async () => {
+      const OSD = (await import("openseadragon")).default;
+      if (cancelled || !containerRef.current) return;
+      osdRef.current = OSD;
+      const viewer = OSD({
+        element: containerRef.current,
+        showNavigationControl: false,
+        showNavigator: false,
+        immediateRender: false,
+        animationTime: 0.35,
+        blendTime: 0.08,
+        visibilityRatio: 1,
+        constrainDuringPan: true,
+        minZoomImageRatio: 1,
+        maxZoomPixelRatio: 4,
+        gestureSettingsMouse: { clickToZoom: false, dblClickToZoom: false },
+        tileSources: tileSourceUrl(p.stem),
+      });
+      viewerRef.current = viewer;
+
+      viewer.addHandler("open", () => {
+        const item = viewer.world.getItemAt(0);
+        if (!item) return;
+        const sz = item.getContentSize();
+        contentSizeRef.current = { w: sz.x, h: sz.y };
+        recalcOverlay();
+        autoRefocus();
+      });
+      viewer.addHandler("open-failed", (e: any) => {
+        setError(e?.message || "scan kon niet geladen worden");
+      });
+      viewer.addHandler("update-viewport", () => {
+        recalcOverlay();
+        if (zoomLabelRef.current) {
+          zoomLabelRef.current.textContent = viewer.viewport.getZoom(true).toFixed(1);
+        }
+      });
+    })();
+    return () => {
+      cancelled = true;
+      try {
+        viewerRef.current?.destroy();
+      } catch {
+        // ignore
+      }
+      viewerRef.current = null;
+      contentSizeRef.current = null;
     };
-  }, [p.stem]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Re-open on stem change
+  useEffect(() => {
+    const v = viewerRef.current;
+    if (!v) return;
+    contentSizeRef.current = null;
+    setError(null);
+    v.open(tileSourceUrl(p.stem));
+  }, [p.stem, tileSourceUrl]);
 
   // Reset rect when entry/initial changes
   useEffect(() => {
@@ -73,170 +163,103 @@ export default function BboxEditor(p: Props) {
     setError(null);
   }, [p.initialBbox, p.entryIdx, p.stem]);
 
-  // Cover-fit base scale (paper bg never visible)
-  const baseScale = useMemo(() => {
-    if (!dim || !container.w || !container.h) return 1;
-    return Math.max(container.w / dim.w, container.h / dim.h);
-  }, [dim, container]);
-
-  const dispW = dim ? dim.w * baseScale : 0;
-  const dispH = dim ? dim.h * baseScale : 0;
-
-  const clampPan = useCallback(
-    (px: number, py: number, z: number) => {
-      if (!container.w || !dispW) return { x: px, y: py };
-      const minX = container.w - dispW * z;
-      const minY = container.h - dispH * z;
-      return {
-        x: Math.min(0, Math.max(minX, px)),
-        y: Math.min(0, Math.max(minY, py)),
-      };
-    },
-    [container.w, container.h, dispW, dispH]
-  );
-
-  // Center on first sizing
+  // Recalc overlay when rect state changes
   useEffect(() => {
-    if (!container.w || !dispW) return;
-    setStagePos((cur) =>
-      cur.x === 0 && cur.y === 0
-        ? { x: (container.w - dispW) / 2, y: (container.h - dispH) / 2 }
-        : cur
-    );
-  }, [container.w, container.h, dispW, dispH]);
+    recalcOverlay();
+  }, [rect, recalcOverlay]);
 
-  // Auto-refocus on entry change if rect not visible
+  // Refocus on entry change (when OSD already open)
   useEffect(() => {
-    if (!rect || !dim || !container.w || !dispW) return;
-    const key = `${p.stem}:${p.entryIdx}`;
-    if (initRefocusedFor.current === key) return;
-    initRefocusedFor.current = key;
+    if (!viewerRef.current || !contentSizeRef.current) return;
+    autoRefocus();
+  }, [p.entryIdx, p.stem, autoRefocus]);
 
-    const z = stageScale;
-    const pp = stagePos;
-    const sx = (n: number) => pp.x + n * baseScale * z;
-    const sy = (n: number) => pp.y + n * baseScale * z;
-    const left = sx(rect[0]);
-    const top = sy(rect[1]);
-    const right = sx(rect[2]);
-    const bottom = sy(rect[3]);
-    const visible =
-      left >= 0 && top >= 0 && right <= container.w && bottom <= container.h;
-    if (visible) return;
+  const beginDrag = useCallback((handle: Handle, startEvent: React.PointerEvent) => {
+    const v = viewerRef.current;
+    const OSD = osdRef.current;
+    const r0 = rectRef.current;
+    const cs = contentSizeRef.current;
+    const container = containerRef.current;
+    if (!v || !OSD || !r0 || !cs || !container) return;
+    startEvent.preventDefault();
+    startEvent.stopPropagation();
 
-    const bbDispW = (rect[2] - rect[0]) * baseScale;
-    const bbDispH = (rect[3] - rect[1]) * baseScale;
-    const FILL = 0.7;
-    const zFit = Math.min(
-      (container.w * FILL) / bbDispW,
-      (container.h * FILL) / bbDispH
-    );
-    let newZoom = Math.min(z, zFit);
-    newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
-
-    const cx = (rect[0] + rect[2]) / 2;
-    const cy = (rect[1] + rect[3]) / 2;
-    const tx = container.w / 2 - cx * baseScale * newZoom;
-    const ty = container.h / 2 - cy * baseScale * newZoom;
-    setStagePos(clampPan(tx, ty, newZoom));
-    setStageScale(newZoom);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [p.stem, p.entryIdx, dim, container.w, container.h, dispW, dispH, baseScale]);
-
-  // Attach transformer to rect node when rect ready
-  useEffect(() => {
-    if (rect && rectRef.current && trRef.current && img) {
-      trRef.current.nodes([rectRef.current]);
-      trRef.current.getLayer()?.batchDraw();
-    } else if (trRef.current) {
-      trRef.current.nodes([]);
+    const targetEl = startEvent.currentTarget as HTMLElement;
+    try {
+      targetEl.setPointerCapture(startEvent.pointerId);
+    } catch {
+      // ignore
     }
-  }, [rect, img]);
+    v.setMouseNavEnabled(false);
 
-  const onWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
-    e.evt.preventDefault();
-    const stage = stageRef.current;
-    if (!stage) return;
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
-    const oldScale = stageScale;
-    const factor = Math.pow(SCALE_BY, -e.evt.deltaY);
-    let newScale = oldScale * factor;
-    newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale));
-    if (newScale === oldScale) return;
-    const ix = (pointer.x - stagePos.x) / oldScale;
-    const iy = (pointer.y - stagePos.y) / oldScale;
-    const np = clampPan(pointer.x - ix * newScale, pointer.y - iy * newScale, newScale);
-    setStageScale(newScale);
-    setStagePos(np);
-  };
+    const containerRect = container.getBoundingClientRect();
+    const toImagePt = (clientX: number, clientY: number) =>
+      v.viewport.viewerElementToImageCoordinates(
+        new OSD.Point(clientX - containerRect.left, clientY - containerRect.top)
+      );
 
-  const onStageDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
-    if (e.target !== stageRef.current) return;
-    const np = clampPan(e.target.x(), e.target.y(), stageScale);
-    setStagePos(np);
-    e.target.position(np);
-  };
+    const startImg = toImagePt(startEvent.clientX, startEvent.clientY);
+    const initial: Bbox = [...r0] as Bbox;
 
-  // Constrain stage drag in real-time
-  const stageDragBound = useCallback(
-    (pos: { x: number; y: number }) => clampPan(pos.x, pos.y, stageScale),
-    [clampPan, stageScale]
-  );
+    const onMove = (e: PointerEvent) => {
+      const cur = toImagePt(e.clientX, e.clientY);
+      const dx = cur.x - startImg.x;
+      const dy = cur.y - startImg.y;
+      let [x1, y1, x2, y2] = initial;
+      if (handle === "move") {
+        const w = x2 - x1;
+        const h = y2 - y1;
+        x1 = Math.max(0, Math.min(cs.w - w, x1 + dx));
+        y1 = Math.max(0, Math.min(cs.h - h, y1 + dy));
+        x2 = x1 + w;
+        y2 = y1 + h;
+      } else {
+        if (handle.includes("w")) x1 = Math.max(0, Math.min(x2 - MIN_RECT, x1 + dx));
+        if (handle.includes("e")) x2 = Math.min(cs.w, Math.max(x1 + MIN_RECT, x2 + dx));
+        if (handle.includes("n")) y1 = Math.max(0, Math.min(y2 - MIN_RECT, y1 + dy));
+        if (handle.includes("s")) y2 = Math.min(cs.h, Math.max(y1 + MIN_RECT, y2 + dy));
+      }
+      const next: Bbox = [
+        Math.round(x1),
+        Math.round(y1),
+        Math.round(x2),
+        Math.round(y2),
+      ];
+      rectRef.current = next;
+      setRect(next);
+    };
 
-  const onRectTransformEnd = () => {
-    const node = rectRef.current;
-    if (!node) return;
-    const sx = node.scaleX();
-    const sy = node.scaleY();
-    node.scaleX(1);
-    node.scaleY(1);
-    const w = Math.max(MIN_RECT, node.width() * sx);
-    const h = Math.max(MIN_RECT, node.height() * sy);
-    node.width(w);
-    node.height(h);
-    commitRectFromNode();
-  };
+    const onUp = (e: PointerEvent) => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      try {
+        targetEl.releasePointerCapture(e.pointerId);
+      } catch {
+        // ignore
+      }
+      v.setMouseNavEnabled(true);
+      setDirty(true);
+    };
 
-  const onRectDragEnd = () => commitRectFromNode();
-
-  const commitRectFromNode = () => {
-    const node = rectRef.current;
-    if (!node || !dim) return;
-    const x1 = Math.max(0, node.x() / baseScale);
-    const y1 = Math.max(0, node.y() / baseScale);
-    const x2 = Math.min(dim.w, (node.x() + node.width()) / baseScale);
-    const y2 = Math.min(dim.h, (node.y() + node.height()) / baseScale);
-    if (x2 - x1 < MIN_RECT || y2 - y1 < MIN_RECT) return;
-    setRect([Math.round(x1), Math.round(y1), Math.round(x2), Math.round(y2)]);
-    setDirty(true);
-  };
-
-  // Bound drag of rect inside image
-  const rectDragBound = useCallback(
-    (pos: { x: number; y: number }) => {
-      const node = rectRef.current;
-      if (!node || !dim) return pos;
-      const w = node.width();
-      const h = node.height();
-      return {
-        x: Math.min(dispW - w, Math.max(0, pos.x)),
-        y: Math.min(dispH - h, Math.max(0, pos.y)),
-      };
-    },
-    [dim, dispW, dispH]
-  );
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  }, []);
 
   const onSave = async () => {
     if (!rect) return;
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(proxyPath(`/api/admin/page/${p.stem}/entry/${p.entryIdx}`), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bbox: rect }),
-      });
+      const res = await fetch(
+        proxyPath(`/api/admin/page/${p.stem}/entry/${p.entryIdx}`),
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bbox: rect }),
+        }
+      );
       if (!res.ok) throw new Error(await res.text());
       setDirty(false);
       p.onSaved();
@@ -253,102 +276,45 @@ export default function BboxEditor(p: Props) {
     setError(null);
   };
 
-  const reset = () => {
-    if (!container.w || !dispW) return;
-    setStageScale(1);
-    setStagePos({ x: (container.w - dispW) / 2, y: (container.h - dispH) / 2 });
-  };
-
   const zoomBy = (factor: number) => {
-    const newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, stageScale * factor));
-    if (newScale === stageScale) return;
-    const cx = container.w / 2;
-    const cy = container.h / 2;
-    const ix = (cx - stagePos.x) / stageScale;
-    const iy = (cy - stagePos.y) / stageScale;
-    const np = clampPan(cx - ix * newScale, cy - iy * newScale, newScale);
-    setStageScale(newScale);
-    setStagePos(np);
+    const v = viewerRef.current;
+    if (!v) return;
+    v.viewport.zoomBy(factor);
+    v.viewport.applyConstraints();
   };
-
-  const rectStage = rect
-    ? {
-        x: rect[0] * baseScale,
-        y: rect[1] * baseScale,
-        width: (rect[2] - rect[0]) * baseScale,
-        height: (rect[3] - rect[1]) * baseScale,
-      }
-    : null;
+  const reset = () => viewerRef.current?.viewport.goHome();
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <div
-        ref={containerRef}
         className="relative flex-1 overflow-hidden select-none"
         style={{ background: "#1a1208", touchAction: "none" }}
       >
-        {img && container.w > 0 && (
-          <Stage
-            ref={stageRef}
-            width={container.w}
-            height={container.h}
-            scaleX={stageScale}
-            scaleY={stageScale}
-            x={stagePos.x}
-            y={stagePos.y}
-            draggable
-            dragBoundFunc={stageDragBound}
-            onDragEnd={onStageDragEnd}
-            onWheel={onWheel}
-            onDblClick={(e) => {
-              if (e.target === stageRef.current) reset();
-            }}
-          >
-            <Layer listening={false}>
-              <KImage image={img} width={dispW} height={dispH} />
-            </Layer>
-            <Layer>
-              {rectStage && (
-                <>
-                  <Rect
-                    ref={rectRef}
-                    x={rectStage.x}
-                    y={rectStage.y}
-                    width={rectStage.width}
-                    height={rectStage.height}
-                    fill="#e8b84c33"
-                    stroke="#e8b84c"
-                    strokeWidth={1 / stageScale}
-                    strokeScaleEnabled={false}
-                    draggable
-                    dragBoundFunc={rectDragBound}
-                    onDragEnd={onRectDragEnd}
-                    onTransformEnd={onRectTransformEnd}
-                  />
-                  <Transformer
-                    ref={trRef}
-                    rotateEnabled={false}
-                    flipEnabled={false}
-                    keepRatio={false}
-                    anchorSize={8 / Math.pow(stageScale, 0.6)}
-                    anchorStrokeWidth={1.5 / stageScale}
-                    borderStrokeWidth={1 / stageScale}
-                    anchorStroke="#e8b84c"
-                    anchorFill="#182d5c"
-                    borderStroke="#e8b84cbb"
-                    boundBoxFunc={(_oldBox, newBox) => {
-                      if (newBox.width < MIN_RECT * baseScale) return _oldBox;
-                      if (newBox.height < MIN_RECT * baseScale) return _oldBox;
-                      return newBox;
-                    }}
-                  />
-                </>
-              )}
-            </Layer>
-          </Stage>
-        )}
+        <div ref={containerRef} className="absolute inset-0" />
 
-        <div className="absolute flex flex-col gap-[2px]" style={{ right: 8, bottom: 8 }}>
+        <div
+          ref={overlayRef}
+          style={{
+            position: "absolute",
+            display: "none",
+            border: "1px solid #e8b84c",
+            background: "#e8b84c33",
+            cursor: "move",
+            boxSizing: "border-box",
+            zIndex: 4,
+            touchAction: "none",
+          }}
+          onPointerDown={(e) => beginDrag("move", e)}
+        >
+          {(["nw", "n", "ne", "e", "se", "s", "sw", "w"] as const).map((h) => (
+            <div key={h} style={handleStyle(h)} onPointerDown={(e) => beginDrag(h, e)} />
+          ))}
+        </div>
+
+        <div
+          className="absolute flex flex-col gap-[2px]"
+          style={{ right: 8, bottom: 8, zIndex: 5 }}
+        >
           <ZoomBtn onClick={() => zoomBy(1.4)} label="+" />
           <ZoomBtn onClick={reset} label="⌖" small />
           <ZoomBtn onClick={() => zoomBy(1 / 1.4)} label="−" />
@@ -365,9 +331,10 @@ export default function BboxEditor(p: Props) {
             border: "1px solid #e8b84c55",
             background: "#182d5cee",
             color: "#7a7054",
+            zIndex: 5,
           }}
         >
-          Z {stageScale.toFixed(1)}× · BBOX EDIT
+          Z <span ref={zoomLabelRef}>1.0</span>× · BBOX EDIT
         </div>
       </div>
 
@@ -377,12 +344,15 @@ export default function BboxEditor(p: Props) {
       >
         <span
           className="text-bp-ink-dim uppercase"
-          style={{ fontSize: 7.5, letterSpacing: "0.14em", flex: 1, minWidth: 0 }}
+          style={{
+            fontSize: 7.5,
+            letterSpacing: "0.14em",
+            flex: 1,
+            minWidth: 0,
+          }}
           title={rect ? rect.join(", ") : ""}
         >
-          {rect
-            ? `${rect[0]},${rect[1]} – ${rect[2]},${rect[3]}`
-            : "geen bbox"}
+          {rect ? `${rect[0]},${rect[1]} – ${rect[2]},${rect[3]}` : "geen bbox"}
           {error && <span className="text-red-400 ml-2">· {error}</span>}
         </span>
         <button
@@ -420,6 +390,39 @@ export default function BboxEditor(p: Props) {
       </div>
     </div>
   );
+}
+
+function handleStyle(h: Exclude<Handle, "move">): CSSProperties {
+  const s = 10;
+  const off = -s / 2;
+  const cursors: Record<Exclude<Handle, "move">, string> = {
+    n: "ns-resize",
+    s: "ns-resize",
+    e: "ew-resize",
+    w: "ew-resize",
+    ne: "nesw-resize",
+    sw: "nesw-resize",
+    nw: "nwse-resize",
+    se: "nwse-resize",
+  };
+  const base: CSSProperties = {
+    position: "absolute",
+    width: s,
+    height: s,
+    background: "#182d5c",
+    border: "1.5px solid #e8b84c",
+    boxSizing: "border-box",
+    cursor: cursors[h],
+    touchAction: "none",
+  };
+  if (h === "n") return { ...base, top: off, left: `calc(50% - ${s / 2}px)` };
+  if (h === "s") return { ...base, bottom: off, left: `calc(50% - ${s / 2}px)` };
+  if (h === "e") return { ...base, top: `calc(50% - ${s / 2}px)`, right: off };
+  if (h === "w") return { ...base, top: `calc(50% - ${s / 2}px)`, left: off };
+  if (h === "ne") return { ...base, top: off, right: off };
+  if (h === "nw") return { ...base, top: off, left: off };
+  if (h === "se") return { ...base, bottom: off, right: off };
+  return { ...base, bottom: off, left: off }; // sw
 }
 
 function ZoomBtn({
