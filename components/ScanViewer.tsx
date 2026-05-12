@@ -155,9 +155,9 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
       const rect = v.viewport.imageToViewportRectangle(x0, y0, w, h);
       const isActive = i === aidx;
       const canNavigateToAddress = !!entry.pand_id;
-      const linkedBorder = isActive ? "2px solid #e8b84c88" : "1px solid transparent";
+      const linkedBorder = isActive ? "2px solid #e8b84c" : "1px solid #e8b84c66";
       const linkedBackground = isActive ? "#e8b84c22" : "transparent";
-      const unlinkedBorder = isActive ? "2px dashed #7a705488" : "1px solid transparent";
+      const unlinkedBorder = isActive ? "2px dashed #7a7054" : "1px dashed #7a705466";
       const unlinkedBackground = isActive ? "#cfc39a10" : "transparent";
 
       const el = document.createElement("div");
@@ -167,6 +167,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
       );
       el.title = canNavigateToAddress ? "Open gekoppeld adres" : "Geen gekoppeld adres";
       el.style.cssText = `
+        position: relative;
         box-sizing: border-box;
         cursor: ${canNavigateToAddress ? "pointer" : "default"};
         pointer-events: auto;
@@ -175,17 +176,41 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         background: ${canNavigateToAddress ? linkedBackground : unlinkedBackground};
       `;
 
-      // If the muted state is still too subtle in use, upgrade toward hover micro-labels.
+      const label = document.createElement("span");
+      label.textContent = canNavigateToAddress ? "🔗 adres gekoppeld" : "⛓︎ adres niet gekoppeld";
+      label.style.cssText = `
+        position: absolute;
+        top: 0;
+        right: 0;
+        transform: translateY(-100%);
+        font-size: 9px;
+        line-height: 1;
+        padding: 2px 4px;
+        border-radius: 3px 3px 0 3px;
+        background: ${canNavigateToAddress ? "#e8b84cee" : "#7a7054cc"};
+        color: ${canNavigateToAddress ? "#1a1006" : "#f0ead8"};
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 120ms;
+        white-space: nowrap;
+        font-family: sans-serif;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      `;
+      el.appendChild(label);
+
       el.addEventListener("mouseenter", () => {
+        label.style.opacity = "1";
         if (!isActive) {
-          el.style.background = canNavigateToAddress ? "#e8b84c12" : "#cfc39a0c";
-          el.style.border = canNavigateToAddress ? "1px solid #e8b84c33" : "1px dashed #7a705466";
+          el.style.background = canNavigateToAddress ? "#e8b84c18" : "#cfc39a0c";
+          el.style.border = canNavigateToAddress ? "1px solid #e8b84c99" : "1px dashed #7a705499";
         }
       });
       el.addEventListener("mouseleave", () => {
+        label.style.opacity = "0";
         if (!isActive) {
           el.style.background = "transparent";
-          el.style.border = "1px solid transparent";
+          el.style.border = canNavigateToAddress ? "1px solid #e8b84c66" : "1px dashed #7a705466";
         }
       });
       el.addEventListener("click", (ev) => {
