@@ -95,10 +95,22 @@ def is_multi_address(value: str) -> bool:
 
 
 def is_caps_noise(value: str) -> bool:
-    tokens = value.split()
-    if len(tokens) < 2:
-        return False
-    return value.isupper() and not has_street_suffix(value)
+    if value.isupper() and not has_street_suffix(value):
+        return True
+    return False
+
+
+# Words that indicate an entity name (company, institution) rather than a street.
+ENTITY_KEYWORDS = (
+    "maatschappij", "stoomboot", "stoombootdienst", " mij.", " mij ",
+    "vereeniging", "vereniging", "kantoor van",
+    "instituut", "fabriek", "drukkerij",
+)
+
+
+def is_entity_name(value: str) -> bool:
+    low = " " + value.lower() + " "
+    return any(kw in low for kw in ENTITY_KEYWORDS)
 
 
 def classify(value: str, canon: set[str]) -> str | None:
@@ -112,6 +124,8 @@ def classify(value: str, canon: set[str]) -> str | None:
         return "multi_address"
     if is_caps_noise(value):
         return "caps_noise"
+    if is_entity_name(value):
+        return "entity_name"
     return None  # leave alone
 
 
@@ -128,7 +142,7 @@ def main() -> int:
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    counts: dict[str, int] = {"place_outside": 0, "multi_address": 0, "caps_noise": 0}
+    counts: dict[str, int] = {"place_outside": 0, "multi_address": 0, "caps_noise": 0, "entity_name": 0}
     examples: dict[str, list[str]] = {k: [] for k in counts}
 
     cur.execute(
@@ -153,11 +167,20 @@ def main() -> int:
             "place_outside": "place outside Groningen",
             "multi_address": "multi-address",
             "caps_noise": "entity / OCR noise",
+            "entity_name": "entity / company name",
         }[verdict]
-        annotation = f"[was address_street: {street!r} ({tag})]"
+        raw = row["address_street"] or ""
+        annotation = (
+            f"[was address_street: {street!r} ({tag})"
+            + (f" / raw: {raw!r}" if raw and raw != street else "")
+            + "]"
+        )
         new_notes = (notes + "\n" + annotation).strip() if notes else annotation
 
-        # Clear address but keep raw OCR (address_street raw) for traceability
+        # Clear BOTH raw and expanded — otherwise the next normalize_streets
+        # pass repopulates address_street_expanded from the raw string after
+        # only the trailing-period strip, undoing this cleanup. The original
+        # value is preserved verbatim in notes.
         new_full = (row["address_number"] or "") or None
         updates.append((row["id"], None, new_full, new_notes, verdict))
 
@@ -175,9 +198,9 @@ def main() -> int:
     cur.execute("BEGIN")
     for entry_id, new_expanded, new_full, new_notes, _ in updates:
         cur.execute(
-            "UPDATE entries SET address_street_expanded = ?, address_full = ?, "
-            "notes = ? WHERE id = ?",
-            (new_expanded, new_full, new_notes, entry_id),
+            "UPDATE entries SET address_street = ?, address_street_expanded = ?, "
+            "address_full = ?, notes = ? WHERE id = ?",
+            (new_expanded, new_expanded, new_full, new_notes, entry_id),
         )
     cur.execute("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')")
     conn.commit()
