@@ -134,14 +134,15 @@ NORMALIZATION_MAP = {
     "Klein Kromme Elleboog": "Kleine Kromme Elleboog",
     "Klein Badstraat": "Kleine Badstraat",
     "Kl. Badstraat": "Kleine Badstraat",
-    # Ooster/Westerbadstraat are one word in modern BAG.
-    "Ooster Badstraat": "Oosterbadstraat",
-    "Oost Badstraat": "Oosterbadstraat",
-    "O. Badstraat": "Oosterbadstraat",
-    "Wester Badstraat": "Westerbadstraat",
-    "West Badstraat": "Westerbadstraat",
-    "W. Badstraat": "Westerbadstraat",
-    "Willem Badstraat": "Westerbadstraat",  # OCR mis-expansion of W.
+    # BAG canonical has space between modifier and Badstraat
+    # ("Ooster Badstraat", not "Oosterbadstraat").
+    "Oosterbadstraat": "Ooster Badstraat",
+    "Oost Badstraat": "Ooster Badstraat",
+    "O. Badstraat": "Ooster Badstraat",
+    "Westerbadstraat": "Wester Badstraat",
+    "West Badstraat": "Wester Badstraat",
+    "W. Badstraat": "Wester Badstraat",
+    "Willem Badstraat": "Wester Badstraat",  # OCR mis-expansion of W.
     # "1e Drift" is consistently OCR'd as "le Drift" (lowercase L = 1).
     "le Drift": "1e Drift",
     "Le Drift": "1e Drift",
@@ -201,6 +202,77 @@ NORMALIZATION_MAP = {
     "Taco Mesd.straat": "Taco Mesdagstraat",
     "Jan Goevern.str": "Jan Goeverneurstraat",
     "Jan Goevern.straat": "Jan Goeverneurstraat",
+
+    # "V. Xstraat" expansions (V. abbreviates Van in these specific streets;
+    # restricted to known cases to avoid clobbering person initials).
+    "V. Sijsenstraat": "Van Sijsenstraat",
+    "V. Sijsenplein": "Van Sijsenplaats",  # BAG has plaats, not plein
+    "V. Sijsenplaats": "Van Sijsenplaats",
+    "V. Speykstraat": "Van Speykstraat",
+    "V. Julsinghastraat": "Van Julsinghastraat",
+    "V. Jul-singhastraat": "Van Julsinghastraat",
+    "V. Jul- singhastraat": "Van Julsinghastraat",
+    "V. Iddekingeweg": "Van Iddekingeweg",
+    "V. Heemskerckstraat": "Van Heemskerckstraat",
+    "V. Brakelplein": "Van Brakelplein",
+    "V. Ketwich Verschuurlaan": "Van Ketwich Verschuurlaan",
+
+    # 'Het Klooster' is actually written "'t Klooster" in BAG.
+    "Klooster": "'t Klooster",
+    "Het Klooster": "'t Klooster",
+    "T Klooster": "'t Klooster",
+
+    # OCR/transcription typos confirmed against BAG.
+    "Abeenstraat": "Abeelstraat",
+    "Joz. Isr.straat": "Jozef Israelsstraat",
+    "Joz. Isr.str": "Jozef Israelsstraat",
+    "Joz. Israëlsstraat": "Jozef Israelsstraat",
+    "Joz. Israelsstraat": "Jozef Israelsstraat",
+    "Jozef Israëlsstraat": "Jozef Israelsstraat",
+    "Joz. Israëlsplein": "Jozef Israelsplein",
+    "Joz. Israelsplein": "Jozef Israelsplein",
+    "Louise Henriëttestraat": "Louise Henriettestraat",
+    "H.A. Kooikerplein": "H.A. Kooykerplein",
+    "H. A. Kooikerplein": "H.A. Kooykerplein",
+    "Nieuwe-Kerkhof": "Nieuwe Kerkhof",
+    "Oude-Kerkhof": "Oude Kerkhof",
+
+    # Historical/defunct streets — keep canonical spelling so search works
+    # even though geocoder won't match modern BAG.
+    "Hav. Bot.d": "Haven Boterdiep",
+    "Hav. Bot.diep": "Haven Boterdiep",
+
+    # BAG-verified canonical fixes (fuzzy match 90+ confirmed against current BAG).
+    "Oude Kijk-in-'t Jatstraat": "Oude Kijk in 't Jatstraat",
+    "Nieuwe Kijk-in-'t Jatstraat": "Nieuwe Kijk in 't Jatstraat",
+    "O. Kijk-in-'t Jatstraat": "Oude Kijk in 't Jatstraat",
+    "N. Kijk-in-'t Jatstraat": "Nieuwe Kijk in 't Jatstraat",
+    "Oude Kijk-In-'t Jatstraat": "Oude Kijk in 't Jatstraat",
+    "Nieuwe Kijk-In-'t Jatstraat": "Nieuwe Kijk in 't Jatstraat",
+    # Nieuwe/N. Blekerstraat is a separate street from Blekerstraat in BAG.
+    "N. Blekerstraat": "Nieuwe Blekerstraat",
+    "Nw. Blekerstraat": "Nieuwe Blekerstraat",
+    "Noord Blekerstraat": "Nieuwe Blekerstraat",
+    "Noorder Blekerstraat": "Nieuwe Blekerstraat",
+    "Nieuwe Bleekerstraat": "Nieuwe Blekerstraat",
+    # "N. Sint Jansstraat" = Nieuwe Sint Jansstraat (separate from Sint Jansstraat).
+    "N. Sint Jansstraat": "Nieuwe Sint Jansstraat",
+    "Nw. Sint Jansstraat": "Nieuwe Sint Jansstraat",
+    "O. Sint Jansstraat": "Sint Jansstraat",
+    "Oude Sint Jansstraat": "Sint Jansstraat",  # only one canonical Sint Jansstraat
+    # Bare "Bakkerstraat" -> only Gerbrand Bakkerstraat in modern Groningen.
+    "Bakkerstraat": "Gerbrand Bakkerstraat",
+    "Bakkerstr.": "Gerbrand Bakkerstraat",
+    "Gerbr. Bakkerstraat": "Gerbrand Bakkerstraat",
+    "Gerbr. Bakkerstr.": "Gerbrand Bakkerstraat",
+    # Person-initial expansions confirmed in BAG.
+    "Herm. Colleniusstraat": "Herman Colleniusstraat",
+    "Joach. Altinghstraat": "Joachim Altinghstraat",
+    # Straat/-straatje canonical forms per BAG.
+    "Stalstraatje": "Stalstraat",
+    "Soephuisstraat": "Soephuisstraatje",
+    "Gasthuisstraat": "Gasthuisstraatje",
+    "Hoogstraatje": "Hoogstraat",
     "Loopendediep": "Lopendediep",
     "Loopende Diep": "Lopendediep",
     "Loopendendiep": "Lopendediep",
@@ -275,6 +347,14 @@ SPELLING_FIXES = (
     (re.compile(r"\bLoopende"), "Lopende"),
     (re.compile(r"\bBleeker"), "Bleker"),
     (re.compile(r"\bVisscher"), "Visser"),
+    # Modern Dutch drops the silent 'e' in "Heer-" compounds:
+    # Heereweg -> Hereweg, Heeresingel -> Heresingel, Heereplein -> Hereplein.
+    (re.compile(r"\bHeere"), "Here"),
+    (re.compile(r"\bheere"), "here"),
+    # Compact pairs of initials: "H. L." -> "H.L.", "W. A." -> "W.A.".
+    (re.compile(r"\b([A-Z])\.\s+([A-Z])\.\s+"), r"\1.\2. "),
+    # "St. X" -> "Sint X" (BAG uses spelled-out form).
+    (re.compile(r"\bSt\.\s+(?=[A-Z])"), "Sint "),
     # "Verl. X" -> "Verlengde X" (and lowercase variant).
     (re.compile(r"\bVerl\.\s*"), "Verlengde "),
     (re.compile(r"\bverl\.\s*"), "verlengde "),
