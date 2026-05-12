@@ -148,6 +148,47 @@ NIEUWE_EBBINGESTRAAT_MENTION_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Boteringestraat is always either Oude (south end) or Nieuwe (north end).
+# The LLM mis-expands "N./O." OCR abbreviations to "Noordzijde/Oostzijde", which
+# the side-marker stripper would otherwise erase. Intercept by compact key
+# (alphanumerics only) before that strip runs.
+_BOTERINGESTRAAT_SUFFIXES = (
+    "boteringestraat",
+    "boteringestr",
+    "boteringestra",
+    "boteringestaat",
+    "boteringetraat",   # OCR drop of the 's'
+    "botstr",
+    "botstraat",
+)
+NIEUWE_BOTERINGESTRAAT_COMPACT_KEYS = {
+    f"{prefix}{suffix}"
+    for prefix in (
+        "n",
+        "nw",
+        "nieuwe",
+        "noord",
+        "noordzijde",
+        "noorder",
+        "noordelijke",
+    )
+    for suffix in _BOTERINGESTRAAT_SUFFIXES
+}
+OUDE_BOTERINGESTRAAT_COMPACT_KEYS = {
+    f"{prefix}{suffix}"
+    for prefix in (
+        "o",
+        "ou",
+        "oude",
+        "oost",
+        "ooster",
+        "oostzijde",
+        "oostelijke",
+        "u",  # OCR misread of 'O.'
+    )
+    for suffix in _BOTERINGESTRAAT_SUFFIXES
+}
+
 
 def normalize_street_key(value: str | None) -> str:
     if not value:
@@ -177,8 +218,13 @@ def compact_street_key(value: str | None) -> str:
 
 
 def special_street_correction(value: str | None) -> str | None:
-    if compact_street_key(value) in NIEUWE_EBBINGESTRAAT_COMPACT_KEYS:
+    key = compact_street_key(value)
+    if key in NIEUWE_EBBINGESTRAAT_COMPACT_KEYS:
         return "Nieuwe Ebbingestraat"
+    if key in NIEUWE_BOTERINGESTRAAT_COMPACT_KEYS:
+        return "Nieuwe Boteringestraat"
+    if key in OUDE_BOTERINGESTRAAT_COMPACT_KEYS:
+        return "Oude Boteringestraat"
     return None
 
 
