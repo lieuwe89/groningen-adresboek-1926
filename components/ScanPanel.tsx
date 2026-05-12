@@ -10,6 +10,7 @@ import type { ScanViewerHandle } from "@/components/ScanViewer";
 import { useTranslations, useLocale } from 'next-intl';
 import { useProxyUrl } from "@/lib/useProxyUrl";
 import { presentEntry } from "@/lib/entryPresentation";
+import { buildPageModeHref, type PageMode } from "@/lib/entryRouteTargets";
 
 const ScanViewer = dynamic(() => import("@/components/ScanViewer"), {
   ssr: false,
@@ -55,12 +56,20 @@ export default function ScanPanel(p: Props) {
   const t = useTranslations('Scan');
   const tc = useTranslations('Common');
   const { proxyPath } = useProxyUrl();
+  const pageMode: PageMode = p.editMode ? "admin" : "public";
 
   function handleSelectEntry(idx: number) {
-    const stableId = `${p.stem}:${idx}`;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("entry", stableId);
-    router.push(proxyPath(`/${locale}/page/${p.stem}?${params.toString()}`));
+    router.push(
+      proxyPath(
+        buildPageModeHref({
+          locale,
+          mode: pageMode,
+          stem: p.stem,
+          activeIdx: idx,
+          currentSearch: searchParams.toString(),
+        })
+      )
+    );
   }
 
   useEffect(() => {
@@ -244,7 +253,14 @@ export default function ScanPanel(p: Props) {
         >
           {p.prev ? (
             <Link
-              href={proxyPath(`/${locale}/page/${p.prev}`)}
+              href={proxyPath(
+                buildPageModeHref({
+                  locale,
+                  mode: pageMode,
+                  stem: p.prev,
+                  currentSearch: searchParams.toString(),
+                })
+              )}
               className="text-bp-ink-dim hover:text-bp-amber transition-colors"
             >
               ← {p.page - 1}
@@ -260,7 +276,14 @@ export default function ScanPanel(p: Props) {
           </span>
           {p.next ? (
             <Link
-              href={proxyPath(`/${locale}/page/${p.next}`)}
+              href={proxyPath(
+                buildPageModeHref({
+                  locale,
+                  mode: pageMode,
+                  stem: p.next,
+                  currentSearch: searchParams.toString(),
+                })
+              )}
               className="text-bp-ink-dim hover:text-bp-amber transition-colors"
             >
               {p.page + 1} →

@@ -127,7 +127,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex flex-col w-full h-full overflow-hidden bg-bp-blue text-bp-ink">
       <GlobalGrid />
-      <Header />
+      <Header activeIdx={activeIdx} currentSearch={searchParams.toString()} />
       <main className="relative flex flex-1 min-h-0 overflow-hidden">
         <SearchPanel
           open={searchOpen}

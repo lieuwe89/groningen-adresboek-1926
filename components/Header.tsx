@@ -6,8 +6,14 @@ import { usePathname, useRouter } from "next/navigation";
 import SectionJump from "./SectionJump";
 import { useTranslations, useLocale } from 'next-intl';
 import { useProxyUrl } from "@/lib/useProxyUrl";
+import { buildPageModeHref } from "@/lib/entryRouteTargets";
 
-export default function Header() {
+interface HeaderProps {
+  activeIdx?: number;
+  currentSearch?: string;
+}
+
+export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderProps) {
   const t = useTranslations('Header');
   const locale = useLocale();
   const router = useRouter();
@@ -37,16 +43,19 @@ export default function Header() {
   const switchLocale = (newLocale: string) => {
     if (newLocale === locale) return;
     const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
-    router.push(proxyPath(newPathname));
+    const query = currentSearch ? `?${currentSearch}` : "";
+    router.push(proxyPath(`${newPathname}${query}`));
   };
 
-  const adminHref = isAdmin
-    ? stem
-      ? proxyPath(`/${locale}/page/${stem}`)
-      : proxyPath(`/${locale}`)
-    : stem
-      ? proxyPath(`/${locale}/admin/page/${stem}`)
-      : proxyPath(`/${locale}/admin`);
+  const adminHref = proxyPath(
+    buildPageModeHref({
+      locale,
+      mode: isAdmin ? "public" : "admin",
+      stem,
+      activeIdx,
+      currentSearch,
+    })
+  );
 
   const clearAdminProbe = () => {
     adminProbeRef.current?.remove();
