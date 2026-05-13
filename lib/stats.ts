@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { loadOverrides } from "./overrides";
 import { getJsonDir } from "./projectPaths.js";
+import { getDb } from "./db";
 import type { PageData } from "./data";
 
 const JSON_DIR = getJsonDir();
@@ -29,6 +30,14 @@ export interface SectionStats {
   unreviewed: number;
 }
 
+export interface BagStats {
+  total: number;
+  bag_linked: number;
+  street_no_number: number;
+  street_number_no_bag: number;
+  no_street: number;
+}
+
 export interface StatsReport {
   overall: {
     pages: number;
@@ -39,6 +48,7 @@ export interface StatsReport {
     edited: number;
     unreviewed: number;
   };
+  bag: BagStats;
   bySection: SectionStats[];
   byPage: PageStats[];
   generatedAt: string;
@@ -131,8 +141,28 @@ export async function computeStats(): Promise<StatsReport> {
     sectionAcc.set(ps.section, sec);
   }
 
+  let bag: BagStats = { total: 0, bag_linked: 0, street_no_number: 0, street_number_no_bag: 0, no_street: 0 };
+  try {
+    const db = getDb();
+    const row = db.prepare(`
+      SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN pand_id IS NOT NULL THEN 1 ELSE 0 END) AS bag_linked,
+        SUM(CASE WHEN pand_id IS NULL AND address_street IS NOT NULL AND trim(address_street) != ''
+                      AND (address_number IS NULL OR trim(address_number) = '') THEN 1 ELSE 0 END) AS street_no_number,
+        SUM(CASE WHEN pand_id IS NULL AND address_street IS NOT NULL AND trim(address_street) != ''
+                      AND address_number IS NOT NULL AND trim(address_number) != '' THEN 1 ELSE 0 END) AS street_number_no_bag,
+        SUM(CASE WHEN pand_id IS NULL AND (address_street IS NULL OR trim(address_street) = '') THEN 1 ELSE 0 END) AS no_street
+      FROM entries
+    `).get() as BagStats;
+    bag = row;
+  } catch {
+    // DB unavailable — leave zeroes
+  }
+
   return {
     overall,
+    bag,
     bySection: [...sectionAcc.values()].sort((a, b) => b.total - a.total),
     byPage,
     generatedAt: new Date().toISOString(),

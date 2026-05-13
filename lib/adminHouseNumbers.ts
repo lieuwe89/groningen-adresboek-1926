@@ -32,3 +32,18 @@ export function houseNumberCorrectionPayload(newNumber: string) {
     flags: { verified: true, needs_review: false },
   };
 }
+
+export function listMissingNumberCandidates(db: DB): HouseNumberCandidate[] {
+  return db.prepare(`
+    SELECT e.stable_id, e.name, e.address_street, e.address_number, e.address_full, e.entry_bbox, p.page_number
+    FROM entries e
+    JOIN pages p ON e.page_id = p.id
+    WHERE e.pand_id IS NULL
+      AND COALESCE(e.flag_verified, 0) = 0
+      AND e.address_street IS NOT NULL AND trim(e.address_street) != ''
+      AND (e.address_number IS NULL OR trim(e.address_number) = '')
+      AND e.entry_bbox IS NOT NULL
+    ORDER BY e.address_street, e.name
+    LIMIT 50
+  `).all() as HouseNumberCandidate[];
+}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { computeStats, type PageStats, type SectionStats } from "@/lib/stats";
+import { computeStats, type PageStats, type SectionStats, type BagStats } from "@/lib/stats";
 import { useLocale } from 'next-intl';
 
 export const dynamic = "force-dynamic";
@@ -31,6 +31,34 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
           </h1>
         </div>
         <div className="flex items-center gap-[14px]">
+          <Link
+            href={`/${locale}/admin/house-numbers`}
+            className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.18em",
+              border: "1px solid #e8b84c88",
+              color: "#e8b84c",
+              background: "transparent",
+              padding: "5px 11px",
+            }}
+          >
+            Huisnummers →
+          </Link>
+          <Link
+            href={`/${locale}/admin/missing-numbers`}
+            className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.18em",
+              border: "1px solid #e8b84c88",
+              color: "#e8b84c",
+              background: "transparent",
+              padding: "5px 11px",
+            }}
+          >
+            Ontbrekende nummers →
+          </Link>
           <Link
             href={`/${locale}/admin/page/1769_19525-1926_0150`}
             className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
@@ -74,6 +102,37 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
             value={ov.edited}
             total={ov.total}
             color="#9fb8e8"
+          />
+        </div>
+      </section>
+
+      <section className="mb-[40px]">
+        <SectionHeading>BAG-koppeling</SectionHeading>
+        <BagCards bag={stats.bag} />
+        <div className="mt-[20px]">
+          <ProgressBar
+            label="Gekoppeld aan BAG-adres"
+            value={stats.bag.bag_linked}
+            total={stats.bag.total}
+            color="#7fc97f"
+          />
+          <ProgressBar
+            label="Straat bekend, huisnummer ontbreekt of ongeldig"
+            value={stats.bag.street_no_number}
+            total={stats.bag.total}
+            color="#e8b84c"
+          />
+          <ProgressBar
+            label="Straat + huisnummer, maar geen BAG-match"
+            value={stats.bag.street_number_no_bag}
+            total={stats.bag.total}
+            color="#cc9f4a"
+          />
+          <ProgressBar
+            label="Geen geldige straatnaam"
+            value={stats.bag.no_street}
+            total={stats.bag.total}
+            color="#cc7a7a"
           />
         </div>
       </section>
@@ -160,6 +219,35 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
                 {c.sub}
               </div>
             )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function BagCards({ bag }: { bag: BagStats }) {
+    const cards = [
+      { label: "BAG gekoppeld", value: bag.bag_linked, sub: `${pct(bag.bag_linked, bag.total).toFixed(1)}%`, color: "#7fc97f" },
+      { label: "Straat, geen nr.", value: bag.street_no_number, sub: `${pct(bag.street_no_number, bag.total).toFixed(1)}%`, color: "#e8b84c" },
+      { label: "Nr. ongeldig", value: bag.street_number_no_bag, sub: `${pct(bag.street_number_no_bag, bag.total).toFixed(1)}%`, color: "#cc9f4a" },
+      { label: "Geen straat", value: bag.no_street, sub: `${pct(bag.no_street, bag.total).toFixed(1)}%`, color: "#cc7a7a" },
+    ];
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px]">
+        {cards.map((c) => (
+          <div
+            key={c.label}
+            style={{ border: "1px solid #e8b84c44", padding: "12px 14px", background: "#0e1c3c" }}
+          >
+            <div className="text-bp-ink-dim uppercase" style={{ fontSize: 8, letterSpacing: "0.18em" }}>
+              {c.label}
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 700, marginTop: 2, color: c.color }}>
+              {c.value.toLocaleString("nl-NL")}
+            </div>
+            <div className="text-bp-ink-bright" style={{ fontSize: 10, marginTop: 1 }}>
+              {c.sub}
+            </div>
           </div>
         ))}
       </div>
