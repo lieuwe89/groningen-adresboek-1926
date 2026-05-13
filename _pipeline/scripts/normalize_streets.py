@@ -326,13 +326,13 @@ NORMALIZATION_MAP = {
     "Petr. Campersingel": "Petrus Campersingel",
     "Petrus Campersingel": "Petrus Campersingel",
 
-    # Snor — one street in BAG: "Snor Damsterdiep". 1926 paren variants
-    # all collapse to that for geocoding.
-    "Snor": "Snor Damsterdiep",
+    # Snor — multiple 1926 streets shared the name. Only the Damsterdiep
+    # branch survives in BAG ("Snor Damsterdiep"). Per-user correction:
+    # the Boterdiep branch is a separate historical street, do NOT merge.
     "Snor (Damsterdiep)": "Snor Damsterdiep",
     "Snor (Binnen Damsterdiep)": "Snor Damsterdiep",
-    "Snor (Boterdiep)": "Snor Damsterdiep",
-    "Snor 148 (Boterdiep)": "Snor Damsterdiep",
+    # "Snor (Boterdiep)" and "Snor 148 (Boterdiep)" intentionally left
+    # alone — historical street, no BAG match.
 
     "Brink": "Brinklaan",
     "Oliemulderswegje": "Oliemuldersweg",
@@ -364,8 +364,13 @@ NORMALIZATION_MAP = {
     "2e Drift (Gedempte Zuiderdiep)": "2e Drift Ged. Zuiderdiep",
 
     # === Paren cross-street indicators / side designators — drop the paren ===
-    "Kerkstraat (Helpman)": "Kerkstraat",
-    "Kerkstraat (Helpm)": "Kerkstraat",
+    # Exception: "Kerkstraat (Helpman)" is BAG-canonical "Helper Kerkstraat",
+    # a distinct street in the Helpman neighbourhood (not the city centre's
+    # "Kerkstraat").
+    "Kerkstraat (Helpman)": "Helper Kerkstraat",
+    "Kerkstraat (Helpm)": "Helper Kerkstraat",
+    "Kerkstraat Helpman": "Helper Kerkstraat",
+    "Helpman Kerkstraat": "Helper Kerkstraat",
     "Stationsweg (Voormiddag)": "Stationsweg",
     "Smakkersgang (Schuitendiep)": "Smakkersgang",
     "Hopmansgang (Schuitendiep)": "Hopmansgang",
