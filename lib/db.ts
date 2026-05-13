@@ -127,7 +127,7 @@ const COUNT_SQL = `
 export function buildFtsQuery(raw: string): string | null {
   const cleaned = raw
     .toLowerCase()
-    .replace(/[\"\,\(\):*+\-]/g, " ")
+    .replace(/[\"\,\(\):*+\-./\\;!?]/g, " ")
     .trim();
   if (!cleaned) return null;
   const tokens = cleaned
