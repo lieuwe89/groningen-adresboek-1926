@@ -28,7 +28,11 @@ export default function middleware(req: NextRequest) {
 
   if (isAdminRoute) {
     const auth = req.headers.get("authorization");
-    if (auth !== expectedHeader()) {
+    const expected = expectedHeader();
+    console.log("Incoming auth:", auth ? auth.slice(0, 30) + "..." : "NONE");
+    console.log("Expected auth:", expected.slice(0, 30) + "...");
+    console.log("Match:", auth === expected);
+    if (auth !== expected) {
       return new NextResponse("Authentication required", {
         status: 401,
         headers: { "WWW-Authenticate": 'Basic realm="Adresboek 1926 Admin", charset="UTF-8"' },
