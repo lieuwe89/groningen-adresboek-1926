@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import SectionJump from "./SectionJump";
 import { useTranslations, useLocale } from 'next-intl';
 import { useProxyUrl } from "@/lib/useProxyUrl";
+import { useIsAdminRoute } from "@/lib/AdminContext";
 import { buildPageModeHref } from "@/lib/entryRouteTargets";
 
 interface HeaderProps {
@@ -22,14 +23,12 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
   
   const stemMatch = pathname.match(/page\/([^/]+)/);
   const stem = stemMatch?.[1];
-  // Use state for active check to handle hydration and proxy path discrepancies
+  const isAdmin = useIsAdminRoute();
+  // isInfo still derived from pathname (info layout doesn't use AppShell)
   const [isInfo, setIsInfo] = useState(pathname.includes('info'));
-  const [isAdmin, setIsAdmin] = useState(pathname.includes("/admin"));
 
   useEffect(() => {
-    const fullPath = window.location.pathname;
-    setIsInfo(fullPath.includes('info'));
-    setIsAdmin(fullPath.includes("/admin"));
+    setIsInfo(window.location.pathname.includes('info'));
   }, [pathname]);
 
   const switchLocale = (newLocale: string) => {

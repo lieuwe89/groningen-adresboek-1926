@@ -14,6 +14,7 @@ import type { PersonHit, SearchMention, SearchResponse } from "@/lib/searchTypes
 import type { BuildingDetail } from "@/lib/db";
 import { useLocale } from 'next-intl';
 import { useProxyUrl } from "@/lib/useProxyUrl";
+import { useIsAdminRoute } from "@/lib/AdminContext";
 
 const SEARCH_DEBOUNCE_MS = 220;
 const SEARCH_LIMIT = 50;
@@ -22,7 +23,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const locale = useLocale();
   const pathname = usePathname() || "";
-  const isAdmin = pathname.includes("/admin");
+  const isAdmin = useIsAdminRoute();
   const { proxyPath } = useProxyUrl();
   
   const {
