@@ -13,9 +13,7 @@ const intlMiddleware = createMiddleware({
 function expectedHeader(): string {
   const user = process.env.ADMIN_USER || "admin";
   const pw = process.env.ADMIN_PASSWORD || "changeme";
-  const header = "Basic " + Buffer.from(`${user}:${pw}`).toString("base64");
-  console.log("Auth check — user:", user, "pw length:", pw.length, "header:", header.slice(0, 30) + "...");
-  return header;
+  return "Basic " + Buffer.from(`${user}:${pw}`).toString("base64");
 }
 
 // 3. Combined proxy/middleware
@@ -28,15 +26,7 @@ export default function middleware(req: NextRequest) {
 
   if (isAdminRoute) {
     const auth = req.headers.get("authorization");
-    const expected = expectedHeader();
-    const allHeaders: Record<string, string> = {};
-    req.headers.forEach((v, k) => { allHeaders[k] = k === "authorization" ? v.slice(0, 30) + "..." : v.slice(0, 50); });
-    console.log("Path:", pathname);
-    console.log("All headers:", JSON.stringify(allHeaders));
-    console.log("Incoming auth:", auth ? auth.slice(0, 30) + "..." : "NONE");
-    console.log("Expected auth:", expected.slice(0, 30) + "...");
-    console.log("Match:", auth === expected);
-    if (auth !== expected) {
+    if (auth !== expectedHeader()) {
       return new NextResponse("Authentication required", {
         status: 401,
         headers: { "WWW-Authenticate": 'Basic realm="Adresboek 1926 Admin", charset="UTF-8"' },
