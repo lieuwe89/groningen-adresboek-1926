@@ -17,11 +17,23 @@ export default function CorrectionTable({ candidates }: { candidates: Candidate[
   const [successIds, setSuccessIds] = useState<Set<string>>(new Set());
   const { proxyPath } = useProxyUrl();
 
+  // Reset items when candidates change (e.g. filter change)
+  if (items.length === 0 && candidates.length > 0 && successIds.size === 0) {
+      setItems(candidates);
+  }
+  
+  // Also handle the case where candidates changed from props
+  const [prevCandidates, setPrevCandidates] = useState(candidates);
+  if (candidates !== prevCandidates) {
+      setItems(candidates);
+      setPrevCandidates(candidates);
+      setSuccessIds(new Set());
+  }
+
   async function handleSave(id: string, newNumber: string) {
     if (!newNumber.trim()) return;
     setSavingId(id);
 
-    // stable_id is "stem:idx"
     const [stem, idx] = id.split(":");
 
     try {
@@ -42,22 +54,41 @@ export default function CorrectionTable({ candidates }: { candidates: Candidate[
     }
   }
 
+  function handleSkip(id: string) {
+    setItems((prev) => prev.filter((item) => item.stable_id !== id));
+  }
+
+  if (items.length === 0) {
+    return (
+      <div
+        className="text-bp-ink-dim uppercase"
+        style={{ fontSize: 10, letterSpacing: "0.14em", marginTop: 32 }}
+      >
+        Geen kandidaten meer gevonden voor dit filter.
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {items.map((item) => {
         const bbox: Bbox = JSON.parse(item.entry_bbox);
         const [stem] = item.stable_id.split(":");
-        const isSuccess = successIds.has(item.stable_id);
         const isSaving = savingId === item.stable_id;
 
         return (
           <div
             key={item.stable_id}
-            className={`border p-4 rounded-lg flex flex-col md:flex-row gap-4 items-start ${
-              isSuccess ? 'bg-green-50 border-green-200' : 'bg-white'
-            }`}
+            style={{
+              border: "1px solid #e8b84c33",
+              background: "#0e1c3c",
+              display: "flex",
+              gap: 20,
+              alignItems: "flex-start",
+              padding: 16,
+            }}
           >
-            <div className="w-full md:w-2/3 h-48 bg-gray-100 rounded overflow-hidden relative">
+            <div style={{ flex: "0 0 55%", height: 200, background: "#060e22", overflow: "hidden", position: "relative" }}>
               <ScanViewer
                 stem={stem}
                 entries={[{ entry_bbox: bbox }] as any}
@@ -65,42 +96,84 @@ export default function CorrectionTable({ candidates }: { candidates: Candidate[
               />
             </div>
 
-            <div className="w-full md:w-1/3 flex flex-col gap-2">
-              <h3 className="font-bold">{item.name}</h3>
-              <p className="text-sm text-gray-600">{item.address_street}</p>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+              <div
+                className="text-bp-amber font-bold uppercase"
+                style={{ fontSize: 12, letterSpacing: "0.12em" }}
+              >
+                {item.name || "—"}
+              </div>
+              <div
+                className="text-bp-ink-bright"
+                style={{ fontSize: 11, letterSpacing: "0.06em" }}
+              >
+                {item.address_street}
+              </div>
+              {item.address_full && (
+                <div className="text-bp-ink-dim" style={{ fontSize: 9, letterSpacing: "0.08em" }}>
+                  {item.address_full}
+                </div>
+              )}
 
-              <div className="mt-4">
-                <label className="block text-sm font-medium mb-1 text-gray-700">
-                  House Number Override
-                </label>
-                <div className="flex gap-2">
+              <div style={{ marginTop: 12 }}>
+                <div
+                  className="text-bp-ink-dim uppercase mb-[6px]"
+                  style={{ fontSize: 8, letterSpacing: "0.18em" }}
+                >
+                  Corrigeer Huisnummer ({item.address_number})
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
                   <input
                     type="text"
                     defaultValue={item.address_number ?? ""}
-                    className="border rounded px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    disabled={isSuccess || isSaving}
+                    className="bg-transparent text-bp-ink-bright focus:outline-none"
+                    style={{
+                      border: "1px solid #e8b84c66",
+                      padding: "5px 10px",
+                      fontSize: 12,
+                      letterSpacing: "0.06em",
+                      width: 100,
+                    }}
+                    disabled={isSaving}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         handleSave(item.stable_id, e.currentTarget.value);
                       }
                     }}
-                    onBlur={(e) => {
-                      if (e.target.value !== (item.address_number ?? "")) {
-                         handleSave(item.stable_id, e.target.value);
-                      }
-                    }}
                   />
                   <button
-                    className={`px-4 py-2 rounded text-white font-medium ${
-                      isSuccess ? 'bg-green-500' : isSaving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
-                    }`}
-                    disabled={isSuccess || isSaving}
+                    className="uppercase font-bold hover:bg-bp-amber/20 transition-colors"
+                    style={{
+                      border: "1px solid #e8b84c88",
+                      color: "#e8b84c",
+                      background: "transparent",
+                      padding: "5px 12px",
+                      fontSize: 9,
+                      letterSpacing: "0.16em",
+                      opacity: isSaving ? 0.5 : 1,
+                    }}
+                    disabled={isSaving}
                     onClick={(e) => {
                       const input = e.currentTarget.previousElementSibling as HTMLInputElement;
                       handleSave(item.stable_id, input.value);
                     }}
                   >
-                    {isSuccess ? 'Saved' : isSaving ? '...' : 'Save'}
+                    {isSaving ? "…" : "Opslaan"}
+                  </button>
+                  <button
+                    className="uppercase font-bold hover:bg-white/5 transition-colors"
+                    style={{
+                      border: "1px solid #e8b84c33",
+                      color: "#7a7054",
+                      background: "transparent",
+                      padding: "5px 12px",
+                      fontSize: 9,
+                      letterSpacing: "0.16em",
+                    }}
+                    disabled={isSaving}
+                    onClick={() => handleSkip(item.stable_id)}
+                  >
+                    Overslaan
                   </button>
                 </div>
               </div>

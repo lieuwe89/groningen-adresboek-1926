@@ -83,7 +83,6 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         if (!v || !ents) return;
         const imgPt = v.viewport.viewerElementToImageCoordinates(ev.position);
         const idx = ents.findIndex((e) => {
-          if (!e.pand_id) return false;
           const bb = e.entry_bbox;
           if (!bb) return false;
           return (
@@ -169,7 +168,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
       el.style.cssText = `
         position: relative;
         box-sizing: border-box;
-        cursor: ${canNavigateToAddress ? "pointer" : "default"};
+        cursor: pointer;
         pointer-events: auto;
         transition: background 120ms, border 120ms;
         border: ${canNavigateToAddress ? linkedBorder : unlinkedBorder};
@@ -215,7 +214,6 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
       });
       el.addEventListener("click", (ev) => {
         ev.stopPropagation();
-        if (!canNavigateToAddress) return;
         onSelectEntryRef.current?.(i);
       });
 

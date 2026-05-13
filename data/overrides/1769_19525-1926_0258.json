@@ -1,0 +1,91 @@
+{
+  "1769_19525-1926_0258:31": {
+    "fields": {
+      "address_number": "34"
+    },
+    "flags": {},
+    "fingerprint": "sha1:cbb48639ed8339b0faff2e82e4d72c83eed65ff5",
+    "edited_at": "2026-05-11T20:09:00.125Z"
+  },
+  "1769_19525-1926_0258:4": {
+    "fields": {
+      "address_street_expanded": "H. W. Mesdagplein"
+    },
+    "flags": {},
+    "fingerprint": "sha1:9b185004c10d99396e0a6f3b3583b427152ad33b",
+    "edited_at": "2026-05-11T20:16:59.181Z"
+  },
+  "1769_19525-1926_0258:6": {
+    "fields": {
+      "address_street_expanded": "Gedempte Zuiderdiep"
+    },
+    "flags": {},
+    "fingerprint": "sha1:2f1c84498b06afa7d98cfa305605f2d43a8e7ff5",
+    "edited_at": "2026-05-11T20:18:19.490Z"
+  },
+  "1769_19525-1926_0258:12": {
+    "fields": {
+      "address_street_expanded": "Noorderbinnensingel"
+    },
+    "flags": {},
+    "fingerprint": "sha1:e1eb3601db45b41cb809b669dd376771734b9d76",
+    "edited_at": "2026-05-11T20:22:37.100Z"
+  },
+  "1769_19525-1926_0258:11": {
+    "fields": {
+      "address_street_expanded": "Nieuwe Ebbingestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:73bbe45b4d22e93a0a40b7db752abc5ea54b24eb",
+    "edited_at": "2026-05-11T20:23:06.424Z"
+  },
+  "1769_19525-1926_0258:19": {
+    "fields": {
+      "address_street_expanded": "Tweede Hunzestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:a0a9f9341f80ad2e2e494bf7b3b63249ee2d4282",
+    "edited_at": "2026-05-11T20:23:24.214Z"
+  },
+  "1769_19525-1926_0258:24": {
+    "fields": {
+      "address_number": "38",
+      "address_street_expanded": "Raamstraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:ac7098833bcd80d2c85c7abd2ae005d6ed594c23",
+    "edited_at": "2026-05-11T20:24:08.514Z"
+  },
+  "1769_19525-1926_0258:26": {
+    "fields": {
+      "address_street_expanded": "Kerklaan"
+    },
+    "flags": {},
+    "fingerprint": "sha1:299bf8d23a1d18cddbe45654c25f3e6e412c935d",
+    "edited_at": "2026-05-11T20:24:24.491Z"
+  },
+  "1769_19525-1926_0258:32": {
+    "fields": {
+      "address_street_expanded": "Peizerweg"
+    },
+    "flags": {},
+    "fingerprint": "sha1:25717239a68314aa00c54fa5981e8042622ff068",
+    "edited_at": "2026-05-11T20:27:08.094Z"
+  },
+  "1769_19525-1926_0258:33": {
+    "fields": {
+      "address_street_expanded": "Folkingestraat"
+    },
+    "flags": {},
+    "fingerprint": "sha1:a0e4704448b250287dc732e27f716d1e1e775e6a",
+    "edited_at": "2026-05-11T20:27:34.186Z"
+  },
+  "1769_19525-1926_0258:36": {
+    "fields": {
+      "address_street_expanded": "Goeman Borgesiuslaan"
+    },
+    "flags": {},
+    "fingerprint": "sha1:8a0fa5981dad5ca3058bbfd6937c133af788bc0d",
+    "edited_at": "2026-05-11T20:27:46.456Z"
+  }
+}
