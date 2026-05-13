@@ -13,7 +13,9 @@ const intlMiddleware = createMiddleware({
 function expectedHeader(): string {
   const user = process.env.ADMIN_USER || "admin";
   const pw = process.env.ADMIN_PASSWORD || "changeme";
-  return "Basic " + Buffer.from(`${user}:${pw}`).toString("base64");
+  const header = "Basic " + Buffer.from(`${user}:${pw}`).toString("base64");
+  console.log("Auth check — user:", user, "pw length:", pw.length, "header:", header.slice(0, 30) + "...");
+  return header;
 }
 
 // 3. Combined proxy/middleware
