@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import SectionJump from "./SectionJump";
@@ -25,20 +25,10 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
   const stem = stemMatch?.[1];
   // Use state for active check to handle hydration and proxy path discrepancies
   const [isInfo, setIsInfo] = useState(pathname.includes('info'));
-  const [authMessageVisible, setAuthMessageVisible] = useState(false);
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(false);
-  const adminProbeRef = useRef<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
     setIsInfo(window.location.pathname.includes('info'));
   }, [pathname]);
-
-  useEffect(() => {
-    return () => {
-      adminProbeRef.current?.remove();
-      adminProbeRef.current = null;
-    };
-  }, []);
 
   const switchLocale = (newLocale: string) => {
     if (newLocale === locale) return;
@@ -57,57 +47,8 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
     })
   );
 
-  const clearAdminProbe = () => {
-    adminProbeRef.current?.remove();
-    adminProbeRef.current = null;
-  };
-
   const handleAdminClick = () => {
-    if (isCheckingAdmin) return;
-
-    clearAdminProbe();
-    setAuthMessageVisible(false);
-    setIsCheckingAdmin(true);
-
-    const iframe = document.createElement("iframe");
-    iframe.title = "Admin authentication check";
-    iframe.setAttribute("aria-hidden", "true");
-    iframe.style.position = "fixed";
-    iframe.style.width = "1px";
-    iframe.style.height = "1px";
-    iframe.style.opacity = "0";
-    iframe.style.pointerEvents = "none";
-    iframe.style.border = "0";
-    iframe.style.left = "-10000px";
-    iframe.style.top = "0";
-
-    let settled = false;
-    const finish = (authorized: boolean) => {
-      if (settled) return;
-      settled = true;
-      clearAdminProbe();
-      setIsCheckingAdmin(false);
-
-      if (authorized) {
-        router.push(adminHref);
-      } else {
-        setAuthMessageVisible(true);
-      }
-    };
-
-    iframe.addEventListener("load", () => {
-      try {
-        const text = iframe.contentDocument?.body?.textContent?.trim() || "";
-        finish(!text.includes("Authentication required"));
-      } catch {
-        finish(false);
-      }
-    });
-    iframe.addEventListener("error", () => finish(false));
-
-    iframe.src = adminHref;
-    document.body.appendChild(iframe);
-    adminProbeRef.current = iframe;
+    router.push(adminHref);
   };
 
   const adminButtonStyle = {
@@ -214,8 +155,7 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
           <button
             type="button"
             onClick={handleAdminClick}
-            disabled={isCheckingAdmin}
-            className="uppercase font-bold transition-colors hover:bg-bp-amber/15 disabled:cursor-wait disabled:opacity-70"
+            className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
             style={adminButtonStyle}
           >
             {t('admin')}
@@ -228,28 +168,6 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
           53°13′N · 6°34′E
         </div>
       </div>
-      {authMessageVisible && (
-        <div
-          role="alert"
-          aria-live="assertive"
-          className="fixed right-[22px] top-[76px] z-50 max-w-[260px] border border-bp-amber/70 bg-bp-paper px-[14px] py-[11px] text-bp-ink shadow-[0_16px_40px_rgba(0,0,0,0.28)]"
-        >
-          <div
-            className="font-bold uppercase text-bp-amber"
-            style={{ fontSize: 9, letterSpacing: "0.16em" }}
-          >
-            {t('authRequired')}
-          </div>
-          <button
-            type="button"
-            onClick={() => setAuthMessageVisible(false)}
-            className="mt-[8px] uppercase font-bold text-bp-ink-dim transition-colors hover:text-bp-amber"
-            style={{ fontSize: 8, letterSpacing: "0.14em" }}
-          >
-            {t('dismiss')}
-          </button>
-        </div>
-      )}
     </header>
   );
 }
