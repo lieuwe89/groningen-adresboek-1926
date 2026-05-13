@@ -20,14 +20,16 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
   const pathname = usePathname() || "";
   const { proxyPath } = useProxyUrl();
   
-  const isAdmin = pathname.includes("/admin");
   const stemMatch = pathname.match(/page\/([^/]+)/);
   const stem = stemMatch?.[1];
   // Use state for active check to handle hydration and proxy path discrepancies
   const [isInfo, setIsInfo] = useState(pathname.includes('info'));
+  const [isAdmin, setIsAdmin] = useState(pathname.includes("/admin"));
 
   useEffect(() => {
-    setIsInfo(window.location.pathname.includes('info'));
+    const fullPath = window.location.pathname;
+    setIsInfo(fullPath.includes('info'));
+    setIsAdmin(fullPath.includes("/admin"));
   }, [pathname]);
 
   const switchLocale = (newLocale: string) => {
