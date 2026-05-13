@@ -29,6 +29,10 @@ export default function middleware(req: NextRequest) {
   if (isAdminRoute) {
     const auth = req.headers.get("authorization");
     const expected = expectedHeader();
+    const allHeaders: Record<string, string> = {};
+    req.headers.forEach((v, k) => { allHeaders[k] = k === "authorization" ? v.slice(0, 30) + "..." : v.slice(0, 50); });
+    console.log("Path:", pathname);
+    console.log("All headers:", JSON.stringify(allHeaders));
     console.log("Incoming auth:", auth ? auth.slice(0, 30) + "..." : "NONE");
     console.log("Expected auth:", expected.slice(0, 30) + "...");
     console.log("Match:", auth === expected);
