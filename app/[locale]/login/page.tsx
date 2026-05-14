@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useProxyUrl } from "@/lib/useProxyUrl";
 
 export default function LoginPage() {
-  const router = useRouter();
   const search = useSearchParams();
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "nl";
@@ -17,11 +16,12 @@ export default function LoginPage() {
   const [user, setUser] = useState("");
   const [pw, setPw] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setPending(true);
     const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -29,14 +29,13 @@ export default function LoginPage() {
       credentials: "include",
     });
     if (res.ok) {
-      startTransition(() => {
-        router.replace(next);
-        router.refresh();
-      });
-    } else if (res.status === 401) {
-      setError("Invalid credentials");
+      // Full-page navigation ensures the admin route loads through the PHP
+      // proxy — router.replace() would hand the proxy-prefixed path to
+      // Next.js's client router, which doesn't understand the prefix.
+      window.location.href = next;
     } else {
-      setError("Login failed");
+      setPending(false);
+      setError(res.status === 401 ? "Invalid credentials" : "Login failed");
     }
   }
 

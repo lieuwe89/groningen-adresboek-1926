@@ -45,7 +45,7 @@ function searchableText(row) {
   ].filter(Boolean).join(" ");
 }
 
-function applyEntry(db, id, ov, selectRow, updateText) {
+function applyEntry(db, id, ov, selectRow, updateText, lookupByFp) {
   const sets = [];
   const params = [];
 
@@ -78,18 +78,30 @@ function applyEntry(db, id, ov, selectRow, updateText) {
     params.push(ov.edited_at);
   }
 
-  if (sets.length === 0) return false;
+  if (sets.length === 0) return { applied: false, fallback: false };
 
-  params.push(id);
-  const info = db.prepare(
+  const stmt = db.prepare(
     `UPDATE entries SET ${sets.join(", ")} WHERE stable_id = ?`
-  ).run(...params);
+  );
+  let info = stmt.run(...params, id);
+  let resolvedId = id;
+  let fallback = false;
 
-  if (info.changes === 0) return false;
+  if (info.changes === 0 && ov.fingerprint) {
+    const stem = id.split(":")[0];
+    const hit = lookupByFp.get(stem, ov.fingerprint);
+    if (hit?.stable_id && hit.stable_id !== id) {
+      resolvedId = hit.stable_id;
+      info = stmt.run(...params, resolvedId);
+      fallback = info.changes > 0;
+    }
+  }
 
-  const row = selectRow.get(id);
-  if (row) updateText.run(searchableText(row), id);
-  return true;
+  if (info.changes === 0) return { applied: false, fallback: false };
+
+  const row = selectRow.get(resolvedId);
+  if (row) updateText.run(searchableText(row), resolvedId);
+  return { applied: true, fallback, oldId: id, newId: resolvedId };
 }
 
 function main() {
@@ -105,6 +117,12 @@ function main() {
   const updateText = db.prepare(
     "UPDATE entries SET searchable_text = ? WHERE stable_id = ?"
   );
+  const lookupByFp = db.prepare(`
+    SELECT e.stable_id FROM entries e
+    JOIN pages p ON p.id = e.page_id
+    WHERE p.stem = ? AND e.fingerprint = ?
+    LIMIT 1
+  `);
 
   let files;
   try {
@@ -116,7 +134,8 @@ function main() {
   files = files.filter((f) => f.endsWith(".json") && !f.startsWith("._"));
   if (ONLY_STEM) files = files.filter((f) => f === `${ONLY_STEM}.json`);
 
-  let pages = 0, applied = 0, missing = 0;
+  let pages = 0, applied = 0, missing = 0, fellBack = 0;
+  const fallbackLog = [];
   const tx = db.transaction(() => {
     for (const file of files) {
       const stem = file.slice(0, -5);
@@ -124,8 +143,16 @@ function main() {
       pages++;
       for (const [id, ov] of Object.entries(raw)) {
         if (!id.startsWith(`${stem}:`)) continue;
-        if (applyEntry(db, id, ov, selectRow, updateText)) applied++;
-        else missing++;
+        const res = applyEntry(db, id, ov, selectRow, updateText, lookupByFp);
+        if (res.applied) {
+          applied++;
+          if (res.fallback) {
+            fellBack++;
+            fallbackLog.push(`${res.oldId} -> ${res.newId}`);
+          }
+        } else {
+          missing++;
+        }
       }
     }
     db.prepare("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')").run();
@@ -133,7 +160,14 @@ function main() {
 
   tx();
   db.close();
-  console.log(`apply-overrides: ${pages} page(s), ${applied} entries updated, ${missing} not found.`);
+  console.log(
+    `apply-overrides: ${pages} page(s), ${applied} entries updated, ` +
+    `${missing} not found, ${fellBack} resolved by fingerprint fallback.`
+  );
+  if (fallbackLog.length) {
+    console.log("Fingerprint fallback remapped IDs (review and migrate override keys):");
+    for (const line of fallbackLog) console.log(`  ${line}`);
+  }
 }
 
 main();

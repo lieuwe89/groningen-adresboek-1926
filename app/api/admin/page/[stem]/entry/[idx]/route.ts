@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { syncEntryDerivedData } from "@/lib/adminDbSync";
 import { loadAdminBaseEntry, type Bbox } from "@/lib/adminEntryLookup";
 import { saveOverrideBestEffort } from "@/lib/adminOverrideSave";
@@ -294,6 +295,9 @@ export async function PATCH(
       return updated;
     }
   );
+
+  // Revalidate the page so router.refresh() picks up the updated data
+  revalidatePath(`/*/admin/page/${stem}`);
 
   return NextResponse.json({
     ok: true,
