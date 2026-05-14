@@ -121,22 +121,69 @@ const COUNT_SQL = `
   WHERE entries_fts MATCH ?
 `;
 
-// Sanitize the user query for FTS5 syntax. Strip anything that could be an
-// FTS operator (",), then split into tokens and AND them with prefix matches.
-// Empty result returns null.
+// Sanitize the user query for FTS5 syntax. Strip FTS operators, split into
+// tokens, and join with AND + prefix match. * is handled per-token (stripped
+// from any non-trailing position; trailing * is preserved).
 export function buildFtsQuery(raw: string): string | null {
   const cleaned = raw
     .toLowerCase()
-    .replace(/[\"\,\(\):*+\-./\\;!?]/g, " ")
+    .replace(/[\"\,\(\):+\-./\\;!?]/g, " ")
     .trim();
   if (!cleaned) return null;
   const tokens = cleaned
     .split(/\s+/)
-    .filter((t) => t.length >= 2)
-    .map((t) => `${t}*`);
+    .map((t) => {
+      const base = t.replace(/\*/g, "");
+      return base.length >= 2 ? `${base}*` : null;
+    })
+    .filter(Boolean) as string[];
   if (!tokens.length) return null;
   return tokens.join(" AND ");
 }
+
+// Build a broad OR query for fuzzy candidate retrieval. Uses a short prefix
+// (first 3 chars) per token to cast a wide net before Levenshtein re-ranking.
+function buildFuzzyFtsQuery(tokens: string[]): string {
+  return tokens
+    .map((t) => `${t.length >= 4 ? t.slice(0, 3) : t}*`)
+    .join(" OR ");
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  const curr = new Array<number>(n + 1);
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      curr[j] = a[i - 1] === b[j - 1]
+        ? prev[j - 1]
+        : 1 + Math.min(prev[j], curr[j - 1], prev[j - 1]);
+    }
+    prev = [...curr];
+  }
+  return prev[n];
+}
+
+// Per query-token: minimum Levenshtein distance to any name token.
+// Returns sum across all query tokens (lower = better match).
+function scoreFuzzy(queryTokens: string[], canonicalName: string | null, mentions: SearchMention[]): number {
+  const name = (canonicalName || mentions[0]?.name || "").toLowerCase();
+  const nameTokens = name.split(/\s+/).filter((t) => t.length > 0);
+  if (nameTokens.length === 0) return Infinity;
+  return queryTokens.reduce((sum, qt) => {
+    return sum + Math.min(...nameTokens.map((nt) => levenshtein(qt, nt)));
+  }, 0);
+}
+
+// Max total edit distance threshold: 1 per short token, 2 per longer token.
+function maxTotalDist(tokens: string[]): number {
+  return tokens.reduce((sum, t) => sum + (t.length <= 4 ? 1 : 2), 0);
+}
+
+const FUZZY_CANDIDATE_LIMIT = 500;
 
 export type SectionInfo = {
   section: string;
@@ -314,20 +361,55 @@ export function getBuilding(pand_id: string): BuildingDetail | null {
   };
 }
 
-export function search(query: string, limit = 50, offset = 0): SearchResult {
+export function search(query: string, limit = 50, offset = 0, fuzzy = false): SearchResult {
+  if (fuzzy) return searchFuzzy(query, limit, offset);
   const fts = buildFtsQuery(query);
   if (!fts) return { total: 0, results: [] };
   const db = getDb();
   const total = (db.prepare(COUNT_SQL).get(fts) as { n: number }).n;
   const rawResults = db.prepare(SEARCH_SQL).all(fts, limit, offset) as any[];
-  
-  const results: SearchRow[] = rawResults.map(r => ({
+  const results: SearchRow[] = rawResults.map((r) => ({
     cluster_id: r.cluster_id,
     canonical_name: r.canonical_name,
     canonical_occupation: r.canonical_occupation,
     canonical_address: r.canonical_address,
-    mentions: JSON.parse(r.mentions_json)
+    mentions: JSON.parse(r.mentions_json),
   }));
-  
   return { total, results };
+}
+
+function searchFuzzy(query: string, limit: number, offset: number): SearchResult {
+  const rawTokens = query
+    .toLowerCase()
+    .replace(/[\"\,\(\):+\-./\\;!?]/g, " ")
+    .split(/\s+/)
+    .map((t) => t.replace(/\*/g, ""))
+    .filter((t) => t.length >= 2);
+  if (!rawTokens.length) return { total: 0, results: [] };
+
+  const ftsQuery = buildFuzzyFtsQuery(rawTokens);
+  const db = getDb();
+  const rawCandidates = db.prepare(SEARCH_SQL).all(ftsQuery, FUZZY_CANDIDATE_LIMIT, 0) as any[];
+  if (!rawCandidates.length) return { total: 0, results: [] };
+
+  const maxDist = maxTotalDist(rawTokens);
+  const scored = rawCandidates
+    .map((r) => {
+      const mentions: SearchMention[] = JSON.parse(r.mentions_json);
+      return { r, mentions, dist: scoreFuzzy(rawTokens, r.canonical_name, mentions) };
+    })
+    .filter((s) => s.dist <= maxDist)
+    .sort((a, b) => a.dist - b.dist || a.r.min_rank - b.r.min_rank);
+
+  const total = scored.length;
+  return {
+    total,
+    results: scored.slice(offset, offset + limit).map(({ r, mentions }) => ({
+      cluster_id: r.cluster_id,
+      canonical_name: r.canonical_name,
+      canonical_occupation: r.canonical_occupation,
+      canonical_address: r.canonical_address,
+      mentions,
+    })),
+  };
 }

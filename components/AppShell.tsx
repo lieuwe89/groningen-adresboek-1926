@@ -30,6 +30,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     activePandId,
     query,
     setQuery,
+    fuzzy,
+    setFuzzy,
     searchOpen,
     setSearchOpen,
     scanOpen,
@@ -81,7 +83,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const controller = new AbortController();
     const handle = window.setTimeout(async () => {
       try {
-        const url = proxyPath(`/api/search?q=${encodeURIComponent(trimmedQuery)}&limit=${SEARCH_LIMIT}`);
+        const fuzzyParam = fuzzy ? "&fuzzy=1" : "";
+        const url = proxyPath(`/api/search?q=${encodeURIComponent(trimmedQuery)}&limit=${SEARCH_LIMIT}${fuzzyParam}`);
         const res = await fetch(url, { signal: controller.signal });
         if (seq !== fetchSeq.current) return;
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -101,7 +104,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       controller.abort();
       window.clearTimeout(handle);
     };
-  }, [trimmedQuery, globalActive, setGlobalResults, setGlobalTotal, setGlobalLoading, setGlobalError]);
+  }, [trimmedQuery, fuzzy, globalActive, setGlobalResults, setGlobalTotal, setGlobalLoading, setGlobalError]);
 
   function handleSelectGlobal(hit: SearchMention) {
     const p = new URLSearchParams({ entry: hit.stable_id, q: trimmedQuery });
@@ -148,6 +151,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           globalError={globalError}
           activeEntryId={searchParams.get("entry") || undefined}
           onSelectGlobal={handleSelectGlobal}
+          fuzzy={fuzzy}
+          onFuzzy={setFuzzy}
         />
         <MapPanel
           searchOpen={searchOpen}
