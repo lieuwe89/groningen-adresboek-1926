@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { listHouseNumberCandidates } from "@/lib/adminHouseNumbers";
 import { getDb } from "@/lib/db";
+import AdminBackLink from "@/components/AdminBackLink";
 import CorrectionTable from "./CorrectionTable";
 import DigitsFilter from "./DigitsFilter";
 
@@ -42,20 +42,7 @@ export default async function HouseNumbersPage({
         </div>
         <div className="flex items-center gap-[14px]">
           <DigitsFilter value={minDigits} />
-          <Link
-            href={`/${locale}/admin/stats`}
-            className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
-            style={{
-              fontSize: 9,
-              letterSpacing: "0.18em",
-              border: "1px solid #e8b84c88",
-              color: "#e8b84c",
-              background: "transparent",
-              padding: "5px 11px",
-            }}
-          >
-            ← Statistieken
-          </Link>
+          <AdminBackLink href={`/${locale}/admin/stats`} label="← Statistieken" />
         </div>
       </header>
 
