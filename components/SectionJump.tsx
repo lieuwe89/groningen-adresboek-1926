@@ -14,6 +14,15 @@ type SectionInfo = {
   count: number;
 };
 
+const KNOWN_SECTION_KEYS = new Set([
+  "other",
+  "institutional",
+  "advertisement",
+  "name_register",
+  "street_register",
+  "occupation_register",
+]);
+
 type Props = {
   // Optional: stem of the page currently being viewed. Used to mark the
   // current section in the dropdown so users see where they are.
@@ -26,6 +35,7 @@ export default function SectionJump({ currentStem, isInfo }: Props) {
   const pathname = usePathname() || "";
   const locale = useLocale();
   const t = useTranslations('Header');
+  const ts = useTranslations('Sections');
   const { proxyPath } = useProxyUrl();
   const [sections, setSections] = useState<SectionInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -103,13 +113,16 @@ export default function SectionJump({ currentStem, isInfo }: Props) {
       >
         {sections === null && !error && <option value="">Loading…</option>}
         {error && <option value="">Error</option>}
-        {sections?.map((s) => (
-          <option key={s.section} value={s.section} style={{ background: "#182d5c" }}>
-            {s.label}
-            {s.first_scan_number != null ? ` — scan ${s.first_scan_number}` : ""}
-            {` (${s.count} ${s.count === 1 ? 'page' : 'pages'})`}
-          </option>
-        ))}
+        {sections?.map((s) => {
+          const localized = KNOWN_SECTION_KEYS.has(s.section) ? ts(s.section) : s.label;
+          return (
+            <option key={s.section} value={s.section} style={{ background: "#182d5c" }}>
+              {localized}
+              {s.first_scan_number != null ? ` — scan ${s.first_scan_number}` : ""}
+              {` (${s.count} ${s.count === 1 ? 'page' : 'pages'})`}
+            </option>
+          );
+        })}
       </select>
     </div>
   );

@@ -2,7 +2,12 @@
 
 import type { Entry } from "@/lib/data";
 import type { PersonHit, SearchMention } from "@/lib/searchTypes";
-import { formatEntryName, presentEntry } from "@/lib/entryPresentation";
+import {
+  buildEntryPresentationLabels,
+  formatEntryName,
+  presentEntry,
+  type EntryPresentationLabels,
+} from "@/lib/entryPresentation";
 import { useTranslations } from 'next-intl';
 
 export type StatusFilter = "all" | "verified" | "needs_review" | "unreviewed";
@@ -35,6 +40,8 @@ interface Props {
 export default function SearchPanel(p: Props) {
   const t = useTranslations('Search');
   const tc = useTranslations('Common');
+  const tep = useTranslations('EntryPresentation');
+  const entryLabels = buildEntryPresentationLabels(tep);
 
   return (
     <div
@@ -151,11 +158,12 @@ export default function SearchPanel(p: Props) {
               activeEntryId={p.activeEntryId}
               onSelect={p.onSelectGlobal}
               t={t}
+              entryLabels={entryLabels}
             />
           ) : (
             p.entries.map(({ entry, idx }) => {
             const active = idx === p.activeIdx;
-            const display = presentEntry(entry);
+            const display = presentEntry(entry, undefined, entryLabels);
             const statusColor = !p.showStatus
               ? null
               : entry.flags?.verified
@@ -302,8 +310,12 @@ function formatMentionName(h: SearchMention): string {
   return formatEntryName(h);
 }
 
-function mentionLine(m: SearchMention, entryFallback: string): string {
-  const display = presentEntry(m, m.section);
+function mentionLine(
+  m: SearchMention,
+  entryFallback: string,
+  labels: EntryPresentationLabels
+): string {
+  const display = presentEntry(m, m.section, labels);
   const detail = display.detail !== "-" ? display.detail : display.badge || entryFallback;
   return [detail, display.address].filter(Boolean).join(" - ");
 }
@@ -318,6 +330,7 @@ function GlobalResults({
   activeEntryId,
   onSelect,
   t,
+  entryLabels,
 }: {
   results: PersonHit[];
   total: number;
@@ -326,6 +339,7 @@ function GlobalResults({
   activeEntryId?: string;
   onSelect?: (h: SearchMention) => void;
   t: SearchTranslator;
+  entryLabels: EntryPresentationLabels;
 }) {
   if (error) {
     return (
@@ -354,7 +368,7 @@ function GlobalResults({
       {results.map((p) => {
         // Find best name/occ/addr for this cluster to display as the header
         // For unclustered entries (mentions.length === 1), use its own data.
-        const firstDisplay = presentEntry(p.mentions[0], p.mentions[0].section);
+        const firstDisplay = presentEntry(p.mentions[0], p.mentions[0].section, entryLabels);
         const headerName = p.canonical_name || formatMentionName(p.mentions[0]) || "—";
         const headerOcc = p.canonical_occupation || firstDisplay.subtitle || "";
         const headerAddr = p.canonical_address || firstDisplay.address || "";
@@ -413,7 +427,7 @@ function GlobalResults({
                       style={{ fontSize: 8.5, color: active ? "#e8b84c" : undefined }}
                     >
                       {/* Only show address and occ here if they differ or just show "Vermelding" */}
-                      {mentionLine(m, entryFallback)}
+                      {mentionLine(m, entryFallback, entryLabels)}
                     </span>
                     <span
                       className="text-bp-amber flex-shrink-0 uppercase ml-[8px]"

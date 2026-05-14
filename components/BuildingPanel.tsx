@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from 'next-intl';
 import { useProxyUrl } from "@/lib/useProxyUrl";
-import { formatEntryName, presentEntry } from "@/lib/entryPresentation";
+import {
+  buildEntryPresentationLabels,
+  formatEntryName,
+  presentEntry,
+  type EntryPresentationLabels,
+} from "@/lib/entryPresentation";
 
 type Mention = {
   stable_id: string;
@@ -35,8 +40,12 @@ type Detail = {
   persons: Person[];
 };
 
-function buildingMentionLine(mention: Mention, entryFallback: string): string {
-  const display = presentEntry(mention, mention.section);
+function buildingMentionLine(
+  mention: Mention,
+  entryFallback: string,
+  labels: EntryPresentationLabels
+): string {
+  const display = presentEntry(mention, mention.section, labels);
   const detail = display.detail !== "-" ? display.detail : display.badge || entryFallback;
   return [detail, display.address].filter(Boolean).join(" - ");
 }
@@ -52,6 +61,8 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const t = useTranslations('BuildingPanel');
+  const tep = useTranslations('EntryPresentation');
+  const entryLabels = buildEntryPresentationLabels(tep);
   const entryFallback = t('entryFallback');
   const { proxyPath } = useProxyUrl();
 
@@ -122,7 +133,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
         )}
         {!loading && !error && data &&
           data.persons.map((p) => {
-            const firstDisplay = presentEntry(p.mentions[0], p.mentions[0].section);
+            const firstDisplay = presentEntry(p.mentions[0], p.mentions[0].section, entryLabels);
             const headerName = p.canonical_name || formatEntryName(p.mentions[0]) || "—";
             const headerOcc = p.canonical_occupation || firstDisplay.subtitle || "";
             const headerAddr = p.canonical_address || firstDisplay.address || "";
@@ -178,7 +189,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
                     }
                   >
                     <span style={{ color: "#7a7054", fontSize: 9 }}>
-                      {buildingMentionLine(m, entryFallback)}
+                      {buildingMentionLine(m, entryFallback, entryLabels)}
                     </span>
                     {m.page_number != null && (
                       <span style={{ color: "#7a7054", fontSize: 9 }}>{t('page')} {m.page_number}</span>
