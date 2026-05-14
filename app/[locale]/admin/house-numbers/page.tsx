@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listHouseNumberCandidates } from "@/lib/adminHouseNumbers";
 import { getDb } from "@/lib/db";
 import CorrectionTable from "./CorrectionTable";
+import DigitsFilter from "./DigitsFilter";
 
 export const dynamic = "force-dynamic";
 
@@ -40,27 +41,7 @@ export default async function HouseNumbersPage({
           </h1>
         </div>
         <div className="flex items-center gap-[14px]">
-          <form method="GET" className="flex items-center gap-2">
-            <label 
-              htmlFor="minDigits" 
-              className="text-bp-ink-dim uppercase"
-              style={{ fontSize: 9, letterSpacing: "0.18em" }}
-            >
-              Filter:
-            </label>
-            <select 
-              name="minDigits" 
-              id="minDigits"
-              defaultValue={minDigits}
-              onChange={(e) => e.target.form?.submit()}
-              className="bg-bp-blue text-bp-amber border border-bp-amber/50 px-2 py-1 focus:outline-none focus:border-bp-amber"
-              style={{ fontSize: 11, fontFamily: "var(--font-josefin-sans)" }}
-            >
-              <option value="2">&gt; 2 cijfers</option>
-              <option value="3">&gt; 3 cijfers</option>
-              <option value="4">&gt; 4 cijfers</option>
-            </select>
-          </form>
+          <DigitsFilter value={minDigits} />
           <Link
             href={`/${locale}/admin/stats`}
             className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
