@@ -107,7 +107,7 @@ export default function SearchPanel(p: Props) {
               className="text-bp-ink-dim uppercase cursor-pointer select-none"
               style={{ fontSize: 8, letterSpacing: "0.12em", fontWeight: 600, color: p.fuzzy ? "#e8b84c" : undefined }}
             >
-              Minder strikt zoeken
+              Fuzzy search
             </label>
           </div>
         )}
