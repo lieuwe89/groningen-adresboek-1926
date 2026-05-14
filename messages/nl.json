@@ -56,11 +56,33 @@
   "Search": {
     "title": "§ 1 — Zoekregister",
     "results": "Resultaten",
-    "placeholder": "Naam, adres of beroep..."
+    "placeholder": "Naam, adres of beroep...",
+    "closeAriaLabel": "Sluit zoekpanel",
+    "filterAll": "Alle",
+    "filterGood": "Goed",
+    "filterUncertain": "Twijfel",
+    "filterOpen": "Open",
+    "statusVerified": "Geverifieerd",
+    "statusNeedsReview": "Te controleren",
+    "noResultsOnPage": "Geen resultaten op deze pagina.",
+    "noResultsGlobal": "Geen resultaten in het hele boek.",
+    "searching": "Zoeken…",
+    "footerLocal": "Afd. I — Persoonsgegevens · {count} totaal",
+    "footerGlobal": "Afd. I — Boekzoeken · {count} treffers",
+    "clustersOf": "{shown} van {total} clusters",
+    "entryFallback": "Vermelding"
   },
   "Scan": {
     "title": "§ 3 — Originele Scan",
-    "loading": "Scan laden..."
+    "loading": "Scan laden...",
+    "konvaLoading": "Konva laden…",
+    "hideSearchAndMapPanel": "Verberg zoek- en kaartpaneel",
+    "narrow": "Smal",
+    "focus": "Focus",
+    "closeAriaLabel": "Sluit scanpanel",
+    "pageLong": "Pagina {page}",
+    "locationNotLinked": "Locatie nog niet gelinkt",
+    "pageShort": "Blz {page}"
   },
   "Map": {
     "search": "Zoeken",
@@ -74,7 +96,9 @@
     "title": "§ 4 — Gebouw",
     "loading": "laden...",
     "noEntries": "Geen vermeldingen aan dit gebouw gekoppeld.",
-    "page": "blz"
+    "page": "blz",
+    "closeAriaLabel": "Sluit gebouwpaneel",
+    "entryFallback": "Vermelding"
   },
   "Footer": {
     "builtBy": "Gebouwd door <name>Lieuwe Jongsma</name>, {year}"

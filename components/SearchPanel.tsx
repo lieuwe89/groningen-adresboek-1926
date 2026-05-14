@@ -60,7 +60,7 @@ export default function SearchPanel(p: Props) {
             onClick={p.onClose}
             className="text-bp-ink-dim hover:text-bp-amber transition-colors"
             style={{ fontSize: 10 }}
-            aria-label="Sluit zoekpanel"
+            aria-label={t('closeAriaLabel')}
           >
             ✕
           </button>
@@ -114,10 +114,10 @@ export default function SearchPanel(p: Props) {
 
         {p.showStatus && (
           <div className="px-[13px] flex gap-[2px]">
-            <FilterBtn label="Alle" id="all" active={p.filter === "all"} onClick={() => p.onFilter("all")} />
-            <FilterBtn label="Goed" id="verified" active={p.filter === "verified"} onClick={() => p.onFilter("verified")} />
-            <FilterBtn label="Twijfel" id="needs_review" active={p.filter === "needs_review"} onClick={() => p.onFilter("needs_review")} />
-            <FilterBtn label="Open" id="unreviewed" active={p.filter === "unreviewed"} onClick={() => p.onFilter("unreviewed")} />
+            <FilterBtn label={t('filterAll')} id="all" active={p.filter === "all"} onClick={() => p.onFilter("all")} />
+            <FilterBtn label={t('filterGood')} id="verified" active={p.filter === "verified"} onClick={() => p.onFilter("verified")} />
+            <FilterBtn label={t('filterUncertain')} id="needs_review" active={p.filter === "needs_review"} onClick={() => p.onFilter("needs_review")} />
+            <FilterBtn label={t('filterOpen')} id="unreviewed" active={p.filter === "unreviewed"} onClick={() => p.onFilter("unreviewed")} />
           </div>
         )}
 
@@ -150,6 +150,7 @@ export default function SearchPanel(p: Props) {
               error={p.globalError || null}
               activeEntryId={p.activeEntryId}
               onSelect={p.onSelectGlobal}
+              t={t}
             />
           ) : (
             p.entries.map(({ entry, idx }) => {
@@ -184,7 +185,7 @@ export default function SearchPanel(p: Props) {
                 >
                   {statusColor && (
                     <span
-                      title={entry.flags?.verified ? "Geverifieerd" : "Te controleren"}
+                      title={entry.flags?.verified ? t('statusVerified') : t('statusNeedsReview')}
                       style={{
                         width: 6,
                         height: 6,
@@ -224,7 +225,7 @@ export default function SearchPanel(p: Props) {
           )}
           {!p.globalMode && p.entries.length === 0 && (
             <div className="px-[13px] py-[20px] text-bp-ink-dim" style={{ fontSize: 9 }}>
-              Geen resultaten op deze pagina.
+              {t('noResultsOnPage')}
             </div>
           )}
         </div>
@@ -235,8 +236,8 @@ export default function SearchPanel(p: Props) {
           style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
         >
           {p.globalMode
-            ? `Afd. I — Boekzoeken · ${p.globalTotal ?? 0} treffers`
-            : `Afd. I — Persoonsgegevens · ${p.totalCount} totaal`}
+            ? t('footerGlobal', { count: p.globalTotal ?? 0 })
+            : t('footerLocal', { count: p.totalCount })}
         </div>
       </aside>
     </div>
@@ -301,11 +302,13 @@ function formatMentionName(h: SearchMention): string {
   return formatEntryName(h);
 }
 
-function mentionLine(m: SearchMention): string {
+function mentionLine(m: SearchMention, entryFallback: string): string {
   const display = presentEntry(m, m.section);
-  const detail = display.detail !== "-" ? display.detail : display.badge || "Vermelding";
+  const detail = display.detail !== "-" ? display.detail : display.badge || entryFallback;
   return [detail, display.address].filter(Boolean).join(" - ");
 }
+
+type SearchTranslator = ReturnType<typeof useTranslations<'Search'>>;
 
 function GlobalResults({
   results,
@@ -314,6 +317,7 @@ function GlobalResults({
   error,
   activeEntryId,
   onSelect,
+  t,
 }: {
   results: PersonHit[];
   total: number;
@@ -321,6 +325,7 @@ function GlobalResults({
   error: string | null;
   activeEntryId?: string;
   onSelect?: (h: SearchMention) => void;
+  t: SearchTranslator;
 }) {
   if (error) {
     return (
@@ -332,17 +337,18 @@ function GlobalResults({
   if (loading && results.length === 0) {
     return (
       <div className="px-[13px] py-[20px] text-bp-ink-dim" style={{ fontSize: 9 }}>
-        Zoeken…
+        {t('searching')}
       </div>
     );
   }
   if (results.length === 0) {
     return (
       <div className="px-[13px] py-[20px] text-bp-ink-dim" style={{ fontSize: 9 }}>
-        Geen resultaten in het hele boek.
+        {t('noResultsGlobal')}
       </div>
     );
   }
+  const entryFallback = t('entryFallback');
   return (
     <>
       {results.map((p) => {
@@ -407,7 +413,7 @@ function GlobalResults({
                       style={{ fontSize: 8.5, color: active ? "#e8b84c" : undefined }}
                     >
                       {/* Only show address and occ here if they differ or just show "Vermelding" */}
-                      {mentionLine(m)}
+                      {mentionLine(m, entryFallback)}
                     </span>
                     <span
                       className="text-bp-amber flex-shrink-0 uppercase ml-[8px]"
@@ -427,7 +433,7 @@ function GlobalResults({
           className="px-[13px] py-[10px] text-bp-ink-dim text-center uppercase"
           style={{ fontSize: 8, letterSpacing: "0.18em" }}
         >
-          {results.length} van {total} clusters
+          {t('clustersOf', { shown: results.length, total })}
         </div>
       )}
     </>

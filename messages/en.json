@@ -56,11 +56,33 @@
   "Search": {
     "title": "§ 1 — Search Register",
     "results": "Results",
-    "placeholder": "Name, address or occupation..."
+    "placeholder": "Name, address or occupation...",
+    "closeAriaLabel": "Close search panel",
+    "filterAll": "All",
+    "filterGood": "Good",
+    "filterUncertain": "Uncertain",
+    "filterOpen": "Open",
+    "statusVerified": "Verified",
+    "statusNeedsReview": "Needs review",
+    "noResultsOnPage": "No results on this page.",
+    "noResultsGlobal": "No results in the entire book.",
+    "searching": "Searching…",
+    "footerLocal": "Dept. I — Personal details · {count} total",
+    "footerGlobal": "Dept. I — Book search · {count} hits",
+    "clustersOf": "{shown} of {total} clusters",
+    "entryFallback": "Entry"
   },
   "Scan": {
     "title": "§ 3 — Original Scan",
-    "loading": "Loading scan..."
+    "loading": "Loading scan...",
+    "konvaLoading": "Loading Konva…",
+    "hideSearchAndMapPanel": "Hide search and map panel",
+    "narrow": "Narrow",
+    "focus": "Focus",
+    "closeAriaLabel": "Close scan panel",
+    "pageLong": "Page {page}",
+    "locationNotLinked": "Location not yet linked",
+    "pageShort": "Pg {page}"
   },
   "Map": {
     "search": "Search",
@@ -74,7 +96,9 @@
     "title": "§ 4 — Building",
     "loading": "loading...",
     "noEntries": "No entries linked to this building.",
-    "page": "pg"
+    "page": "pg",
+    "closeAriaLabel": "Close building panel",
+    "entryFallback": "Entry"
   },
   "Footer": {
     "builtBy": "Built by <name>Lieuwe Jongsma</name>, {year}"
