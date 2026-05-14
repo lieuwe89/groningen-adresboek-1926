@@ -42,16 +42,23 @@ Pick locations on the Windows PC:
 | `adresboek-backup.sqlite` | Same parent folder |
 | `validator\audit_word_coverage.py` | Either `C:\Users\<you>\projects\tables-ocr-pipeline\scripts\` (if cloned) or just call from this folder |
 
-### 1a. Companion outputs bundle (if `_pipeline\output\` is incomplete)
+### 1a. Companion outputs bundle (REQUIRED if `_pipeline\output\` is incomplete)
 
-If `<repo>\_pipeline\output\json\` doesn't have ~838 files, or `geocoded\addresses.json` / `combined\` are missing, extract `windows-rerun-outputs-2026-05-14.zip` (companion package) into `<repo>` first. Merges into the existing `_pipeline\output\` tree. Without `json\`, the rerun cannot rebuild combined indexes for un-rerun pages; without `geocoded\addresses.json`, SQLite will have NULL lat/lng.
+Extract `windows-rerun-outputs-2026-05-14.zip` (companion package, ~54 MB zipped / ~434 MB extracted) into `<repo>`. Merges into the existing `_pipeline\output\` tree. Ships `hocr/`, `llm_raw/`, `json/`, `alto/`, `llm_usage/`, `geocoded/`, `combined/`, `checkpoint.json`.
 
-Verify counts:
+**Critical:** without `hocr/` the pipeline re-runs OCR (Surya, hours). Without `llm_raw/` it re-extracts all 838 pages (~$60+, undoes the skip logic) instead of just the 363 we want.
+
+Verify counts after extraction:
 
 ```powershell
+(Get-ChildItem _pipeline\output\hocr\).Count                # expect ~1676
+(Get-ChildItem _pipeline\output\llm_raw\).Count             # expect 838
 (Get-ChildItem _pipeline\output\json\).Count                # expect 838
 Test-Path _pipeline\output\geocoded\addresses.json          # True
+Test-Path _pipeline\output\checkpoint.json                  # True
 ```
+
+See the companion zip's `README.md` for the per-subdir breakdown and what was deliberately NOT shipped (`bag/`, `_backup_pre_reanchor/`, `logs/`).
 
 `<repo>` below = the Windows path of the `groningen-adresboek-1926` checkout. PowerShell examples; adapt to your shell.
 
