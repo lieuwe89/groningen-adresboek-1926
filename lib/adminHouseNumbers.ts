@@ -44,6 +44,12 @@ export function listMissingNumberCandidates(db: DB): HouseNumberCandidate[] {
       AND e.address_street IS NOT NULL AND trim(e.address_street) != ''
       AND (e.address_number IS NULL OR trim(e.address_number) = '')
       AND e.entry_bbox IS NOT NULL
+      AND e.name IS NOT NULL AND trim(e.name) != ''
+      AND EXISTS (
+        SELECT 1 FROM entries v
+        WHERE v.pand_id IS NOT NULL
+          AND v.address_street = e.address_street
+      )
     ORDER BY e.address_street, e.name
     LIMIT 50
   `).all() as HouseNumberCandidate[];
