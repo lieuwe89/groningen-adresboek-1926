@@ -43,14 +43,77 @@ export type EntryPresentation = {
   showMapStatus: boolean;
 };
 
-const SECTION_LABELS: Record<string, string> = {
-  advertisement: "Advertentie",
-  institutional: "Instellingen",
-  name_register: "Naamregister",
-  occupation_register: "Beroepenregister",
-  other: "Tekst",
-  street_register: "Stratenregister",
+export type EntryPresentationLabels = {
+  badgeAdvertisement: string;
+  badgeInstitution: string;
+  badgeOrganization: string;
+  badgeText: string;
+  detailDescription: string;
+  detailMention: string;
+  detailContext: string;
+  detailRole: string;
+  detailOccupation: string;
+  sectionAdvertisement: string;
+  sectionInstitutional: string;
+  sectionNameRegister: string;
+  sectionOccupationRegister: string;
+  sectionOther: string;
+  sectionStreetRegister: string;
+  sectionRegisterDefault: string;
 };
+
+const DUTCH_LABELS: EntryPresentationLabels = {
+  badgeAdvertisement: "Advertentie",
+  badgeInstitution: "Instelling",
+  badgeOrganization: "Organisatie",
+  badgeText: "Tekst",
+  detailDescription: "Beschrijving",
+  detailMention: "Vermelding",
+  detailContext: "Context",
+  detailRole: "Rol",
+  detailOccupation: "Beroep",
+  sectionAdvertisement: "Advertentie",
+  sectionInstitutional: "Instellingen",
+  sectionNameRegister: "Naamregister",
+  sectionOccupationRegister: "Beroepenregister",
+  sectionOther: "Tekst",
+  sectionStreetRegister: "Stratenregister",
+  sectionRegisterDefault: "Register",
+};
+
+function buildSectionLabels(labels: EntryPresentationLabels): Record<string, string> {
+  return {
+    advertisement: labels.sectionAdvertisement,
+    institutional: labels.sectionInstitutional,
+    name_register: labels.sectionNameRegister,
+    occupation_register: labels.sectionOccupationRegister,
+    other: labels.sectionOther,
+    street_register: labels.sectionStreetRegister,
+  };
+}
+
+export function buildEntryPresentationLabels(
+  t: (key: keyof EntryPresentationLabels) => string
+): EntryPresentationLabels {
+  return {
+    badgeAdvertisement: t("badgeAdvertisement"),
+    badgeInstitution: t("badgeInstitution"),
+    badgeOrganization: t("badgeOrganization"),
+    badgeText: t("badgeText"),
+    detailDescription: t("detailDescription"),
+    detailMention: t("detailMention"),
+    detailContext: t("detailContext"),
+    detailRole: t("detailRole"),
+    detailOccupation: t("detailOccupation"),
+    sectionAdvertisement: t("sectionAdvertisement"),
+    sectionInstitutional: t("sectionInstitutional"),
+    sectionNameRegister: t("sectionNameRegister"),
+    sectionOccupationRegister: t("sectionOccupationRegister"),
+    sectionOther: t("sectionOther"),
+    sectionStreetRegister: t("sectionStreetRegister"),
+    sectionRegisterDefault: t("sectionRegisterDefault"),
+  };
+}
 
 const BUSINESS_PATTERNS = [
   /\b(n\.?\s*v\.?|n\.v\.|fa\.|firma|geb(?:r|rs)\.?|maatschappij|vereeniging|vereniging)\b/i,
@@ -73,7 +136,8 @@ export function formatEntryName(entry: PresentableEntry | undefined): string {
 
 export function presentEntry(
   entry: PresentableEntry | undefined,
-  fallbackSection?: EntrySection | null
+  fallbackSection?: EntrySection | null,
+  labels: EntryPresentationLabels = DUTCH_LABELS
 ): EntryPresentation {
   const section = entry?.section ?? fallbackSection ?? "";
   const title = formatEntryName(entry) || "-";
@@ -83,17 +147,19 @@ export function presentEntry(
   const address = entry?.address_full || "";
   const parent = entry?.parent_organization || "";
   const kind = classifyEntry(entry, section);
+  const sectionLabels = buildSectionLabels(labels);
+  const sectionLabelResolved = sectionLabels[section] || section || labels.sectionRegisterDefault;
 
   if (kind === "advertisement") {
     return {
       kind,
-      badge: "Advertentie",
+      badge: labels.badgeAdvertisement,
       title,
       subtitle: description || occupation,
-      detailLabel: description ? "Beschrijving" : "Vermelding",
+      detailLabel: description ? labels.detailDescription : labels.detailMention,
       detail: description || occupation || "-",
       address,
-      sectionLabel: sectionLabel(section),
+      sectionLabel: sectionLabelResolved,
       showMapStatus: true,
     };
   }
@@ -101,13 +167,13 @@ export function presentEntry(
   if (kind === "organization") {
     return {
       kind,
-      badge: section === "institutional" ? "Instelling" : "Organisatie",
+      badge: section === "institutional" ? labels.badgeInstitution : labels.badgeOrganization,
       title,
       subtitle: description || occupation || parent,
-      detailLabel: description ? "Beschrijving" : "Context",
+      detailLabel: description ? labels.detailDescription : labels.detailContext,
       detail: description || occupation || parent || "-",
       address,
-      sectionLabel: sectionLabel(section),
+      sectionLabel: sectionLabelResolved,
       showMapStatus: true,
     };
   }
@@ -115,13 +181,13 @@ export function presentEntry(
   if (kind === "institutional") {
     return {
       kind,
-      badge: "Instelling",
+      badge: labels.badgeInstitution,
       title,
       subtitle: [role, parent].filter(Boolean).join(" / "),
-      detailLabel: role ? "Rol" : "Context",
+      detailLabel: role ? labels.detailRole : labels.detailContext,
       detail: role || parent || description || "-",
       address,
-      sectionLabel: sectionLabel(section),
+      sectionLabel: sectionLabelResolved,
       showMapStatus: address.length > 0,
     };
   }
@@ -129,13 +195,13 @@ export function presentEntry(
   if (kind === "text") {
     return {
       kind,
-      badge: "Tekst",
+      badge: labels.badgeText,
       title,
       subtitle: description || occupation,
-      detailLabel: "Vermelding",
+      detailLabel: labels.detailMention,
       detail: description || occupation || "-",
       address,
-      sectionLabel: sectionLabel(section),
+      sectionLabel: sectionLabelResolved,
       showMapStatus: address.length > 0,
     };
   }
@@ -145,10 +211,10 @@ export function presentEntry(
     badge: null,
     title,
     subtitle: occupation,
-    detailLabel: "Beroep",
+    detailLabel: labels.detailOccupation,
     detail: occupation || "-",
     address,
-    sectionLabel: sectionLabel(section),
+    sectionLabel: sectionLabelResolved,
     showMapStatus: true,
   };
 }
@@ -174,8 +240,4 @@ function classifyEntry(
 function looksLikeBusiness(entry: PresentableEntry): boolean {
   const name = entry.name || "";
   return BUSINESS_PATTERNS.some((pattern) => pattern.test(name));
-}
-
-function sectionLabel(section: EntrySection): string {
-  return SECTION_LABELS[section] || section || "Register";
 }

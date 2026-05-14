@@ -9,7 +9,7 @@ import EditForm from "@/components/EditForm";
 import type { ScanViewerHandle } from "@/components/ScanViewer";
 import { useTranslations, useLocale } from 'next-intl';
 import { useProxyUrl } from "@/lib/useProxyUrl";
-import { presentEntry } from "@/lib/entryPresentation";
+import { presentEntry, buildEntryPresentationLabels } from "@/lib/entryPresentation";
 import { buildPageModeHref, type PageMode } from "@/lib/entryRouteTargets";
 
 const ScanViewer = dynamic(() => import("@/components/ScanViewer"), {
@@ -65,6 +65,8 @@ export default function ScanPanel(p: Props) {
   const [bboxEditMode, setBboxEditMode] = useState(false);
   const t = useTranslations('Scan');
   const tc = useTranslations('Common');
+  const tep = useTranslations('EntryPresentation');
+  const entryLabels = buildEntryPresentationLabels(tep);
   const { proxyPath } = useProxyUrl();
   const pageMode: PageMode = p.editMode ? "admin" : "public";
 
@@ -87,7 +89,7 @@ export default function ScanPanel(p: Props) {
   }, [p.stem]);
 
   const bbox = p.activeEntry?.entry_bbox;
-  const display = presentEntry(p.activeEntry, p.section);
+  const display = presentEntry(p.activeEntry, p.section, entryLabels);
   const showBboxEditor =
     !!(p.editMode && p.activeEntry && p.activeIdx !== undefined && bboxEditMode);
 

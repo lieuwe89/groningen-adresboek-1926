@@ -113,5 +113,31 @@
     "unlinkedAddressAriaLabel": "Geen gekoppeld adres",
     "linkedAddressLabel": "🔗 adres gekoppeld",
     "unlinkedAddressLabel": "⛓︎ adres niet gekoppeld"
+  },
+  "EntryPresentation": {
+    "badgeAdvertisement": "Advertentie",
+    "badgeInstitution": "Instelling",
+    "badgeOrganization": "Organisatie",
+    "badgeText": "Tekst",
+    "detailDescription": "Beschrijving",
+    "detailMention": "Vermelding",
+    "detailContext": "Context",
+    "detailRole": "Rol",
+    "detailOccupation": "Beroep",
+    "sectionAdvertisement": "Advertentie",
+    "sectionInstitutional": "Instellingen",
+    "sectionNameRegister": "Naamregister",
+    "sectionOccupationRegister": "Beroepenregister",
+    "sectionOther": "Tekst",
+    "sectionStreetRegister": "Stratenregister",
+    "sectionRegisterDefault": "Register"
+  },
+  "Sections": {
+    "other": "Index & Inleiding",
+    "institutional": "Instellingen",
+    "advertisement": "Advertenties",
+    "name_register": "Naamregister",
+    "street_register": "Stratenregister",
+    "occupation_register": "Beroepenregister"
   }
 }

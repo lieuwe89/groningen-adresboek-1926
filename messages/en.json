@@ -113,5 +113,31 @@
     "unlinkedAddressAriaLabel": "No linked address",
     "linkedAddressLabel": "🔗 address linked",
     "unlinkedAddressLabel": "⛓︎ address not linked"
+  },
+  "EntryPresentation": {
+    "badgeAdvertisement": "Advertisement",
+    "badgeInstitution": "Institution",
+    "badgeOrganization": "Organization",
+    "badgeText": "Text",
+    "detailDescription": "Description",
+    "detailMention": "Entry",
+    "detailContext": "Context",
+    "detailRole": "Role",
+    "detailOccupation": "Occupation",
+    "sectionAdvertisement": "Advertisement",
+    "sectionInstitutional": "Institutions",
+    "sectionNameRegister": "Name register",
+    "sectionOccupationRegister": "Occupation register",
+    "sectionOther": "Text",
+    "sectionStreetRegister": "Street register",
+    "sectionRegisterDefault": "Register"
+  },
+  "Sections": {
+    "other": "Index & Introduction",
+    "institutional": "Institutions",
+    "advertisement": "Advertisements",
+    "name_register": "Name register",
+    "street_register": "Street register",
+    "occupation_register": "Occupation register"
   }
 }
