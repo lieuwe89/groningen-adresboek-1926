@@ -14,21 +14,31 @@ import { buildPageModeHref, type PageMode } from "@/lib/entryRouteTargets";
 
 const ScanViewer = dynamic(() => import("@/components/ScanViewer"), {
   ssr: false,
-  loading: () => (
-    <div className="absolute inset-0 flex items-center justify-center text-bp-ink-dim" style={{ fontSize: 9 }}>
-      Scan laden…
-    </div>
-  ),
+  loading: () => <ScanLoading />,
 });
 
 const BboxEditor = dynamic(() => import("@/components/BboxEditor"), {
   ssr: false,
-  loading: () => (
-    <div className="flex-1 flex items-center justify-center text-bp-ink-dim" style={{ fontSize: 9 }}>
-      Konva laden…
-    </div>
-  ),
+  loading: () => <BboxLoading />,
 });
+
+function ScanLoading() {
+  const t = useTranslations('Scan');
+  return (
+    <div className="absolute inset-0 flex items-center justify-center text-bp-ink-dim" style={{ fontSize: 9 }}>
+      {t('loading')}
+    </div>
+  );
+}
+
+function BboxLoading() {
+  const t = useTranslations('Scan');
+  return (
+    <div className="flex-1 flex items-center justify-center text-bp-ink-dim" style={{ fontSize: 9 }}>
+      {t('konvaLoading')}
+    </div>
+  );
+}
 
 interface Props {
   open: boolean;
@@ -121,9 +131,9 @@ export default function ScanPanel(p: Props) {
                   padding: "2px 8px",
                 }}
                 aria-pressed={!!p.focusMode}
-                title="Verberg zoek- en kaartpaneel"
+                title={t('hideSearchAndMapPanel')}
               >
-                {p.focusMode ? "Smal" : "Focus"}
+                {p.focusMode ? t('narrow') : t('focus')}
               </button>
             )}
             {p.editMode && p.activeEntry && p.activeIdx !== undefined && (
@@ -149,7 +159,7 @@ export default function ScanPanel(p: Props) {
               onClick={p.onClose}
               className="text-bp-ink-dim hover:text-bp-amber transition-colors"
               style={{ fontSize: 10 }}
-              aria-label="Sluit scanpanel"
+              aria-label={t('closeAriaLabel')}
             >
               ✕
             </button>
@@ -177,7 +187,7 @@ export default function ScanPanel(p: Props) {
             className="text-bp-amber uppercase"
             style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.16em" }}
           >
-            Pagina {p.page}
+            {t('pageLong', { page: p.page })}
           </span>
           <div className="flex gap-[16px] mt-[3px]">
             <InfoCol label={tc('name')} value={display.title} badge={display.badge} />
@@ -196,7 +206,7 @@ export default function ScanPanel(p: Props) {
                   className="text-bp-amber/50 italic"
                   style={{ fontSize: 7.5, letterSpacing: "0.05em" }}
                 >
-                  Locatie nog niet gelinkt
+                  {t('locationNotLinked')}
                 </span>
               )}
             </div>
@@ -272,7 +282,7 @@ export default function ScanPanel(p: Props) {
             className="text-bp-ink-bright uppercase"
             style={{ fontSize: 9, letterSpacing: "0.16em", fontWeight: 600 }}
           >
-            Blz {p.page}
+            {t('pageShort', { page: p.page })}
           </span>
           {p.next ? (
             <Link

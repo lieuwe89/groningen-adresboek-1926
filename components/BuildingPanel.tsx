@@ -35,9 +35,9 @@ type Detail = {
   persons: Person[];
 };
 
-function buildingMentionLine(mention: Mention): string {
+function buildingMentionLine(mention: Mention, entryFallback: string): string {
   const display = presentEntry(mention, mention.section);
-  const detail = display.detail !== "-" ? display.detail : display.badge || "Vermelding";
+  const detail = display.detail !== "-" ? display.detail : display.badge || entryFallback;
   return [detail, display.address].filter(Boolean).join(" - ");
 }
 
@@ -52,6 +52,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const t = useTranslations('BuildingPanel');
+  const entryFallback = t('entryFallback');
   const { proxyPath } = useProxyUrl();
 
   useEffect(() => {
@@ -101,7 +102,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
         <button
           type="button"
           onClick={onClose}
-          aria-label="Sluit gebouwpaneel"
+          aria-label={t('closeAriaLabel')}
           style={{ background: "none", border: "none", color: "#e8b84c", cursor: "pointer" }}
         >
           ✕
@@ -177,7 +178,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
                     }
                   >
                     <span style={{ color: "#7a7054", fontSize: 9 }}>
-                      {buildingMentionLine(m)}
+                      {buildingMentionLine(m, entryFallback)}
                     </span>
                     {m.page_number != null && (
                       <span style={{ color: "#7a7054", fontSize: 9 }}>{t('page')} {m.page_number}</span>
