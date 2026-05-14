@@ -30,6 +30,7 @@ yarn-error.log*
 # Documentation & Markdown
 *.md
 !/README.md
+!/CHANGELOG.md
 /docs/*
 !/docs/sync-overrides.md
 

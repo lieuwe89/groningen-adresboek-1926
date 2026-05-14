@@ -16,12 +16,15 @@ Entries are geocoded via PDOK / BAG and linked to georeferenced historic maps.
 
 ```
 .
-├── app/                 Route handlers (Next.js App Router)
+├── app/[locale]/        Route handlers (Next.js App Router, i18n nl/en)
 │   ├── page/[stem]/     Public page viewer (read-only)
-│   ├── admin/           Admin panel (basic-auth)
-│   │   ├── page/[stem]/ Per-page correction editor
-│   │   └── stats/       Extraction quality stats
-│   └── info/            About page
+│   ├── login/           Cookie-session login
+│   ├── admin/           Admin panel (cookie auth)
+│   │   ├── page/[stem]/      Per-page correction editor
+│   │   ├── house-numbers/    House number corrections
+│   │   ├── missing-numbers/  Missing-number gap finder (BAG)
+│   │   └── stats/            Extraction quality + BAG coverage
+│   └── info/            About page (Waarom 1926, methodology)
 ├── components/          Shared React components
 ├── lib/                 DB access, geocoding helpers, types
 ├── public/              Static assets (DZI tiles served from here)
@@ -54,9 +57,15 @@ See [docs/sync-overrides.md](docs/sync-overrides.md) for details.
 - **PDOK Locatieserver**: Used for real-time address normalization and BAG-compliant geocoding.
 - **GeoTIFF / PMTiles**: Historical maps (circa 1919–1930) are georeferenced and served as tiled layers.
 
+### Search
+- **SQLite FTS5**: Full-text index over names, occupations, and addresses.
+- **Fuzzy re-ranking** (v0.13.0): Optional Levenshtein-based re-ranking on top of FTS hits, toggled by a checkbox in the search sidebar — handles OCR variants and historic spelling.
+- **i18n**: Dutch + English UI via `messages/{nl,en}.json` and `next-intl`.
+
 ### Infrastructure
-- **Basic Auth**: Secures the administrative correction interface.
-- **Environment Variables**: Managed via `.env.local` for sensitive configuration like passwords.
+- **Cookie session auth** (v0.11.0): HTTP-only signed cookie issued at `/login`, replacing Basic Auth so the admin works inside the `playground.lieuwejongsma.nl` proxy iframe.
+- **Reverse-proxy aware**: All internal links go through `useProxyUrl().proxyPath` so the app works both at `/` and under the `/groningen-1926` proxy prefix.
+- **Environment Variables**: Managed via `.env.local` for `ADMIN_PASSWORD` and the cookie signing secret.
 
 ## Setup
 
@@ -79,11 +88,17 @@ The SQLite file is gitignored (regeneratable). See "External assets" below.
 
 | Route | Access | Description |
 |---|---|---|
-| `/` | public | Search and map overview |
+| `/` | public | Search (FTS + optional fuzzy) and map overview |
 | `/page/<stem>` | public | Scan viewer + extracted entries for one page |
-| `/info` | public | About page / methodology |
-| `/admin/page/<stem>` | basic-auth | Correction editor |
-| `/admin/stats` | basic-auth | Extraction quality dashboard |
+| `/info` | public | About page (Waarom 1926, methodology, links) |
+| `/login` | public | Cookie-session login for admin |
+| `/admin` | cookie-auth | Admin landing |
+| `/admin/page/<stem>` | cookie-auth | Per-page correction editor (bbox + entries) |
+| `/admin/house-numbers` | cookie-auth | House number correction queue |
+| `/admin/missing-numbers` | cookie-auth | Gap finder against BAG-validated streets |
+| `/admin/stats` | cookie-auth | Extraction quality + BAG coverage dashboard |
+
+All routes are also reachable via `/{nl,en}/...` for explicit locale; `next-intl` middleware handles the default redirect.
 
 ## External assets
 
