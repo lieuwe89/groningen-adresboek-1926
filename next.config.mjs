@@ -13,6 +13,17 @@ const nextConfig = {
   // assetPrefix makes the *browser* fetch all _next/ resources and RSC
   // payloads from /groningen-1926/_next/... so they go through the proxy.
   assetPrefix: '/groningen-1926',
+  async rewrites() {
+    // Favicon link is generated with the /groningen-1926 prefix so it works
+    // through the Apache reverse proxy. On the direct fly.io URL, rewrite
+    // the prefixed path back to the actual public/ file.
+    return [
+      {
+        source: '/groningen-1926/favicon.png',
+        destination: '/favicon.png',
+      },
+    ];
+  },
   async headers() {
     const longLivedAssetHeaders = [
       {
