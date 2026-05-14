@@ -257,6 +257,27 @@ export default function InfoPage() {
                     the map. This is a work in progress: errors, gaps, and empty
                     pins will still be common.
                   </p>
+                  <p>
+                    Read more about the making of this project in{" "}
+                    <a
+                      href="https://www.lieuwejongsma.nl/mapping-groningens-1926-address-book/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-bp-amber hover:underline"
+                    >
+                      this blog post
+                    </a>
+                    . The source code is available on{" "}
+                    <a
+                      href="https://github.com/lieuwe89/groningen-adresboek-1926"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-bp-amber hover:underline"
+                    >
+                      GitHub
+                    </a>
+                    .
+                  </p>
                   <p className="text-bp-ink-dim">
                     Questions or comments? Get in touch at{" "}
                     <a
@@ -294,6 +315,27 @@ export default function InfoPage() {
                     Dit is een werk in uitvoering — fouten, hiaten en lege pinnen
                     zullen nog ruimschoots aanwezig zijn.
                   </p>
+                  <p>
+                    Meer over de totstandkoming van dit project kun je lezen in{" "}
+                    <a
+                      href="https://www.lieuwejongsma.nl/mapping-groningens-1926-address-book/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-bp-amber hover:underline"
+                    >
+                      deze blogpost
+                    </a>
+                    . De broncode vind je op{" "}
+                    <a
+                      href="https://github.com/lieuwe89/groningen-adresboek-1926"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-bp-amber hover:underline"
+                    >
+                      GitHub
+                    </a>
+                    .
+                  </p>
                   <p className="text-bp-ink-dim">
                     Vragen of opmerkingen? Neem contact op via{" "}
                     <a
@@ -303,6 +345,53 @@ export default function InfoPage() {
                       lieuwe89@gmail.com
                     </a>
                     .
+                  </p>
+                </>
+              )}
+            </Section>
+
+            <Rule />
+
+            {/* ── Why 1926? ─────────────────────────────────────────────── */}
+            <Section label={isEnglish ? "Why 1926?" : "Waarom 1926?"}>
+              {isEnglish ? (
+                <>
+                  <p>
+                    The choice of 1926 is more or less arbitrary. The year falls
+                    exactly a hundred years back and seemed like a good candidate
+                    for testing the processing pipeline. The address book is fairly
+                    complex in structure — some pages are particularly dense, with
+                    many abbreviations in both occupations and street names, making
+                    it an interesting challenge for automated recognition.
+                  </p>
+                  <p>
+                    One advantage of 1926 over older editions: the addresses already
+                    use the modern numbering system. Editions from before the late
+                    nineteenth century followed a different system, for which
+                    concordances exist. Converting historical numbers to modern
+                    addresses using those concordances would have been an additional
+                    step in the pipeline — a nice challenge for a future project.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    De keuze voor 1926 is min of meer toevallig. Het jaar valt
+                    precies 100 jaar terug en leek een goede kandidaat om de
+                    verwerkingspijplijn mee te testen. Het adresboek is qua
+                    structuur vrij complex: sommige pagina's zijn bijzonder dicht,
+                    met veel afkortingen in zowel beroepen als straatnamen. Dat
+                    maakt het een interessante uitdaging voor automatische
+                    herkenning.
+                  </p>
+                  <p>
+                    Een voordeel van 1926 ten opzichte van oudere edities: de
+                    adressen gebruiken al het moderne nummerstelsel. Voor edities
+                    van vóór het einde van de negentiende eeuw gold een ander
+                    stelsel, waarvoor concordanties bestaan. Het vertalen van
+                    historische nummers naar moderne adressen met behulp van die
+                    concordanties zou een extra stap in de pijplijn zijn geweest,
+                    wat een mooie uitdaging is voor een toekomstig project.
                   </p>
                 </>
               )}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
+import packageJson from '@/package.json';
 
 export default function Footer() {
   const t = useTranslations('Footer');
@@ -26,6 +27,12 @@ export default function Footer() {
           ),
           year: 2026
         })}
+      </span>
+      <span
+        className="text-bp-ink-dim uppercase"
+        style={{ fontSize: 9, letterSpacing: "0.2em", fontWeight: 600 }}
+      >
+        v{packageJson.version}
       </span>
     </footer>
   );
