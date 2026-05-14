@@ -28,6 +28,8 @@ interface Props {
   globalError?: string | null;
   activeEntryId?: string;
   onSelectGlobal?: (hit: SearchMention) => void;
+  fuzzy?: boolean;
+  onFuzzy?: (f: boolean) => void;
 }
 
 export default function SearchPanel(p: Props) {
@@ -90,6 +92,25 @@ export default function SearchPanel(p: Props) {
             <span className="bg-bp-amber inline-block" style={{ width: 1.5, height: 13 }} />
           </div>
         </div>
+
+        {p.globalMode && (
+          <div className="px-[13px] pb-[6px] flex items-center gap-[6px]">
+            <input
+              type="checkbox"
+              id="fuzzy-toggle"
+              checked={p.fuzzy ?? false}
+              onChange={(e) => p.onFuzzy?.(e.target.checked)}
+              style={{ accentColor: "#e8b84c", width: 10, height: 10, cursor: "pointer" }}
+            />
+            <label
+              htmlFor="fuzzy-toggle"
+              className="text-bp-ink-dim uppercase cursor-pointer select-none"
+              style={{ fontSize: 8, letterSpacing: "0.12em", fontWeight: 600, color: p.fuzzy ? "#e8b84c" : undefined }}
+            >
+              Minder strikt zoeken
+            </label>
+          </div>
+        )}
 
         {p.showStatus && (
           <div className="px-[13px] flex gap-[2px]">

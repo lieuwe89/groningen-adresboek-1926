@@ -8,6 +8,8 @@ interface SelectionContextType {
   setActivePandId: (id: string | null) => void;
   query: string;
   setQuery: (q: string) => void;
+  fuzzy: boolean;
+  setFuzzy: (f: boolean) => void;
   searchOpen: boolean;
   setSearchOpen: (open: boolean) => void;
   scanOpen: boolean;
@@ -39,6 +41,7 @@ const SelectionContext = createContext<SelectionContextType | undefined>(undefin
 export function SelectionProvider({ children }: { children: ReactNode }) {
   const [activePandId, setActivePandId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [fuzzy, setFuzzy] = useState(false);
   const [searchOpen, setSearchOpen] = useState(true);
   const [scanOpen, setScanOpen] = useState(true);
   const [globalResults, setGlobalResults] = useState<PersonHit[]>([]);
@@ -59,6 +62,8 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
         setActivePandId,
         query,
         setQuery,
+        fuzzy,
+        setFuzzy,
         searchOpen,
         setSearchOpen,
         scanOpen,

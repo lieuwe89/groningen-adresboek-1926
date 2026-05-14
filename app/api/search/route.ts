@@ -18,9 +18,11 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(MAX_LIMIT, Math.max(1, Number.isFinite(rawLimit) ? rawLimit : DEFAULT_LIMIT));
   const offset = Math.max(0, Number.isFinite(rawOffset) ? rawOffset : 0);
 
+  const fuzzy = searchParams.get("fuzzy") === "1";
+
   try {
-    const out = search(q, limit, offset);
-    return NextResponse.json({ ...out, q, limit, offset });
+    const out = search(q, limit, offset, fuzzy);
+    return NextResponse.json({ ...out, q, limit, offset, fuzzy });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : String(e) },
