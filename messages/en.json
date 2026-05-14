@@ -83,5 +83,11 @@
     "name": "Name",
     "address": "Address",
     "occupation": "Occupation"
+  },
+  "ScanViewer": {
+    "linkedAddressAriaLabel": "Open linked address",
+    "unlinkedAddressAriaLabel": "No linked address",
+    "linkedAddressLabel": "🔗 address linked",
+    "unlinkedAddressLabel": "⛓︎ address not linked"
   }
 }

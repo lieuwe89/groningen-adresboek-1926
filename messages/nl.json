@@ -83,5 +83,11 @@
     "name": "Naam",
     "address": "Adres",
     "occupation": "Beroep"
+  },
+  "ScanViewer": {
+    "linkedAddressAriaLabel": "Open gekoppeld adres",
+    "unlinkedAddressAriaLabel": "Geen gekoppeld adres",
+    "linkedAddressLabel": "🔗 adres gekoppeld",
+    "unlinkedAddressLabel": "⛓︎ adres niet gekoppeld"
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useProxyUrl } from "@/lib/useProxyUrl";
 import { resolvePublicAssetUrl } from "@/lib/publicAssetUrls";
 import type { Entry } from "@/lib/data";
@@ -21,6 +22,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
   { stem, entries, activeIdx, onSelectEntry },
   ref
 ) {
+  const t = useTranslations("ScanViewer");
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<any>(null);
   const osdRef = useRef<any>(null);
@@ -37,6 +39,8 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
   const onSelectEntryRef = useRef(onSelectEntry);
   onSelectEntryRef.current = onSelectEntry;
   const { prefix } = useProxyUrl();
+  const translationsRef = useRef({ t });
+  translationsRef.current = { t };
 
   const applyOverlaysRef = useRef<((force?: boolean) => void) | null>(null);
 
@@ -138,6 +142,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
     const ents = entriesRef.current;
     const aidx = activeIdxRef.current;
     const curStem = stemRef.current;
+    const { t: getLabel } = translationsRef.current;
 
     if (!v || !OSD || !ents) return;
 
@@ -162,9 +167,13 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
       const el = document.createElement("div");
       el.setAttribute(
         "aria-label",
-        canNavigateToAddress ? "Open gekoppeld adres" : "Geen gekoppeld adres"
+        canNavigateToAddress
+          ? getLabel("linkedAddressAriaLabel")
+          : getLabel("unlinkedAddressAriaLabel")
       );
-      el.title = canNavigateToAddress ? "Open gekoppeld adres" : "Geen gekoppeld adres";
+      el.title = canNavigateToAddress
+        ? getLabel("linkedAddressAriaLabel")
+        : getLabel("unlinkedAddressAriaLabel");
       el.style.cssText = `
         position: relative;
         box-sizing: border-box;
@@ -176,7 +185,9 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
       `;
 
       const label = document.createElement("span");
-      label.textContent = canNavigateToAddress ? "🔗 adres gekoppeld" : "⛓︎ adres niet gekoppeld";
+      label.textContent = canNavigateToAddress
+        ? getLabel("linkedAddressLabel")
+        : getLabel("unlinkedAddressLabel");
       label.style.cssText = `
         position: absolute;
         top: 0;
