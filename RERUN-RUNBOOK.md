@@ -42,6 +42,17 @@ Pick locations on the Windows PC:
 | `adresboek-backup.sqlite` | Same parent folder |
 | `validator\audit_word_coverage.py` | Either `C:\Users\<you>\projects\tables-ocr-pipeline\scripts\` (if cloned) or just call from this folder |
 
+### 1a. Companion outputs bundle (if `_pipeline\output\` is incomplete)
+
+If `<repo>\_pipeline\output\json\` doesn't have ~838 files, or `geocoded\addresses.json` / `combined\` are missing, extract `windows-rerun-outputs-2026-05-14.zip` (companion package) into `<repo>` first. Merges into the existing `_pipeline\output\` tree. Without `json\`, the rerun cannot rebuild combined indexes for un-rerun pages; without `geocoded\addresses.json`, SQLite will have NULL lat/lng.
+
+Verify counts:
+
+```powershell
+(Get-ChildItem _pipeline\output\json\).Count                # expect 838
+Test-Path _pipeline\output\geocoded\addresses.json          # True
+```
+
 `<repo>` below = the Windows path of the `groningen-adresboek-1926` checkout. PowerShell examples; adapt to your shell.
 
 ---
