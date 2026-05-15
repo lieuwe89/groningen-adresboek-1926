@@ -71,55 +71,59 @@ export async function computeStats(): Promise<StatsReport> {
     unreviewed: 0,
   };
 
-  for (const f of files) {
-    const stem = f.replace(/\.json$/, "");
-    let page: PageData;
-    try {
-      page = JSON.parse(await fs.readFile(path.join(JSON_DIR, f), "utf8")) as PageData;
-    } catch {
-      continue;
-    }
-    const overrides = await loadOverrides(stem);
-    const entries = page.entries || [];
-    const total = entries.length;
-    let verified = 0;
-    let needs_review = 0;
-    let bbox_unreliable = 0;
-    let edited = 0;
-    for (let i = 0; i < total; i++) {
-      const ov = overrides[`${stem}:${i}`];
-      if (!ov) continue;
-      if (ov.flags?.verified) verified++;
-      if (ov.flags?.needs_review) needs_review++;
-      if (ov.flags?.bbox_unreliable) bbox_unreliable++;
-      if (
-        (ov.fields && Object.keys(ov.fields).length > 0) ||
-        ov.bbox
-      ) {
-        edited++;
+  const results = await Promise.all(
+    files.map(async (f) => {
+      const stem = f.replace(/\.json$/, "");
+      let page: PageData;
+      try {
+        page = JSON.parse(await fs.readFile(path.join(JSON_DIR, f), "utf8")) as PageData;
+      } catch {
+        return null;
       }
-    }
-    const unreviewed = total - verified - needs_review;
-    const ps: PageStats = {
-      stem,
-      page: page.page_number,
-      section: page.section || "unknown",
-      total,
-      verified,
-      needs_review,
-      bbox_unreliable,
-      edited,
-      unreviewed,
-    };
+      const overrides = await loadOverrides(stem);
+      const entries = page.entries || [];
+      const total = entries.length;
+      let verified = 0;
+      let needs_review = 0;
+      let bbox_unreliable = 0;
+      let edited = 0;
+      for (let i = 0; i < total; i++) {
+        const ov = overrides[`${stem}:${i}`];
+        if (!ov) continue;
+        if (ov.flags?.verified) verified++;
+        if (ov.flags?.needs_review) needs_review++;
+        if (ov.flags?.bbox_unreliable) bbox_unreliable++;
+        if ((ov.fields && Object.keys(ov.fields).length > 0) || ov.bbox) {
+          edited++;
+        }
+      }
+      const unreviewed = total - verified - needs_review;
+      const ps: PageStats = {
+        stem,
+        page: page.page_number,
+        section: page.section || "unknown",
+        total,
+        verified,
+        needs_review,
+        bbox_unreliable,
+        edited,
+        unreviewed,
+      };
+      return ps;
+    })
+  );
+
+  for (const ps of results) {
+    if (!ps) continue;
     byPage.push(ps);
 
     overall.pages++;
-    overall.total += total;
-    overall.verified += verified;
-    overall.needs_review += needs_review;
-    overall.bbox_unreliable += bbox_unreliable;
-    overall.edited += edited;
-    overall.unreviewed += unreviewed;
+    overall.total += ps.total;
+    overall.verified += ps.verified;
+    overall.needs_review += ps.needs_review;
+    overall.bbox_unreliable += ps.bbox_unreliable;
+    overall.edited += ps.edited;
+    overall.unreviewed += ps.unreviewed;
 
     const sec = sectionAcc.get(ps.section) ?? {
       section: ps.section,
@@ -132,12 +136,12 @@ export async function computeStats(): Promise<StatsReport> {
       unreviewed: 0,
     };
     sec.pages++;
-    sec.total += total;
-    sec.verified += verified;
-    sec.needs_review += needs_review;
-    sec.bbox_unreliable += bbox_unreliable;
-    sec.edited += edited;
-    sec.unreviewed += unreviewed;
+    sec.total += ps.total;
+    sec.verified += ps.verified;
+    sec.needs_review += ps.needs_review;
+    sec.bbox_unreliable += ps.bbox_unreliable;
+    sec.edited += ps.edited;
+    sec.unreviewed += ps.unreviewed;
     sectionAcc.set(ps.section, sec);
   }
 
