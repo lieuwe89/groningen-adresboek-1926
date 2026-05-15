@@ -24,9 +24,7 @@ export async function GET(req: NextRequest) {
     const out = search(q, limit, offset, fuzzy);
     return NextResponse.json({ ...out, q, limit, offset, fuzzy });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : String(e) },
-      { status: 500 }
-    );
+    console.error(`[Search API] Search failed for query "${q}":`, e);
+    return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
 }

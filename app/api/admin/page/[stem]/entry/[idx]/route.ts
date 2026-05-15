@@ -187,10 +187,7 @@ export async function PATCH(
     }
   } catch (err) {
     console.error(`[Admin API] Database update failed for ${id}:`, err);
-    return NextResponse.json(
-      { error: `Database update failed: ${err instanceof Error ? err.message : String(err)}` },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Database update failed" }, { status: 500 });
   }
 
   if (addressChanged) {
