@@ -121,13 +121,13 @@ const COUNT_SQL = `
   WHERE entries_fts MATCH ?
 `;
 
-// Sanitize the user query for FTS5 syntax. Strip FTS operators, split into
-// tokens, and join with AND + prefix match. * is handled per-token (stripped
-// from any non-trailing position; trailing * is preserved).
+// Sanitize the user query for FTS5 syntax. Whitelist letters (incl. diacritics),
+// digits, spaces and apostrophes; everything else becomes a space. Each token
+// then gets a trailing * appended for prefix matching.
 export function buildFtsQuery(raw: string): string | null {
   const cleaned = raw
     .toLowerCase()
-    .replace(/[\"\,\(\):+\-./\\;!?]/g, " ")
+    .replace(/[^\p{L}\p{N}\s']/gu, " ")
     .trim();
   if (!cleaned) return null;
   const tokens = cleaned
