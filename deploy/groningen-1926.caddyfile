@@ -1,0 +1,4 @@
+groningen-1926.lieuwejongsma.nl {
+	encode gzip
+	reverse_proxy localhost:3003
+}

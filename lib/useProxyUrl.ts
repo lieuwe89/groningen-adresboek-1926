@@ -1,61 +1,17 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { normalizeProxyPrefix } from "./publicAssetUrls";
-
 /**
- * Hook to detect the proxy prefix (e.g. /groningen-1926) from window.location.
- * This is necessary because Next.js router only knows about the path 
- * after the proxy has stripped the prefix.
+ * Legacy hook from the playground.lieuwejongsma.nl/groningen-1926 era,
+ * when the app sat behind a path-prefix reverse proxy. The app now runs
+ * on its own subdomain (groningen-1926.lieuwejongsma.nl) with clean
+ * paths, so the prefix is always empty and proxyPath is the identity.
+ *
+ * Kept as a thin shim so existing callsites compile without churn.
+ * Safe to delete the hook and its imports once all callers are removed.
  */
 export function useProxyUrl() {
-  const pathname = usePathname() || "";
-  
-  const getPrefix = () => {
-    if (typeof window === "undefined") return "";
-    // If window.location.pathname is /groningen-1926/en/info
-    // and pathname is /en/info
-    // Then prefix is /groningen-1926
-    
-    // We remove the trailing slash from the pathname for comparison
-    const cleanPathname = pathname === "/" ? "" : pathname;
-    const fullPath = window.location.pathname;
-    
-    if (cleanPathname === "") {
-        // If we are at the root (relative to the app), check for the mount point
-        if (fullPath.includes("/groningen-1926")) {
-            return "/groningen-1926";
-        }
-        return "";
-    }
-
-    if (fullPath.endsWith(cleanPathname) && fullPath !== cleanPathname) {
-      return fullPath.slice(0, fullPath.lastIndexOf(cleanPathname));
-    }
-    
-    // Fallback: check if /groningen-1926 is in the path at all
-    if (fullPath.includes("/groningen-1926") || (typeof window !== 'undefined' && window.location.hostname.includes('playground'))) {
-        return "/groningen-1926";
-    }
-    
-    return "";
-  };
-
-  const prefix = normalizeProxyPrefix(getPrefix());
-
-  /**
-   * Prepends the detected proxy prefix to a given path.
-   * Ensures no double slashes.
-   */
-  const proxyPath = (path: string) => {
-    if (!prefix) return path;
-    const cleanPath = path.startsWith("/") ? path : `/${path}`;
-    if (cleanPath === prefix || cleanPath.startsWith(`${prefix}/`)) return cleanPath;
-    return `${prefix}${cleanPath}`;
-  };
-
   return {
-    prefix,
-    proxyPath,
+    prefix: "",
+    proxyPath: (path: string) => path,
   };
 }

@@ -1,0 +1,16 @@
+services:
+  app:
+    image: ghcr.io/lieuwe89/groningen-adresboek-1926:latest
+    container_name: groningen-1926
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:3003:3000"
+    volumes:
+      - /srv/data/groningen-1926:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/sections"]
+      interval: 30s
+      timeout: 8s
+      retries: 3
+      start_period: 30s
