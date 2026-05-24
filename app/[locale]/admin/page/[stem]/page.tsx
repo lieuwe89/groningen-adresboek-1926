@@ -1,3 +1,7 @@
+/**
+ * Admin per-page editor. Gated by `middleware.ts` via the
+ * `lib/adminRouteContract.ts` protected patterns.
+ */
 import { notFound } from "next/navigation";
 import { listStems, loadPage, neighborStems } from "@/lib/data";
 import Viewer from "@/app/[locale]/page/[stem]/Viewer";

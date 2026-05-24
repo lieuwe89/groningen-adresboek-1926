@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { useParams } from "next/navigation";
+import { ADMIN_LOGIN_API_PATH } from "@/lib/adminRouteContract";
 
 export default function LoginPage() {
   const search = useSearchParams();
@@ -19,7 +20,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setPending(true);
-    const res = await fetch("/api/admin/login", {
+    const res = await fetch(ADMIN_LOGIN_API_PATH, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user, pw }),

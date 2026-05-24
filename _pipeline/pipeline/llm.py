@@ -34,8 +34,17 @@ from pipeline.config import (
     get_section_for_page,
 )
 from pipeline.ocr import OcrPage
+from pipeline.prompts import (
+    PROMPT_FILES,
+    get_prompt_path,
+    validate_registry,
+)
 
 logger = logging.getLogger(__name__)
+
+# Fail loudly at import if any registered prompt template is missing on disk —
+# catches renames/deletions long before a page dispatch hits the bad path.
+validate_registry()
 
 
 # ── Prompt loading ────────────────────────────────────────────────────────────
@@ -44,9 +53,20 @@ _prompt_cache: dict[str, str] = {}
 
 
 def load_prompt(prompt_filename: str) -> str:
-    """Load and cache a prompt template from the prompts directory."""
+    """Load and cache a prompt template from the prompts directory.
+
+    Accepts either a registered section key (preferred — checked against
+    ``pipeline.prompts.PROMPT_FILES``) or a raw ``.txt`` filename inside
+    ``PROMPTS_DIR`` for backwards compatibility.
+    """
     if prompt_filename not in _prompt_cache:
-        prompt_path = PROMPTS_DIR / prompt_filename
+        # Registered key path: resolve via the static registry so the graph
+        # of code-vs-prompt edges is statically visible.
+        stem = prompt_filename[:-4] if prompt_filename.endswith(".txt") else prompt_filename
+        if stem in PROMPT_FILES:
+            prompt_path = get_prompt_path(stem)
+        else:
+            prompt_path = PROMPTS_DIR / prompt_filename
         if not prompt_path.exists():
             raise FileNotFoundError(f"Prompt template not found: {prompt_path}")
         _prompt_cache[prompt_filename] = prompt_path.read_text(encoding="utf-8")

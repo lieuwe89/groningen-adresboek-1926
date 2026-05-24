@@ -1,5 +1,20 @@
-// Edge-compatible HMAC session token for admin auth.
-// Token format: <expiryMs>.<base64url(hmac-sha256(secret, expiryMs))>
+/**
+ * Edge-compatible HMAC session token for admin auth.
+ *
+ * Token format: ``<expiryMs>.<base64url(hmac-sha256(secret, expiryMs))>``
+ *
+ * Used by:
+ * - `middleware.ts`                — calls `verifySession` per request.
+ * - `app/api/admin/login/route.ts` — calls `signSession` to mint the cookie.
+ * - `app/api/admin/logout/route.ts`— clears the cookie.
+ *
+ * The set of paths this protects is declared in `lib/adminRouteContract.ts`
+ * (re-exported below for convenience).
+ */
+
+import { ADMIN_LOGIN_API_PATH } from "@/lib/adminRouteContract";
+
+export { ADMIN_LOGIN_API_PATH };
 
 export const ADMIN_COOKIE_NAME = "admin_session";
 export const ADMIN_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;

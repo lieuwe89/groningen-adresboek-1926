@@ -1,3 +1,7 @@
+/**
+ * Admin house-number correction page. Gated by `middleware.ts` via the
+ * `lib/adminRouteContract.ts` protected patterns.
+ */
 import { listHouseNumberCandidates } from "@/lib/adminHouseNumbers";
 import { getDb } from "@/lib/db";
 import AdminBackLink from "@/components/AdminBackLink";

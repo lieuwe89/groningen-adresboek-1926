@@ -1,3 +1,7 @@
+/**
+ * Admin stats dashboard. Gated by `middleware.ts` via the
+ * `lib/adminRouteContract.ts` protected patterns.
+ */
 import Link from "next/link";
 import { computeStats, type PageStats, type SectionStats, type BagStats } from "@/lib/stats";
 import { useLocale } from 'next-intl';

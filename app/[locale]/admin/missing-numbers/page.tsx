@@ -1,3 +1,7 @@
+/**
+ * Admin missing-number page. Gated by `middleware.ts` via the
+ * `lib/adminRouteContract.ts` protected patterns.
+ */
 import { listMissingNumberCandidates } from "@/lib/adminHouseNumbers";
 import { getDb } from "@/lib/db";
 import AdminBackLink from "@/components/AdminBackLink";

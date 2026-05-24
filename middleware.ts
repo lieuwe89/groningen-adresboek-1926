@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { ADMIN_COOKIE_NAME, verifySession } from "@/lib/admin-session";
+import {
+  ADMIN_BYPASS_PREFIXES,
+  ADMIN_LOCALE_LOGIN_PATTERN,
+  ADMIN_PROTECTED_PATTERNS,
+} from "@/lib/adminRouteContract";
 
 const intlMiddleware = createMiddleware({
   locales: ["nl", "en"],
@@ -14,13 +19,10 @@ function localeFromPath(pathname: string): "nl" | "en" {
 }
 
 function isAdminRoute(pathname: string): boolean {
-  if (pathname.startsWith("/api/admin/login")) return false;
-  if (pathname.startsWith("/api/admin/logout")) return false;
-  if (pathname.match(/^\/(nl|en)\/login(?:\/|$)/)) return false;
-  return Boolean(
-    pathname.match(/^\/(nl|en)\/admin/) ||
-      pathname.startsWith("/admin") ||
-      pathname.startsWith("/api/admin"),
+  if (ADMIN_BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) return false;
+  if (ADMIN_LOCALE_LOGIN_PATTERN.test(pathname)) return false;
+  return ADMIN_PROTECTED_PATTERNS.some((p) =>
+    typeof p === "string" ? pathname.startsWith(p) : p.test(pathname),
   );
 }
 

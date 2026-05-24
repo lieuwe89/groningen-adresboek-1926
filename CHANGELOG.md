@@ -2,6 +2,14 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.14.2] — 2026-05-24
+
+### Changed
+- Static prompt registry at `_pipeline/pipeline/prompts/__init__.py`. `PROMPT_FILES` dict maps section keys to template filenames; `pipeline.llm` imports + validates at module load so a missing/renamed template fails at import instead of dispatch. Closes the codebase-graph "island" around the prompt files (they used to be loaded purely by dynamic string lookup).
+- Admin route protection contract at `lib/adminRouteContract.ts`. `middleware.ts` and `app/[locale]/login/page.tsx` now import `ADMIN_PROTECTED_PATTERNS`, `ADMIN_BYPASS_PREFIXES`, `ADMIN_LOGIN_API_PATH` from this single source instead of duplicating regex/strings. `isAdminRoute()` refactored to iterate the contract; semantics identical.
+- JSDoc cross-refs added to every admin `page.tsx` + the admin layout pointing to `middleware.ts` and the contract, so editors discover the auth gate without grep.
+- `lib/admin-session.ts` gained a header docstring describing the cookie/HMAC contract and its consumers, plus a re-export of `ADMIN_LOGIN_API_PATH` for convenience.
+
 ## [0.13.0] — 2026-05-14
 
 ### Added

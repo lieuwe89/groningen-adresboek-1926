@@ -1,3 +1,7 @@
+/**
+ * Admin home (redirect-only). Gated by `middleware.ts` via the
+ * `/^\/(nl|en)\/admin/` pattern in `lib/adminRouteContract.ts`.
+ */
 import { redirect } from "next/navigation";
 
 export default async function AdminHome({ params }: { params: Promise<{ locale: string }> }) {
