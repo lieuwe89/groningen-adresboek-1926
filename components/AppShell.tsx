@@ -13,7 +13,6 @@ import { useTour } from "@/lib/useTour";
 import type { PersonHit, SearchMention, SearchResponse } from "@/lib/searchTypes";
 import type { BuildingDetail } from "@/lib/db";
 import { useLocale } from 'next-intl';
-import { useProxyUrl } from "@/lib/useProxyUrl";
 import { useIsAdminRoute } from "@/lib/AdminContext";
 
 const SEARCH_DEBOUNCE_MS = 220;
@@ -24,8 +23,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const locale = useLocale();
   const pathname = usePathname() || "";
   const isAdmin = useIsAdminRoute();
-  const { proxyPath } = useProxyUrl();
-  
+
   const {
     activePandId,
     query,
@@ -84,7 +82,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const handle = window.setTimeout(async () => {
       try {
         const fuzzyParam = fuzzy ? "&fuzzy=1" : "";
-        const url = proxyPath(`/api/search?q=${encodeURIComponent(trimmedQuery)}&limit=${SEARCH_LIMIT}${fuzzyParam}`);
+        const url = `/api/search?q=${encodeURIComponent(trimmedQuery)}&limit=${SEARCH_LIMIT}${fuzzyParam}`;
         const res = await fetch(url, { signal: controller.signal });
         if (seq !== fetchSeq.current) return;
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -109,7 +107,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   function handleSelectGlobal(hit: SearchMention) {
     const p = new URLSearchParams({ entry: hit.stable_id, q: trimmedQuery });
     const base = isAdmin ? `/${locale}/admin/page` : `/${locale}/page`;
-    router.push(proxyPath(`${base}/${hit.stem}?${p.toString()}`));
+    router.push(`${base}/${hit.stem}?${p.toString()}`);
   }
 
   // Sync local query back to URL (debounced)
@@ -120,7 +118,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         const p = new URLSearchParams(searchParams.toString());
         if (query) p.set("q", query);
         else p.delete("q");
-        router.replace(proxyPath(`${pathname}?${p.toString()}`), { scroll: false });
+        router.replace(`${pathname}?${p.toString()}`, { scroll: false });
       }
     }, 500);
     return () => clearTimeout(handle);

@@ -1,4 +1,13 @@
 groningen-1926.lieuwejongsma.nl {
 	encode gzip
-	reverse_proxy localhost:3003
+
+	reverse_proxy localhost:3003 {
+		header_up X-Forwarded-Proto https
+		header_up X-Forwarded-Port 443
+
+		# Next.js standalone server builds absolute redirects using its
+		# internal bind port (3000). Rewrite Location back to the public
+		# https origin so the browser doesn't follow to :3000.
+		header_down Location "^http://groningen-1926\.lieuwejongsma\.nl:3000(.*)$" "https://groningen-1926.lieuwejongsma.nl$1"
+	}
 }

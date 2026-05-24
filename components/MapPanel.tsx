@@ -7,7 +7,6 @@ import BuildingPanel from "./BuildingPanel";
 import { HISTORIC_MAPS } from "@/lib/historicMaps";
 import { useSelection } from "@/lib/SelectionContext";
 import { useTranslations, useLocale } from 'next-intl';
-import { useProxyUrl } from "@/lib/useProxyUrl";
 
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
@@ -28,7 +27,6 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('Map');
-  const { proxyPath } = useProxyUrl();
 
   return (
     <section id="tour-map" className="relative flex-1 min-w-0 overflow-hidden bg-bp-blue">
@@ -46,7 +44,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           onClose={() => setActivePand(null)}
           onSelectEntry={(stem, stableId) => {
             const params = new URLSearchParams({ entry: stableId });
-            router.push(proxyPath(`/${locale}/page/${stem}?${params.toString()}`));
+            router.push(`/${locale}/page/${stem}?${params.toString()}`);
           }}
         />
       )}

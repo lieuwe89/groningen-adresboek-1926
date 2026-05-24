@@ -8,7 +8,6 @@ import type { Entry } from "@/lib/data";
 import EditForm from "@/components/EditForm";
 import type { ScanViewerHandle } from "@/components/ScanViewer";
 import { useTranslations, useLocale } from 'next-intl';
-import { useProxyUrl } from "@/lib/useProxyUrl";
 import { presentEntry, buildEntryPresentationLabels } from "@/lib/entryPresentation";
 import { buildPageModeHref, type PageMode } from "@/lib/entryRouteTargets";
 
@@ -67,20 +66,17 @@ export default function ScanPanel(p: Props) {
   const tc = useTranslations('Common');
   const tep = useTranslations('EntryPresentation');
   const entryLabels = buildEntryPresentationLabels(tep);
-  const { proxyPath } = useProxyUrl();
   const pageMode: PageMode = p.editMode ? "admin" : "public";
 
   function handleSelectEntry(idx: number) {
     router.push(
-      proxyPath(
-        buildPageModeHref({
-          locale,
-          mode: pageMode,
-          stem: p.stem,
-          activeIdx: idx,
-          currentSearch: searchParams.toString(),
-        })
-      )
+      buildPageModeHref({
+        locale,
+        mode: pageMode,
+        stem: p.stem,
+        activeIdx: idx,
+        currentSearch: searchParams.toString(),
+      })
     );
   }
 
@@ -265,14 +261,12 @@ export default function ScanPanel(p: Props) {
         >
           {p.prev ? (
             <Link
-              href={proxyPath(
-                buildPageModeHref({
-                  locale,
-                  mode: pageMode,
-                  stem: p.prev,
-                  currentSearch: searchParams.toString(),
-                })
-              )}
+              href={buildPageModeHref({
+                locale,
+                mode: pageMode,
+                stem: p.prev,
+                currentSearch: searchParams.toString(),
+              })}
               className="text-bp-ink-dim hover:text-bp-amber transition-colors"
             >
               ← {p.page - 1}
@@ -288,14 +282,12 @@ export default function ScanPanel(p: Props) {
           </span>
           {p.next ? (
             <Link
-              href={proxyPath(
-                buildPageModeHref({
-                  locale,
-                  mode: pageMode,
-                  stem: p.next,
-                  currentSearch: searchParams.toString(),
-                })
-              )}
+              href={buildPageModeHref({
+                locale,
+                mode: pageMode,
+                stem: p.next,
+                currentSearch: searchParams.toString(),
+              })}
               className="text-bp-ink-dim hover:text-bp-amber transition-colors"
             >
               {p.page + 1} →

@@ -3,15 +3,12 @@
 import { useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { useParams } from "next/navigation";
-import { useProxyUrl } from "@/lib/useProxyUrl";
 
 export default function LoginPage() {
   const search = useSearchParams();
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? "nl";
-  const { proxyPath } = useProxyUrl();
-  const rawNext = search?.get("next") || `/${locale}/admin`;
-  const next = proxyPath(rawNext);
+  const next = search?.get("next") || `/${locale}/admin`;
 
   const [user, setUser] = useState("");
   const [pw, setPw] = useState("");

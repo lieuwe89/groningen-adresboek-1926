@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from 'next-intl';
-import { useProxyUrl } from "@/lib/useProxyUrl";
 
 type SectionInfo = {
   section: string;
@@ -36,13 +35,12 @@ export default function SectionJump({ currentStem, isInfo }: Props) {
   const locale = useLocale();
   const t = useTranslations('Header');
   const ts = useTranslations('Sections');
-  const { proxyPath } = useProxyUrl();
   const [sections, setSections] = useState<SectionInfo[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
-    fetch(proxyPath("/api/sections"))
+    fetch("/api/sections")
       .then(async (r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return (await r.json()) as { sections: SectionInfo[] };
@@ -78,7 +76,7 @@ export default function SectionJump({ currentStem, isInfo }: Props) {
     
     const isAdmin = pathname.includes("/admin/");
     const base = isAdmin ? `/${locale}/admin/page` : `/${locale}/page`;
-    router.push(proxyPath(`${base}/${s.first_stem}`));
+    router.push(`${base}/${s.first_stem}`);
   }
 
   // Hide on info page

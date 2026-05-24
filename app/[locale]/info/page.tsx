@@ -6,7 +6,6 @@ import Footer from "@/components/Footer";
 import GlobalGrid from "@/components/GlobalGrid";
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
-import { useProxyUrl } from "@/lib/useProxyUrl";
 
 /* ── Map profiles ──────────────────────────────────────────────────────────── */
 
@@ -211,7 +210,6 @@ export default function InfoPage() {
   const locale = useLocale();
   const isEnglish = locale === "en";
   const maps = isEnglish ? MAPS_EN : MAPS_NL;
-  const { proxyPath } = useProxyUrl();
   return (
     <div className="h-full flex flex-col" style={{ position: "relative" }}>
       <GlobalGrid />
@@ -598,7 +596,7 @@ export default function InfoPage() {
 
               <div className="mt-6 flex flex-col gap-6">
                 {maps.map((m) => (
-                  <MapCard key={m.id} map={m} proxyPath={proxyPath} isEnglish={isEnglish} />
+                  <MapCard key={m.id} map={m} isEnglish={isEnglish} />
                 ))}
               </div>
             </Section>
@@ -674,11 +672,9 @@ function Rule() {
 /* eslint-disable @next/next/no-img-element */
 function MapCard({
   map,
-  proxyPath,
   isEnglish,
 }: {
   map: MapProfile;
-  proxyPath: (p: string) => string;
   isEnglish: boolean;
 }) {
   const metaLabels = isEnglish
@@ -722,7 +718,7 @@ function MapCard({
         }}
       >
         <img
-          src={proxyPath(`/map-thumbs/${map.thumb}`)}
+          src={`/map-thumbs/${map.thumb}`}
           alt={map.title}
           style={{
             width: "100%",

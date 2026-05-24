@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useProxyUrl } from "@/lib/useProxyUrl";
 
 export default function AdminBackLink({
   href,
@@ -10,10 +9,9 @@ export default function AdminBackLink({
   href: string;
   label: string;
 }) {
-  const { proxyPath } = useProxyUrl();
   return (
     <Link
-      href={proxyPath(href)}
+      href={href}
       className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
       style={{
         fontSize: 9,

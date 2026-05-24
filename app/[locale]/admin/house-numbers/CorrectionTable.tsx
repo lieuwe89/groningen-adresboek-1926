@@ -7,7 +7,6 @@ import {
   type HouseNumberCandidate,
 } from "@/lib/adminHouseNumbers";
 import type { Bbox } from "@/lib/data";
-import { useProxyUrl } from "@/lib/useProxyUrl";
 
 export type Candidate = HouseNumberCandidate;
 
@@ -15,7 +14,6 @@ export default function CorrectionTable({ candidates }: { candidates: Candidate[
   const [items, setItems] = useState<Candidate[]>(candidates);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [successIds, setSuccessIds] = useState<Set<string>>(new Set());
-  const { proxyPath } = useProxyUrl();
 
   // Reset items when candidates change (e.g. filter change)
   if (items.length === 0 && candidates.length > 0 && successIds.size === 0) {
@@ -37,7 +35,7 @@ export default function CorrectionTable({ candidates }: { candidates: Candidate[
     const [stem, idx] = id.split(":");
 
     try {
-      const res = await fetch(proxyPath(`/api/admin/page/${stem}/entry/${idx}`), {
+      const res = await fetch(`/api/admin/page/${stem}/entry/${idx}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(houseNumberCorrectionPayload(newNumber)),

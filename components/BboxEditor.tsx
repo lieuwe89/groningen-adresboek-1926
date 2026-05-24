@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Bbox } from "@/lib/data";
-import { useProxyUrl } from "@/lib/useProxyUrl";
 import { resolvePublicAssetUrl } from "@/lib/publicAssetUrls";
 
 interface Props {
@@ -34,18 +33,15 @@ export default function BboxEditor(p: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { prefix, proxyPath } = useProxyUrl();
-
   const tileSourceUrl = useCallback(
     (s: string) =>
       resolvePublicAssetUrl({
         assetPath: `/tiles/${s}.dzi`,
-        proxyPrefix: prefix,
         cdnBaseUrl:
           process.env.NEXT_PUBLIC_TILES_BASE_URL ||
           process.env.NEXT_PUBLIC_STATIC_ASSETS_BASE_URL,
       }),
-    [prefix]
+    []
   );
 
   const recalcOverlay = useCallback(() => {
@@ -253,7 +249,7 @@ export default function BboxEditor(p: Props) {
     setError(null);
     try {
       const res = await fetch(
-        proxyPath(`/api/admin/page/${p.stem}/entry/${p.entryIdx}`),
+        `/api/admin/page/${p.stem}/entry/${p.entryIdx}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

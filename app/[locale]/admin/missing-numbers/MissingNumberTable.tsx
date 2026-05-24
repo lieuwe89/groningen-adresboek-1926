@@ -7,20 +7,18 @@ import {
   type HouseNumberCandidate,
 } from "@/lib/adminHouseNumbers";
 import type { Bbox } from "@/lib/data";
-import { useProxyUrl } from "@/lib/useProxyUrl";
 
 export default function MissingNumberTable({ candidates }: { candidates: HouseNumberCandidate[] }) {
   const [items, setItems] = useState<HouseNumberCandidate[]>(candidates);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
-  const { proxyPath } = useProxyUrl();
 
   async function handleSave(id: string, newNumber: string) {
     if (!newNumber.trim()) return;
     setSavingId(id);
     const [stem, idx] = id.split(":");
     try {
-      const res = await fetch(proxyPath(`/api/admin/page/${stem}/entry/${idx}`), {
+      const res = await fetch(`/api/admin/page/${stem}/entry/${idx}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(houseNumberCorrectionPayload(newNumber)),

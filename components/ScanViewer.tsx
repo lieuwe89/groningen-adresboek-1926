@@ -2,7 +2,6 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { useProxyUrl } from "@/lib/useProxyUrl";
 import { resolvePublicAssetUrl } from "@/lib/publicAssetUrls";
 import type { Entry } from "@/lib/data";
 
@@ -38,7 +37,6 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
   stemRef.current = stem;
   const onSelectEntryRef = useRef(onSelectEntry);
   onSelectEntryRef.current = onSelectEntry;
-  const { prefix } = useProxyUrl();
   const translationsRef = useRef({ t });
   translationsRef.current = { t };
 
@@ -47,7 +45,6 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
   const tileSourceUrl = (currentStem: string) =>
     resolvePublicAssetUrl({
       assetPath: `/tiles/${currentStem}.dzi`,
-      proxyPrefix: prefix,
       cdnBaseUrl:
         process.env.NEXT_PUBLIC_TILES_BASE_URL ||
         process.env.NEXT_PUBLIC_STATIC_ASSETS_BASE_URL,

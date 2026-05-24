@@ -7,7 +7,6 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import { HISTORIC_MAPS } from "@/lib/historicMaps";
 import { resolvePublicAssetUrl } from "@/lib/publicAssetUrls";
-import { useProxyUrl } from "@/lib/useProxyUrl";
 
 const GRONINGEN_CENTER: [number, number] = [6.5665, 53.2194];
 const MAP_POS_KEY = "grn1926-map-pos";
@@ -45,7 +44,6 @@ export default function MapView({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MLMap | null>(null);
   const [ready, setReady] = useState(false);
-  const { prefix, proxyPath } = useProxyUrl();
 
   // Hover highlight: track hovered pand id via feature-state.
   const hoveredRef = useRef<string | null>(null);
@@ -103,7 +101,7 @@ export default function MapView({
 
     map.on("load", async () => {
       // Buildings: GeoJSON with a `pand_id` and `entry_count` per feature.
-      const res = await fetch(proxyPath("/api/buildings"));
+      const res = await fetch("/api/buildings");
       const data = await res.json();
       buildingsDataRef.current = data;
       map.addSource("buildings", { type: "geojson", data, promoteId: "pand_id" });
@@ -259,7 +257,6 @@ export default function MapView({
 
     const assetUrl = resolvePublicAssetUrl({
       assetPath: conf.url,
-      proxyPrefix: prefix,
       cdnBaseUrl:
         process.env.NEXT_PUBLIC_MAPS_BASE_URL ||
         process.env.NEXT_PUBLIC_STATIC_ASSETS_BASE_URL,

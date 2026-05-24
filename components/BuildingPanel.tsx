@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from 'next-intl';
-import { useProxyUrl } from "@/lib/useProxyUrl";
 import {
   buildEntryPresentationLabels,
   formatEntryName,
@@ -64,14 +63,13 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
   const tep = useTranslations('EntryPresentation');
   const entryLabels = buildEntryPresentationLabels(tep);
   const entryFallback = t('entryFallback');
-  const { proxyPath } = useProxyUrl();
 
   useEffect(() => {
     setLoading(true);
     setError(null);
     setData(null);
     const ctrl = new AbortController();
-    fetch(proxyPath(`/api/buildings/${encodeURIComponent(pandId)}`), { signal: ctrl.signal })
+    fetch(`/api/buildings/${encodeURIComponent(pandId)}`, { signal: ctrl.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

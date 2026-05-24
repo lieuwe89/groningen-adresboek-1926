@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import SectionJump from "./SectionJump";
 import { useTranslations, useLocale } from 'next-intl';
-import { useProxyUrl } from "@/lib/useProxyUrl";
 import { useIsAdminRoute } from "@/lib/AdminContext";
 import { buildPageModeHref } from "@/lib/entryRouteTargets";
 
@@ -19,8 +18,7 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname() || "";
-  const { proxyPath } = useProxyUrl();
-  
+
   const stemMatch = pathname.match(/page\/([^/]+)/);
   const stem = stemMatch?.[1];
   const isAdmin = useIsAdminRoute();
@@ -35,18 +33,16 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
     if (newLocale === locale) return;
     const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
     const query = currentSearch ? `?${currentSearch}` : "";
-    router.push(proxyPath(`${newPathname}${query}`));
+    router.push(`${newPathname}${query}`);
   };
 
-  const adminHref = proxyPath(
-    buildPageModeHref({
-      locale,
-      mode: isAdmin ? "public" : "admin",
-      stem,
-      activeIdx,
-      currentSearch,
-    })
-  );
+  const adminHref = buildPageModeHref({
+    locale,
+    mode: isAdmin ? "public" : "admin",
+    stem,
+    activeIdx,
+    currentSearch,
+  });
 
   const handleAdminClick = () => {
     router.push(adminHref);
@@ -98,9 +94,9 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
             const currentPath = typeof window !== 'undefined' ? window.location.pathname : pathname;
             const reallyIsInfo = isInfo || currentPath.includes('info');
             if (reallyIsInfo) {
-              window.location.href = proxyPath(`/${locale}`);
+              window.location.href = `/${locale}`;
             } else {
-              router.push(proxyPath(`/${locale}/info`));
+              router.push(`/${locale}/info`);
             }
           }}
         />
@@ -128,7 +124,7 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
         </div>
         {isAdmin && (
           <Link
-            href={proxyPath(`/${locale}/admin/stats`)}
+            href={`/${locale}/admin/stats`}
             prefetch={false}
             className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
             style={{
