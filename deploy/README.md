@@ -68,12 +68,24 @@ Expect: `adresboek.sqlite`, `json/`, `overrides/`, `tiles/`, `maps/`.
 
 ## 4. Caddy block
 
+The caddyfile serves `/tiles/*` and `/maps/*` directly from `/srv/data/groningen-1926/` (bypassing the Node container) — the `caddy` user needs read access first:
+
+```
+vps$ sudo chmod -R o+rX /srv/data/groningen-1926/tiles /srv/data/groningen-1926/maps
+```
+
 ```
 scp deploy/groningen-1926.caddyfile lieuwe@vmi3314129:/tmp/
 ssh lieuwe@vmi3314129 "sudo mv /tmp/groningen-1926.caddyfile /etc/caddy/sites.d/ && sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl reload caddy"
 ```
 
 Caddy will provision the Let's Encrypt cert on the first HTTPS hit, provided DNS resolves.
+
+Verify the bypass works (any existing tile path; expect 200 + `Cache-Control: … immutable` without the container logging the request):
+
+```
+curl -sI "https://groningen-1926.lieuwejongsma.nl/tiles/$(ssh lieuwe@vmi3314129 'cd /srv/data/groningen-1926/tiles && find . -type f | head -1 | cut -c3-')"
+```
 
 ## 5. Deploy
 

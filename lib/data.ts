@@ -113,10 +113,22 @@ export async function loadPageRaw(stem: string): Promise<PageData | null> {
   }
 }
 
+let _stemsCache: { key: string; stems: string[] } | null = null;
+
 export async function listStems(): Promise<string[]> {
   try {
+    // Dir mtime only changes on file add/remove/rename — content edits don't
+    // affect the stem list, so inode+mtime of the directory is a valid key.
+    const stat = await fs.stat(JSON_DIR);
+    const key = `${stat.ino}:${stat.mtimeMs}`;
+    if (_stemsCache?.key === key) return _stemsCache.stems;
     const files = await fs.readdir(JSON_DIR);
-    return files.filter((f) => f.endsWith(".json")).map((f) => f.replace(/\.json$/, "")).sort();
+    const stems = files
+      .filter((f) => f.endsWith(".json"))
+      .map((f) => f.replace(/\.json$/, ""))
+      .sort();
+    _stemsCache = { key, stems };
+    return stems;
   } catch {
     return [];
   }

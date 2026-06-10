@@ -2,6 +2,17 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.15.0] — 2026-06-10
+
+### Changed
+- Caddy now serves `/tiles/*` and `/maps/*` straight from `/srv/data/groningen-1926/` with immutable cache headers — map pan/zoom tile bursts no longer hit the Node container. Fallback proxy wrapped in `handle`; `encode zstd gzip` replaces gzip-only.
+- `listSections()` and `listStems()` results are memoized (DB-file inode+mtime / JSON-dir inode+mtime keys, same pattern as the buildings GeoJSON cache). The `/api/sections` health check no longer runs its GROUP BY every 30s.
+- Read DB handle gets `mmap_size = 128 MB` and a 16 MB page cache.
+- shepherd.js is dynamically imported when the tour starts instead of shipping in the main client bundle; its base CSS moved to the locale layout (before `shepherd-theme.css`, which overrides it).
+
+### Removed
+- `.github/workflows/fly-deploy.yml` — Fly app is destroyed, VPS is canonical. `fly.toml` stays for now because `scripts/sync-overrides.mjs` still reads it.
+
 ## [0.14.2] — 2026-05-24
 
 ### Changed

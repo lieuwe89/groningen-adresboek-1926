@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import Shepherd from "shepherd.js";
-import "shepherd.js/dist/css/shepherd.css";
 import { useSelection } from "./SelectionContext";
 import { useTranslations } from 'next-intl';
 
@@ -13,7 +11,11 @@ export function useTour() {
   const { setLayersOpen, setTourActive, setSearchOpen, setScanOpen } = useSelection();
   const t = useTranslations('Tour');
 
-  const startTour = useCallback(() => {
+  const startTour = useCallback(async () => {
+    // Shepherd only loads when the tour actually starts — keeps it out of the
+    // main bundle. Its base CSS is imported globally in app/[locale]/layout.tsx.
+    const { default: Shepherd } = await import("shepherd.js");
+
     // 1. Cleanup any existing tour instance
     if (tourRef.current) {
       tourRef.current.cancel();

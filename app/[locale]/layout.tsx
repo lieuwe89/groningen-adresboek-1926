@@ -5,6 +5,9 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import "../globals.css";
+// Shepherd base CSS first so shepherd-theme.css overrides it. The JS side of
+// shepherd.js is dynamically imported in lib/useTour.ts.
+import "shepherd.js/dist/css/shepherd.css";
 import "../shepherd-theme.css";
 
 const josefin = Josefin_Sans({

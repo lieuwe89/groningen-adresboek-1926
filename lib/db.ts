@@ -23,6 +23,10 @@ export function getDb(): DB {
   _db = new Database(dbPath, { fileMustExist: true });
   _db.pragma("journal_mode = WAL");
   _db.pragma("query_only = ON");
+  // 62 MB read-mostly DB: mmap + larger page cache (16 MB) avoid repeated
+  // read() syscalls on the hot FTS/join paths.
+  _db.pragma("mmap_size = 134217728");
+  _db.pragma("cache_size = -16000");
   _dbInode = currentInode;
   return _db;
 }
@@ -216,8 +220,24 @@ const SECTIONS_SQL = `
   ORDER BY MIN(stem)
 `;
 
+let _sectionsCache: { key: string; sections: SectionInfo[] } | null = null;
+
+function dbFileCacheKey(dbPath: string): string {
+  try {
+    const stat = fs.statSync(dbPath);
+    // inode + mtime catch both file-replace and in-place writes.
+    return `${stat.ino}:${stat.mtimeMs}`;
+  } catch {
+    return dbPath;
+  }
+}
+
 export function listSections(): SectionInfo[] {
   const db = getDb();
+  // Sections only change when the pages table changes (pipeline rebuild →
+  // new inode). The /api/sections health check hits this every 30s.
+  const key = dbFileCacheKey(db.name);
+  if (_sectionsCache?.key === key) return _sectionsCache.sections;
   const rows = db.prepare(SECTIONS_SQL).all() as Array<{
     section: string;
     first_stem: string;
@@ -225,10 +245,12 @@ export function listSections(): SectionInfo[] {
     first_page_number: number | null;
     count: number;
   }>;
-  return rows.map((r) => ({
+  const sections = rows.map((r) => ({
     ...r,
     label: SECTION_LABELS[r.section] || r.section,
   }));
+  _sectionsCache = { key, sections };
+  return sections;
 }
 
 // ── Buildings (BAG pand polygons with linked 1926 entries) ───────────────
