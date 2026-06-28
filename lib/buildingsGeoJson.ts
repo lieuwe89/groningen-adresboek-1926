@@ -30,7 +30,7 @@ export function getBuildingsGeoJsonPayload(): string {
 
   const rows = db
     .prepare(
-      `SELECT pand_id, geometry, entry_count, address_count
+      `SELECT pand_id, geometry, entry_count, address_count, bouwjaar
        FROM buildings`,
     )
     .all() as BuildingRow[];

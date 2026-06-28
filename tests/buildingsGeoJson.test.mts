@@ -10,12 +10,13 @@ test("serializeBuildingRows emits a GeoJSON feature collection", () => {
       geometry: '{"type":"Polygon","coordinates":[[[6.1,53.1],[6.2,53.1],[6.2,53.2],[6.1,53.1]]]}',
       entry_count: 3,
       address_count: 2,
+      bouwjaar: 1900,
     },
   ]);
 
   assert.equal(
     json,
-    '{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[6.1,53.1],[6.2,53.1],[6.2,53.2],[6.1,53.1]]]},"properties":{"pand_id":"pand-a","entry_count":3,"address_count":2}}]}',
+    '{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[6.1,53.1],[6.2,53.1],[6.2,53.2],[6.1,53.1]]]},"properties":{"pand_id":"pand-a","entry_count":3,"address_count":2,"bouwjaar":1900}}]}',
   );
 });
 
@@ -28,6 +29,7 @@ test("serializeBuildingRows throws a useful error for invalid geometry JSON", ()
           geometry: "not-json",
           entry_count: 1,
           address_count: 1,
+          bouwjaar: null,
         },
       ]),
     /Invalid building geometry JSON for pand-a/,

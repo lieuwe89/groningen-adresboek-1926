@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl, { type Map as MLMap, type StyleSpecification } from "maplibre-gl";
+import maplibregl, { type Map as MLMap, type StyleSpecification, type FilterSpecification } from "maplibre-gl";
 import { cogProtocol } from "@geomatico/maplibre-cog-protocol";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -10,6 +10,14 @@ import { resolvePublicAssetUrl } from "@/lib/publicAssetUrls";
 
 const GRONINGEN_CENTER: [number, number] = [6.5665, 53.2194];
 const MAP_POS_KEY = "grn1926-map-pos";
+
+// Keep only footprints whose BAG bouwjaar is <= 1926. `to-number` with a high
+// fallback drops features with missing/null bouwjaar (they sort above 1926).
+const ONLY_1926_FILTER: FilterSpecification = [
+  "<=",
+  ["to-number", ["get", "bouwjaar"], 99999],
+  1926,
+];
 
 // Register the cog:// protocol exactly once per JS module load. Calling
 // addProtocol twice for the same scheme throws in maplibre-gl, which would
@@ -28,6 +36,7 @@ function ensureCogProtocol() {
 
 interface Props {
   buildingsVisible: boolean;
+  only1926: boolean; // when true, show only buildings with bouwjaar <= 1926
   historicId: string | null; // id from HISTORIC_MAPS, or null = no overlay
   historicOpacity: number; // 0..1
   onBuildingClick: (pand_id: string) => void;
@@ -36,6 +45,7 @@ interface Props {
 
 export default function MapView({
   buildingsVisible,
+  only1926,
   historicId,
   historicOpacity,
   onBuildingClick,
@@ -234,6 +244,16 @@ export default function MapView({
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v);
     }
   }, [buildingsVisible, ready]);
+
+  // Apply / clear the "only buildings ≤ 1926" filter on both building layers.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const filter = only1926 ? ONLY_1926_FILTER : null;
+    for (const id of ["buildings-fill", "buildings-line"]) {
+      if (map.getLayer(id)) map.setFilter(id, filter);
+    }
+  }, [only1926, ready]);
 
   // Swap historic layer when selection changes.
   useEffect(() => {

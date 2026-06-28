@@ -90,7 +90,8 @@
     "layers": "Map Layers",
     "modern": "Modern (no overlay)",
     "opacity": "Transparency",
-    "buildings": "Address Buildings"
+    "buildings": "Address Buildings",
+    "only1926": "Only buildings ≤ 1926"
   },
   "BuildingPanel": {
     "title": "§ 4 — Building",

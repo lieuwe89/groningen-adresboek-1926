@@ -2,6 +2,15 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.16.0] — 2026-06-28
+
+### Added
+- "Only buildings ≤ 1926" map toggle. Derives a 1926 building footprint layer from present-day BAG by filtering `oorspronkelijkBouwjaar ≤ 1926` — a survivorship proxy (buildings that stood in 1926 and survive today), no HISGIS dataset needed. 7637 of 9760 record-linked panden (78%) qualify.
+- `bouwjaar` now persisted on `buildings` (schema + INSERT in `build_db.py`), surfaced through the buildings GeoJSON API (`buildingsGeoJsonCore.ts` type + property, `buildingsGeoJson.ts` SELECT) and applied as a client-side MapLibre filter on `buildings-fill`/`buildings-line` (`["<=", ["to-number", ["get","bouwjaar"], 99999], 1926]`, `to-number` fallback drops null years). Toggle in `MapPanel.tsx`/`MapView.tsx`; labels in `messages/{nl,en}.json`.
+
+### Notes
+- Caveats inherent to the survivorship approach: misses panden demolished or rebuilt after 1926, and dirty BAG years (medieval placeholders like 1050 — harmless here, still ≤ 1926).
+
 ## [0.15.0] — 2026-06-10
 
 ### Changed

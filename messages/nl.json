@@ -90,7 +90,8 @@
     "layers": "Kaartlagen",
     "modern": "Modern (geen overlay)",
     "opacity": "Transparantie",
-    "buildings": "Adresgebouwen"
+    "buildings": "Adresgebouwen",
+    "only1926": "Alleen panden ≤ 1926"
   },
   "BuildingPanel": {
     "title": "§ 4 — Gebouw",

@@ -20,6 +20,7 @@ interface Props {
 
 export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenScan, focusPandId }: Props) {
   const [buildingsOn, setBuildingsOn] = useState(true);
+  const [only1926, setOnly1926] = useState(false);
   const [historicId, setHistoricId] = useState<string | null>(null);
   const [historicOpacity, setHistoricOpacity] = useState(0.85);
   const [activePand, setActivePand] = useState<string | null>(null);
@@ -32,6 +33,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
     <section id="tour-map" className="relative flex-1 min-w-0 overflow-hidden bg-bp-blue">
       <MapView
         buildingsVisible={buildingsOn}
+        only1926={only1926}
         historicId={historicId}
         historicOpacity={historicOpacity}
         onBuildingClick={setActivePand}
@@ -207,6 +209,9 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           )}
 
           <LayerRow label={t('buildings')} on={buildingsOn} onChange={setBuildingsOn} />
+          {buildingsOn && (
+            <LayerRow label={t('only1926')} on={only1926} onChange={setOnly1926} />
+          )}
         </div>
       </div>
     </section>

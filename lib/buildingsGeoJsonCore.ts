@@ -3,6 +3,7 @@ export type BuildingRow = {
   geometry: string;
   entry_count: number;
   address_count: number;
+  bouwjaar: number | null;
 };
 
 function parseGeometry(row: BuildingRow): unknown {
@@ -25,6 +26,7 @@ export function serializeBuildingRows(rows: BuildingRow[]): string {
         pand_id: row.pand_id,
         entry_count: row.entry_count,
         address_count: row.address_count,
+        bouwjaar: row.bouwjaar,
       },
     })),
   });

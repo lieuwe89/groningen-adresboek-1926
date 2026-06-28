@@ -362,7 +362,8 @@ CREATE TABLE buildings (
     centroid_lat REAL,
     centroid_lng REAL,
     address_count INTEGER NOT NULL,    -- VBOs in this pand
-    entry_count INTEGER NOT NULL       -- 1926 entries linked to this pand
+    entry_count INTEGER NOT NULL,      -- 1926 entries linked to this pand
+    bouwjaar INTEGER                   -- BAG oorspronkelijk bouwjaar (NULL if unknown)
 );
 CREATE INDEX idx_buildings_bbox ON buildings(bbox_west, bbox_south, bbox_east, bbox_north);
 
@@ -688,8 +689,8 @@ def main() -> None:
             cur.execute(
                 """INSERT INTO buildings
                    (pand_id, geometry, bbox_west, bbox_south, bbox_east, bbox_north,
-                    centroid_lat, centroid_lng, address_count, entry_count)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    centroid_lat, centroid_lng, address_count, entry_count, bouwjaar)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     pid,
                     json.dumps(geom, ensure_ascii=False),
@@ -698,6 +699,7 @@ def main() -> None:
                     (bbox_w + bbox_e) / 2,
                     feat["properties"].get("address_count", 0),
                     ec,
+                    feat["properties"].get("bouwjaar"),
                 ),
             )
             n_buildings += 1
