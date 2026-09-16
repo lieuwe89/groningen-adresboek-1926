@@ -53,6 +53,17 @@ class StreetNormalizationTest(unittest.TestCase):
             with self.subTest(historical=historical):
                 self.assertIn(modern, match_addresses.expanded_streets(historical))
 
+    def test_renamed_book_streets_parse_to_current_bag_name(self):
+        examples = {
+            "Zuiderbinnensingel 12": ("coehoornsingel", 12, ""),
+            "Witlattensteeg 3a": ("witlattenstraat", 3, "a"),
+            "Hoornsedijk 7": ("paterswoldseweg", 7, ""),
+        }
+
+        for address, expected in examples.items():
+            with self.subTest(address=address):
+                self.assertEqual(expected, match_addresses.parse_book_address(address))
+
     def test_directional_side_markers_do_not_affect_matching(self):
         examples = {
             "Noorderhaven z.z.": "noorderhaven",

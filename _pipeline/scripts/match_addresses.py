@@ -162,6 +162,42 @@ SPELLING_REFORM = [
 ]
 
 
+# Whole-name renames: 1926 street → current BAG street. Book side only (never
+# applied to BAG names). Source: Grunnlink (DisappearedPlaces) reviewed
+# street-match candidates + rename claims, 2026-09-16. Deliberately left out:
+#   - Boteringestraat / Ebbingestraat / Kijk in 't Jatstraat: Oude vs Nieuwe
+#     is lost in the book, needs review against the scan (backlog).
+#   - Cubadwarsstraat (demolished c. 1972), Houtstraat (gone c. 1970, not
+#     Houtzagersstraat): vanished-streets step, backlog.
+#   - Claims about names older than 1926 or streets that still exist
+#     (Korenstraat→Wipstraat, Achterweg→Viaductstraat, Bocht van Guinea→Vishoek,
+#     Hardewikerstraat, Hofstraat), Raamstraat→Herepoortenmolendrift (only part,
+#     c. 1975) and Veemarktstraat→Palmslag (replacement, not a rename).
+#   - Langestraat→Brugstraat (15th c.), Raamsteeg→Agricolastraat (partial),
+#     Kerkstraat→Noorderkerkstraat (book "Kerkstraat" = Helper Kerkstraat).
+#   - Papiermolen→Papiermolenpad, Noorderkuipen→Achter de Noorderkuipen:
+#     target has no BAG addresses.
+HISTORICAL_RENAMES = {
+    "zuiderbinnensingel": "coehoornsingel",  # renamed 1929
+    # Rebuilt c. 1955 (not Coehoornsingel, as the trigram match had it); book
+    # numbers run to 54, BAG to 37, and matched panden are post-1926.
+    "coehoornstraat": "geulstraat",
+    "lissabonsteeg": "lissabonstraat",
+    "witlattensteeg": "witlattenstraat",
+    "aduardersteeg": "aduarderstraat",
+    "bessemoersteeg": "bessemoerstraat",
+    "winschoterstraat": "winschoterdiep",
+    "singel": "turfsingel",
+    "buiten damsterdiep": "damsterdiep",
+    # Hoornsche Dijk became Paterswoldseweg in 1928; today's Hoornsedijk is a
+    # different street (2 addresses). Book forms after normalisation:
+    "hoornsedijk": "paterswoldseweg",
+    "hoornsche dijk": "paterswoldseweg",
+    "hoornschedijk": "paterswoldseweg",
+    "hoornsched": "paterswoldseweg",
+}
+
+
 def normalise_street(name: str | None) -> str:
     if not name:
         return ""
@@ -250,7 +286,8 @@ def parse_book_address(address_full: str | None) -> tuple[str, int, str] | None:
     street = s[: m.start()].strip(" ,.-")
     if not street:
         return None
-    return normalise_street(street), huisnummer, huisletter
+    street = normalise_street(street)
+    return HISTORICAL_RENAMES.get(street, street), huisnummer, huisletter
 
 
 def main() -> None:

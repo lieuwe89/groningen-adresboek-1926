@@ -2,6 +2,16 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.17.0] — 2026-09-16
+
+### Added
+- Historical street renames from Grunnlink in the BAG matcher (`HISTORICAL_RENAMES` in `match_addresses.py`), e.g. Coehoornstraat→Geulstraat, Zuiderbinnensingel→Coehoornsingel, Hoornsche dijk→Paterswoldseweg.
+- `apply_bag_matches.py`: add (or, with `unlink`, remove) building links in a live DB without a rebuild.
+
+### Data
+- Prod: +4,726 entries linked to a BAG building, +890 buildings on the map (426 via renames, the rest from a match run that was stale since the May street normalisation).
+- Prod, second pass: 30 Houtstraat links removed (vanished street, not Houtzagersstraat); Hoornsche dijk moved from today's Hoornsedijk to Paterswoldseweg (+235 links). Totals: 32,836 linked entries, 10,737 buildings.
+
 ## [0.16.0] — 2026-06-28
 
 ### Added
