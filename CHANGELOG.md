@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.17.1] — 2026-09-16
+
+### Fixed
+- Map basemap showed a tiled "API KEY REQUIRED" watermark: Carto now watermarks keyless `basemaps.cartocdn.com` tiles. Switched to Esri World Dark Gray Base (keyless), dimmed with `raster-brightness-max` to keep the dark look.
+
 ## [0.17.0] — 2026-09-16
 
 ### Added
