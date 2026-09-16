@@ -116,7 +116,7 @@ export default function SectionJump({ currentStem, isInfo }: Props) {
           return (
             <option key={s.section} value={s.section} style={{ background: "#182d5c" }}>
               {localized}
-              {s.first_scan_number != null ? ` — scan ${s.first_scan_number}` : ""}
+              {s.first_scan_number != null ? `: scan ${s.first_scan_number}` : ""}
               {` (${s.count} ${s.count === 1 ? 'page' : 'pages'})`}
             </option>
           );

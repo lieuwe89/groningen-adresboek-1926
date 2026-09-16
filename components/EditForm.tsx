@@ -114,9 +114,9 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
               : `📍 Locatie bijgewerkt → ${geo.matched || "gevonden"}`
           );
         } else if (geo.status === "no_number") {
-          setGeoStatus("⚠ Geen huisnummer — locatie gewist");
+          setGeoStatus("⚠ Geen huisnummer: locatie gewist");
         } else {
-          setGeoStatus("⚠ Adres niet gevonden — locatie gewist");
+          setGeoStatus("⚠ Adres niet gevonden: locatie gewist");
         }
       }
 

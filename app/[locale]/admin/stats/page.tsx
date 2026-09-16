@@ -25,7 +25,7 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
             className="text-bp-ink-dim uppercase mb-[4px]"
             style={{ fontSize: 9, letterSpacing: "0.22em" }}
           >
-            § Admin — Statistieken
+            § Admin: Statistieken
           </div>
           <h1
             className="text-bp-amber font-bold uppercase"

@@ -83,7 +83,7 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
         </div>
         <div className="flex gap-[20px] mt-[5px] items-end">
           <SectionJump currentStem={stem} isInfo={isInfo} />
-          <Meta label={t('labelSheet')} value="A — Z" />
+          <Meta label={t('labelSheet')} value="A-Z" />
         </div>
       </div>
       <div className="flex items-center gap-[14px]">

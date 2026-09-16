@@ -23,7 +23,7 @@ const specialElite = Special_Elite({
 });
 
 export const metadata: Metadata = {
-  title: "Adresboek 1926 — Gemeente Groningen",
+  title: "Adresboek 1926: Gemeente Groningen",
   description: "Interactieve verkenner van het Groninger adresboek 1926",
   icons: {
     icon: "/favicon.png",

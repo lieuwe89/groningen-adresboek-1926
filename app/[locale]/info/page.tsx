@@ -86,7 +86,7 @@ const MAPS_NL: MapProfile[] = [
   {
     id: "0817_00950",
     thumb: "0817_00950-1_0001.jpg",
-    title: "Plattegrond van Groningen — 1 : 10.000",
+    title: "Plattegrond van Groningen - 1 : 10.000",
     appLabel: "Bouma, circa 1922",
     date: "ca. 1920–1925",
     scale: "1 : 10.000 / 1 : 50.000",
@@ -101,7 +101,7 @@ const MAPS_NL: MapProfile[] = [
   {
     id: "1536_1554",
     thumb: "1536_1554.jpg",
-    title: "Groningen — Centrum",
+    title: "Groningen - Centrum",
     appLabel: "VVV, circa 1930",
     date: "ca. 1920–1940",
     scale: "1 : 10.000",
@@ -110,7 +110,7 @@ const MAPS_NL: MapProfile[] = [
     dimensions: "31 × 25 cm (gevouwen: 25 × 11 cm)",
     hdl: "https://hdl.handle.net/21.12105/2f2ae1c5-3e1b-bc4e-1a6e-124d168fd428",
     description:
-      "Compacte centrumplattegrond, uitgegeven door de VVV met aanduiding van straten met eenrichtingsverkeer. Verso vermeldt de verkeersregels voor de weg.",
+      "Compacte centrumplattegrond, uitgegeven door de VVV met aanduiding van straten met eenrichtingsverkeer. Op de achterkant staan de verkeersregels.",
   },
 ];
 
@@ -234,9 +234,9 @@ export default function InfoPage() {
                   <p>
                     This is a hobby project by{" "}
                     <strong className="text-bp-ink-bright">Lieuwe Jongsma</strong>,
-                    who works at the Groninger Archieven. Its goal is to make the
+                    who works at the Groninger Archieven. The goal is to make the
                     1926 address book of the Municipality of Groningen searchable
-                    and explorable on a map. The roughly 900 scanned pages were
+                    and to put it on a map. The roughly 900 scanned pages were
                     processed with a combination of OCR and a vision-language
                     model, replacing most of the manual transcription work.
                   </p>
@@ -252,8 +252,8 @@ export default function InfoPage() {
                     </a>
                     . The address data has been linked to the Dutch Addresses and
                     Buildings Key Register (BAG) so the records can be placed on
-                    the map. This is a work in progress: errors, gaps, and empty
-                    pins will still be common.
+                    the map. The project is not finished yet: you will still run
+                    into plenty of errors, gaps and empty pins.
                   </p>
                   <p>
                     Read more about the making of this project in{" "}
@@ -292,14 +292,14 @@ export default function InfoPage() {
                   <p>
                     Dit is een hobbyproject van{" "}
                     <strong className="text-bp-ink-bright">Lieuwe Jongsma</strong>,
-                    werkzaam bij de Groninger Archieven. Het doel is om
-                    het adresboek van de Gemeente Groningen uit 1926 doorzoekbaar en
-                    ruimtelijk verkenbaar te maken. De ~900 gescande pagina's zijn
+                    die bij de Groninger Archieven werkt. Het doel is om
+                    het adresboek van de Gemeente Groningen uit 1926 doorzoekbaar te
+                    maken en op de kaart te zetten. De ~900 gescande pagina's zijn
                     verwerkt met een combinatie van OCR en een vision-taalmodel, dat
                     de handmatige transcriptie grotendeels vervangt.
                   </p>
                   <p>
-                    De bronscans zijn afkomstig uit de collectie van het{" "}
+                    De bronscans zijn afkomstig uit de collectie van de{" "}
                     <a
                       href="https://groningsarchieven.nl"
                       target="_blank"
@@ -310,8 +310,8 @@ export default function InfoPage() {
                     </a>
                     . De adresgegevens zijn gekoppeld aan het Basisregister Adressen
                     en Gebouwen (BAG) om een plaatsje op de kaart te kunnen geven.
-                    Dit is een werk in uitvoering — fouten, hiaten en lege pinnen
-                    zullen nog ruimschoots aanwezig zijn.
+                    Het project is nog niet af: je komt nog genoeg fouten, gaten en
+                    lege pinnen tegen.
                   </p>
                   <p>
                     Meer over de totstandkoming van dit project kun je lezen in{" "}
@@ -358,17 +358,17 @@ export default function InfoPage() {
                     The choice of 1926 is more or less arbitrary. The year falls
                     exactly a hundred years back and seemed like a good candidate
                     for testing the processing pipeline. The address book is fairly
-                    complex in structure — some pages are particularly dense, with
-                    many abbreviations in both occupations and street names, making
-                    it an interesting challenge for automated recognition.
+                    complex in structure: some pages are particularly dense, with
+                    many abbreviations in both occupations and street names. That
+                    makes it a good test for automated recognition.
                   </p>
                   <p>
                     One advantage of 1926 over older editions: the addresses already
                     use the modern numbering system. Editions from before the late
                     nineteenth century followed a different system, for which
                     concordances exist. Converting historical numbers to modern
-                    addresses using those concordances would have been an additional
-                    step in the pipeline — a nice challenge for a future project.
+                    addresses using those concordances would have added a step to
+                    the pipeline. I'm saving that for a future project.
                   </p>
                 </>
               ) : (
@@ -379,8 +379,7 @@ export default function InfoPage() {
                     verwerkingspijplijn mee te testen. Het adresboek is qua
                     structuur vrij complex: sommige pagina's zijn bijzonder dicht,
                     met veel afkortingen in zowel beroepen als straatnamen. Dat
-                    maakt het een interessante uitdaging voor automatische
-                    herkenning.
+                    maakt het een goede test voor automatische herkenning.
                   </p>
                   <p>
                     Een voordeel van 1926 ten opzichte van oudere edities: de
@@ -388,8 +387,8 @@ export default function InfoPage() {
                     van vóór het einde van de negentiende eeuw gold een ander
                     stelsel, waarvoor concordanties bestaan. Het vertalen van
                     historische nummers naar moderne adressen met behulp van die
-                    concordanties zou een extra stap in de pijplijn zijn geweest,
-                    wat een mooie uitdaging is voor een toekomstig project.
+                    concordanties zou een extra stap in de pijplijn zijn geweest.
+                    Die bewaar ik voor een toekomstig project.
                   </p>
                 </>
               )}
@@ -424,9 +423,11 @@ export default function InfoPage() {
                     <li>
                       <strong className="text-bp-ink-bright">Street name changes.</strong>{" "}
                       Some streets have different names today than they did in
-                      1926. Matching uses the modern street name, so if the
-                      historical name differs, the lookup can fail or choose the
-                      wrong place.
+                      1926: the Hoornsche Dijk became the Paterswoldseweg, the
+                      Zuiderbinnensingel the Coehoornsingel. Matching uses a
+                      translation table from old to new names. Where that table
+                      is incomplete, or a street was only partly renamed, the
+                      lookup can fail or choose the wrong place.
                     </li>
                     <li>
                       <strong className="text-bp-ink-bright">OCR and extraction errors.</strong>{" "}
@@ -449,7 +450,7 @@ export default function InfoPage() {
                       <strong className="text-bp-ink-bright">Hernummering en herindeling.</strong>{" "}
                       Straten zijn in de loop van de twintigste eeuw herhaaldelijk
                       hernummerd. Een huis dat in 1926 als nummer 12 te boek stond,
-                      kan nu nummer 18 zijn — of het pand is samengevoegd met een
+                      kan nu nummer 18 zijn. Of het pand is samengevoegd met een
                       buurpand en bestaat als zelfstandig adres niet meer.
                     </li>
                     <li>
@@ -460,9 +461,12 @@ export default function InfoPage() {
                     </li>
                     <li>
                       <strong className="text-bp-ink-bright">Straatnaamwijzigingen.</strong>{" "}
-                      Sommige straten heten nu anders dan in 1926. De koppeling
-                      gebeurt op de moderne straatnaam; wanneer de historische naam
-                      afwijkt, kan de match missen of fout gaan.
+                      Sommige straten heten nu anders dan in 1926: de Hoornsche
+                      Dijk werd de Paterswoldseweg, de Zuiderbinnensingel de
+                      Coehoornsingel. De koppeling gebruikt een vertaaltabel van
+                      oude naar nieuwe namen. Mist daarin een straat, of kreeg maar
+                      een deel van de straat een nieuwe naam, dan kan de match
+                      missen of fout gaan.
                     </li>
                     <li>
                       <strong className="text-bp-ink-bright">OCR- en extractiefouten.</strong>{" "}
@@ -483,72 +487,111 @@ export default function InfoPage() {
               {isEnglish ? (
                 <>
                   <p>
-                    A substantial share of the address book entries, estimated at{" "}
-                    <strong className="text-bp-ink-bright">30-50%</strong>, cannot
-                    be placed on the map with the current approach. The main
-                    reasons are:
+                    About 44,000 entries in the address book include an
+                    address. Roughly three quarters of them are now linked to a
+                    building in the BAG. About{" "}
+                    <strong className="text-bp-ink-bright">26%</strong> (some
+                    11,300 entries) are not on the map yet (as of September
+                    2026). The reasons:
                   </p>
                   <ul>
                     <li>
-                      <strong className="text-bp-ink-bright">The address no longer exists in the BAG.</strong>{" "}
-                      Demolished buildings, discontinued street sections, and
-                      vanished neighborhoods simply cannot be found in the current
-                      address register.
+                      <strong className="text-bp-ink-bright">The house number no longer exists (over 8,300).</strong>{" "}
+                      The street was found, but the BAG does not know the
+                      number. The building was demolished, the street was
+                      renumbered, or the entry lacks part of the name: the
+                      address book often writes just "Boteringestraat", while
+                      today there is an Oude and a Nieuwe Boteringestraat. That
+                      last group needs checking against the scan, one by one.
                     </li>
                     <li>
-                      <strong className="text-bp-ink-bright">Incomplete or illegible addresses.</strong>{" "}
-                      Some entries contain only a street name without a house
-                      number, or the house number was unreadable in the scan.
+                      <strong className="text-bp-ink-bright">The address could not be located (about 2,000).</strong>{" "}
+                      Neither the street nor the address could be found, often
+                      because of reading errors or unusual abbreviations.
                     </li>
                     <li>
-                      <strong className="text-bp-ink-bright">Historical spellings.</strong>{" "}
-                      Street names were sometimes spelled differently in 1926
-                      (for example, "Heereweg" versus "Hereweg"). Without a
-                      manually curated translation table, the automatic matching
-                      misses those cases. Such a table already exists, but it is
-                      not complete yet.
+                      <strong className="text-bp-ink-bright">The street no longer exists (almost 700).</strong>{" "}
+                      Streets such as the Lijsterstraat and Leeuwerikstraat in
+                      the Rode Dorp (demolished 1968), the Violetsteeg, the
+                      Veulsgang and the Kanaalstraat have disappeared completely.
+                      No present-day building matches them.
+                    </li>
+                    <li>
+                      <strong className="text-bp-ink-bright">No house number (about 200).</strong>{" "}
+                      The entry has only a street name, or the number was
+                      unreadable in the scan.
                     </li>
                   </ul>
                   <p>
-                    I plan to improve this step by step by comparing historical
-                    address files with the current BAG data and manually building
-                    a name translation table. That requires substantial archival
-                    research, so it will take time.
+                    The translation table from old to new street names largely
+                    comes from{" "}
+                    <a
+                      href="https://grunnlink.lieuwejongsma.nl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-bp-amber hover:underline"
+                    >
+                      GrunnLink
+                    </a>
+                    , where I collect historical Groningen street names with
+                    their sources. Next steps: show vanished streets on the map
+                    with an explanation, and resolve the ambiguous street names
+                    by hand.
                   </p>
                 </>
               ) : (
                 <>
                   <p>
-                    Een aanzienlijk deel van de vermeldingen in het adresboek — naar
-                    schatting{" "}
-                    <strong className="text-bp-ink-bright">30–50 %</strong> — kan
-                    met de huidige aanpak niet op de kaart worden geplaatst. De
-                    voornaamste redenen:
+                    Ongeveer 44.000 vermeldingen in het adresboek hebben een
+                    adres. Zo'n driekwart daarvan hangt nu aan een pand in het BAG.
+                    Ongeveer{" "}
+                    <strong className="text-bp-ink-bright">26%</strong> (ruim
+                    11.300 vermeldingen) staat nog niet op de kaart (stand
+                    september 2026). De redenen:
                   </p>
                   <ul>
                     <li>
-                      <strong className="text-bp-ink-bright">Het adres bestaat niet meer in het BAG.</strong>{" "}
-                      Gesloopte panden, opgeheven straatdelen en verdwenen wijken
-                      zijn simpelweg niet terug te vinden in de huidige
-                      adresregistratie.
+                      <strong className="text-bp-ink-bright">Het huisnummer bestaat niet meer (ruim 8.300).</strong>{" "}
+                      De straat is gevonden, maar het BAG kent het nummer niet. Het
+                      pand is gesloopt, de straat is omgenummerd, of de vermelding
+                      mist een deel van de naam: het adresboek schrijft vaak alleen
+                      "Boteringestraat", terwijl er nu een Oude en een Nieuwe
+                      Boteringestraat zijn. Die laatste groep moet ik met de scan
+                      erbij één voor één nalopen.
                     </li>
                     <li>
-                      <strong className="text-bp-ink-bright">Onvolledige of onleesbare adressen.</strong>{" "}
-                      Sommige vermeldingen bevatten alleen een straatnaam zonder
-                      huisnummer, of het huisnummer was onleesbaar op de scan.
+                      <strong className="text-bp-ink-bright">Het adres is niet gevonden (ongeveer 2.000).</strong>{" "}
+                      Straat en adres leverden geen locatie op, vaak door
+                      leesfouten of ongebruikelijke afkortingen.
                     </li>
                     <li>
-                      <strong className="text-bp-ink-bright">Historische schrijfwijzen.</strong>{" "}
-                      Straatnamen werden in 1926 soms anders gespeld (bijv.
-                      "Heereweg" versus "Hereweg"). Zonder handmatig gecureerde
-                      vertaaltabel mist de automatische koppeling deze gevallen. Zo'n vertaaltabel is er al wel, maar nog niet compleet.
+                      <strong className="text-bp-ink-bright">De straat bestaat niet meer (bijna 700).</strong>{" "}
+                      Straten als de Lijsterstraat en Leeuwerikstraat in het Rode
+                      Dorp (afgebroken in 1968), de Violetsteeg, de Veulsgang en de
+                      Kanaalstraat zijn helemaal verdwenen. Daar hoort geen huidig
+                      pand bij.
+                    </li>
+                    <li>
+                      <strong className="text-bp-ink-bright">Geen huisnummer (ongeveer 200).</strong>{" "}
+                      De vermelding heeft alleen een straatnaam, of het nummer was
+                      onleesbaar op de scan.
                     </li>
                   </ul>
                   <p>
-                    Ik ben van plan dit stapsgewijs te verbeteren door historische
-                    adresbestanden te vergelijken met de huidige BAG-data en
-                    handmatig een naamsvertaling op te bouwen. Dit vergt echter
-                    aanzienlijk archiefonderzoek, dus het zal tijd kosten.
+                    De vertaaltabel van oude naar nieuwe straatnamen komt voor een
+                    groot deel uit{" "}
+                    <a
+                      href="https://grunnlink.lieuwejongsma.nl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-bp-amber hover:underline"
+                    >
+                      GrunnLink
+                    </a>
+                    , waarin ik historische Groningse straatnamen met hun bronnen
+                    verzamel. Volgende stappen: verdwenen straten met uitleg op de
+                    kaart tonen, en de dubbelzinnige straatnamen met de hand
+                    oplossen.
                   </p>
                 </>
               )}
@@ -577,9 +620,9 @@ export default function InfoPage() {
                 </p>
               ) : (
                 <p>
-                  In de kaartweergave zijn zes historische stadsplattegronden
-                  beschikbaar als overlay, afkomstig uit de collectie van het
-                  Groninger Archieven en digitaal beschikbaar via{" "}
+                  In de kaartweergave kun je zes historische stadsplattegronden
+                  als overlay aanzetten. Ze komen uit de collectie van de
+                  Groninger Archieven en je vindt ze ook op{" "}
                   <a
                     href="https://beeldbankgroningen.nl"
                     target="_blank"
@@ -622,7 +665,7 @@ function PageTitle({ isEnglish }: { isEnglish: boolean }) {
           className="text-bp-ink-dim uppercase font-semibold"
           style={{ fontSize: 8.5, letterSpacing: "0.22em" }}
         >
-          {isEnglish ? "Address Book 1926 - Municipality of Groningen" : "Adresboek 1926 — Gemeente Groningen"}
+          {isEnglish ? "Address Book 1926 - Municipality of Groningen" : "Adresboek 1926 - Gemeente Groningen"}
         </div>
         <h1
           className="text-bp-amber uppercase font-bold mt-1"

@@ -35,7 +35,7 @@ export default async function HouseNumbersPage({
             className="text-bp-ink-dim uppercase mb-[4px]"
             style={{ fontSize: 9, letterSpacing: "0.22em" }}
           >
-            § Admin — Adressering
+            § Admin: Adressering
           </div>
           <h1
             className="text-bp-amber font-bold uppercase"

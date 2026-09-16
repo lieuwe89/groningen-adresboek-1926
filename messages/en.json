@@ -1,8 +1,8 @@
 {
   "Header": {
-    "subtitle": "“Municipality of Groningen” — Address Book",
+    "subtitle": "“Municipality of Groningen”: Address Book",
     "title": "Address Book 1926",
-    "description": "Interactive explorer — Name Register & Map",
+    "description": "Interactive explorer: Name Register & Map",
     "labelSheet": "Sheet",
     "labelSection": "Section",
     "info": "Info",
@@ -14,7 +14,7 @@
   },
   "WelcomeModal": {
     "title": "Welcome to the 1926 Address Book",
-    "body1": "This is a hobby project by <name>Lieuwe Jongsma</name> (Groninger Archieven). The goal is to make the 1926 Groningen adresboek searchable and spatially explorable in an interactive way.",
+    "body1": "This is a hobby project by <name>Lieuwe Jongsma</name> (Groninger Archieven). The goal is to make the 1926 Groningen adresboek searchable and to put it on a map.",
     "disclaimer": "Note: This is a work in progress. The link between addresses and map locations may contain errors or gaps due to historical renumbering or extraction differences.",
     "mobileNotice": "This website works best on a larger screen",
     "dontShowAgain": "Don't show again",
@@ -54,7 +54,7 @@
     }
   },
   "Search": {
-    "title": "§ 1 — Search Register",
+    "title": "§ 1: Search Register",
     "results": "Results",
     "placeholder": "Name, address or occupation...",
     "closeAriaLabel": "Close search panel",
@@ -67,13 +67,13 @@
     "noResultsOnPage": "No results on this page.",
     "noResultsGlobal": "No results in the entire book.",
     "searching": "Searching…",
-    "footerLocal": "Dept. I — Personal details · {count} total",
-    "footerGlobal": "Dept. I — Book search · {count} hits",
+    "footerLocal": "Dept. I: Personal details · {count} total",
+    "footerGlobal": "Dept. I: Book search · {count} hits",
     "clustersOf": "{shown} of {total} clusters",
     "entryFallback": "Entry"
   },
   "Scan": {
-    "title": "§ 3 — Original Scan",
+    "title": "§ 3: Original Scan",
     "loading": "Loading scan...",
     "konvaLoading": "Loading Konva…",
     "hideSearchAndMapPanel": "Hide search and map panel",
@@ -94,7 +94,7 @@
     "only1926": "Only buildings ≤ 1926"
   },
   "BuildingPanel": {
-    "title": "§ 4 — Building",
+    "title": "§ 4: Building",
     "loading": "loading...",
     "noEntries": "No entries linked to this building.",
     "page": "pg",
