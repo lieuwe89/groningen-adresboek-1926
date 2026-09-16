@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.17.2] — 2026-09-16
+
+### Changed
+- Back to the Carto `dark_nolabels` basemap, now with a free Carto basemaps API key (referrer-restricted), replacing the Esri stopgap from 0.17.1.
+
 ## [0.17.1] — 2026-09-16
 
 ### Fixed

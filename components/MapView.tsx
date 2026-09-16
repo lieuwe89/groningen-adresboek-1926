@@ -71,20 +71,17 @@ export default function MapView({
       version: 8,
       glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
       sources: {
-        // Carto basemaps now watermark keyless requests ("API KEY REQUIRED"); Esri's
-        // Dark Gray Base is keyless. Its native max zoom is 16, MapLibre overzooms above.
-        base: {
+        // Carto watermarks keyless tiles ("API KEY REQUIRED"). The key is public by design
+        // and referrer-restricted in the Carto basemaps dashboard (403 from other origins).
+        carto: {
           type: "raster",
-          tiles: [
-            "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-          ],
+          tiles: ["https://basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png?key=cb1_3nss_1_48025c3c08804815b71b1d1f"],
           tileSize: 256,
-          maxzoom: 16,
-          attribution: "Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
         },
       },
-      // Esri's grey is lighter than Carto's near-black; dim it so the amber overlay keeps its contrast.
-      layers: [{ id: "base", type: "raster", source: "base", paint: { "raster-brightness-max": 0.4 } }],
+      layers: [{ id: "carto-base", type: "raster", source: "carto" }],
     };
 
     const savedPos = (() => {
