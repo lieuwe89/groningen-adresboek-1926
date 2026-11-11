@@ -2,6 +2,7 @@
  * Admin stats dashboard. Gated by `middleware.ts` via the
  * `lib/adminRouteContract.ts` protected patterns.
  */
+import { BOOK } from "@/lib/book";
 import Link from "next/link";
 import { computeStats, type PageStats, type SectionStats, type BagStats } from "@/lib/stats";
 import { useLocale } from 'next-intl';
@@ -41,8 +42,8 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
             style={{
               fontSize: 9,
               letterSpacing: "0.18em",
-              border: "1px solid #e8b84c88",
-              color: "#e8b84c",
+              border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
+              color: "var(--color-bp-amber)",
               background: "transparent",
               padding: "5px 11px",
             }}
@@ -55,8 +56,8 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
             style={{
               fontSize: 9,
               letterSpacing: "0.18em",
-              border: "1px solid #e8b84c88",
-              color: "#e8b84c",
+              border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
+              color: "var(--color-bp-amber)",
               background: "transparent",
               padding: "5px 11px",
             }}
@@ -64,13 +65,13 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
             Ontbrekende nummers →
           </Link>
           <Link
-            href={`/${locale}/admin/page/1769_19525-1926_0150`}
+            href={`/${locale}/admin/page/${BOOK.adminStartStem}`}
             className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
             style={{
               fontSize: 9,
               letterSpacing: "0.18em",
-              border: "1px solid #e8b84c88",
-              color: "#e8b84c",
+              border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
+              color: "var(--color-bp-amber)",
               background: "transparent",
               padding: "5px 11px",
             }}
@@ -87,19 +88,19 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
             label="Geverifieerd"
             value={ov.verified}
             total={ov.total}
-            color="#7fc97f"
+            color="var(--color-bp-ok)"
           />
           <ProgressBar
             label="Twijfel"
             value={ov.needs_review}
             total={ov.total}
-            color="#e8b84c"
+            color="var(--color-bp-amber)"
           />
           <ProgressBar
             label="Bbox slecht"
             value={ov.bbox_unreliable}
             total={ov.total}
-            color="#cc7a7a"
+            color="var(--color-bp-err)"
           />
           <ProgressBar
             label="Bewerkt (any)"
@@ -118,13 +119,13 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
             label="Gekoppeld aan BAG-adres"
             value={stats.bag.bag_linked}
             total={stats.bag.total}
-            color="#7fc97f"
+            color="var(--color-bp-ok)"
           />
           <ProgressBar
             label="Straat bekend, huisnummer ontbreekt of ongeldig"
             value={stats.bag.street_no_number}
             total={stats.bag.total}
-            color="#e8b84c"
+            color="var(--color-bp-amber)"
           />
           <ProgressBar
             label="Straat + huisnummer, maar geen BAG-match"
@@ -136,7 +137,7 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
             label="Geen geldige straatnaam"
             value={stats.bag.no_street}
             total={stats.bag.total}
-            color="#cc7a7a"
+            color="var(--color-bp-err)"
           />
         </div>
       </section>
@@ -201,9 +202,9 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
           <div
             key={c.label}
             style={{
-              border: "1px solid #e8b84c44",
+              border: "1px solid color-mix(in srgb, var(--color-bp-amber) 27%, transparent)",
               padding: "12px 14px",
-              background: "#0e1c3c",
+              background: "var(--color-bp-blue-deep)",
             }}
           >
             <div
@@ -231,17 +232,17 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
 
   function BagCards({ bag }: { bag: BagStats }) {
     const cards = [
-      { label: "BAG gekoppeld", value: bag.bag_linked, sub: `${pct(bag.bag_linked, bag.total).toFixed(1)}%`, color: "#7fc97f" },
-      { label: "Straat, geen nr.", value: bag.street_no_number, sub: `${pct(bag.street_no_number, bag.total).toFixed(1)}%`, color: "#e8b84c" },
+      { label: "BAG gekoppeld", value: bag.bag_linked, sub: `${pct(bag.bag_linked, bag.total).toFixed(1)}%`, color: "var(--color-bp-ok)" },
+      { label: "Straat, geen nr.", value: bag.street_no_number, sub: `${pct(bag.street_no_number, bag.total).toFixed(1)}%`, color: "var(--color-bp-amber)" },
       { label: "Nr. ongeldig", value: bag.street_number_no_bag, sub: `${pct(bag.street_number_no_bag, bag.total).toFixed(1)}%`, color: "#cc9f4a" },
-      { label: "Geen straat", value: bag.no_street, sub: `${pct(bag.no_street, bag.total).toFixed(1)}%`, color: "#cc7a7a" },
+      { label: "Geen straat", value: bag.no_street, sub: `${pct(bag.no_street, bag.total).toFixed(1)}%`, color: "var(--color-bp-err)" },
     ];
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px]">
         {cards.map((c) => (
           <div
             key={c.label}
-            style={{ border: "1px solid #e8b84c44", padding: "12px 14px", background: "#0e1c3c" }}
+            style={{ border: "1px solid color-mix(in srgb, var(--color-bp-amber) 27%, transparent)", padding: "12px 14px", background: "var(--color-bp-blue-deep)" }}
           >
             <div className="text-bp-ink-dim uppercase" style={{ fontSize: 8, letterSpacing: "0.18em" }}>
               {c.label}
@@ -285,8 +286,8 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
         <div
           style={{
             height: 8,
-            background: "#0e1c3c",
-            border: "1px solid #e8b84c33",
+            background: "var(--color-bp-blue-deep)",
+            border: "1px solid color-mix(in srgb, var(--color-bp-amber) 20%, transparent)",
             position: "relative",
           }}
         >
@@ -314,13 +315,13 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.section} style={{ borderBottom: "1px solid #e8b84c22" }}>
+            <tr key={r.section} style={{ borderBottom: "1px solid color-mix(in srgb, var(--color-bp-amber) 13%, transparent)" }}>
               <Td>{r.section}</Td>
               <Td num>{r.pages}</Td>
               <Td num>{r.total}</Td>
-              <Td num color="#7fc97f">{r.verified}</Td>
-              <Td num color="#e8b84c">{r.needs_review}</Td>
-              <Td num color="#cc7a7a">{r.bbox_unreliable}</Td>
+              <Td num color="var(--color-bp-ok)">{r.verified}</Td>
+              <Td num color="var(--color-bp-amber)">{r.needs_review}</Td>
+              <Td num color="var(--color-bp-err)">{r.bbox_unreliable}</Td>
               <Td num>{r.edited}</Td>
               <Td num>{pct(r.verified, r.total).toFixed(1)}%</Td>
             </tr>
@@ -345,12 +346,12 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.stem} style={{ borderBottom: "1px solid #e8b84c22" }}>
+            <tr key={r.stem} style={{ borderBottom: "1px solid color-mix(in srgb, var(--color-bp-amber) 13%, transparent)" }}>
               <Td num>{r.page}</Td>
               <Td>{r.section}</Td>
               <Td num>{r.total}</Td>
-              <Td num color="#7fc97f">{r.verified}</Td>
-              <Td num color="#e8b84c">{r.needs_review}</Td>
+              <Td num color="var(--color-bp-ok)">{r.verified}</Td>
+              <Td num color="var(--color-bp-amber)">{r.needs_review}</Td>
               <Td num>{r.edited}</Td>
               <Td>
                 <Link
@@ -372,9 +373,9 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
     return (
       <tr
         style={{
-          borderBottom: "1px solid #e8b84c44",
+          borderBottom: "1px solid color-mix(in srgb, var(--color-bp-amber) 27%, transparent)",
           textAlign: "left",
-          color: "#7a7054",
+          color: "var(--color-bp-ink-dim)",
         }}
       >
         {cols.map((c, i) => (
@@ -410,7 +411,7 @@ export default async function StatsPage({ params }: { params: Promise<{ locale: 
         style={{
           padding: "6px 10px",
           textAlign: num ? "right" : "left",
-          color: color || "#e6d9b0",
+          color: color || "var(--color-bp-ink-bright)",
           fontFamily: num ? "var(--font-special-elite), monospace" : undefined,
         }}
       >

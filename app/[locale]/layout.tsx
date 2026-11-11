@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Josefin_Sans, Special_Elite } from "next/font/google";
+import { Abril_Fatface, Josefin_Sans, Old_Standard_TT, Special_Elite } from "next/font/google";
+import { BOOK } from "@/lib/book";
 import { SelectionProvider } from "@/lib/SelectionContext";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -22,9 +23,31 @@ const specialElite = Special_Elite({
   subsets: ["latin"],
 });
 
+// next/font needs literal calls at module scope, so every book's fonts are
+// declared; the 1854 ones are not preloaded and only load when applied.
+const oldStandard = Old_Standard_TT({
+  variable: "--font-old-standard",
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  preload: false,
+});
+
+const abril = Abril_Fatface({
+  variable: "--font-abril",
+  weight: "400",
+  subsets: ["latin"],
+  preload: false,
+});
+
+const FONT_CLASSES: Record<string, string> = {
+  "1926": `${josefin.variable} ${specialElite.variable}`,
+  "1854": `${oldStandard.variable} ${abril.variable}`,
+};
+
 export const metadata: Metadata = {
-  title: "Adresboek 1926: Gemeente Groningen",
-  description: "Interactieve verkenner van het Groninger adresboek 1926",
+  title: BOOK.title,
+  description: BOOK.description,
   icons: {
     icon: "/favicon.png",
   },
@@ -48,7 +71,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <div className={`${josefin.variable} ${specialElite.variable} h-full antialiased`}>
+    <div className={`${FONT_CLASSES[BOOK.id]} book-fonts h-full antialiased`}>
       <NextIntlClientProvider messages={messages} locale={locale}>
         <SelectionProvider>
           {children}

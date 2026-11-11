@@ -1,5 +1,6 @@
 "use client";
 
+import { BOOK } from "@/lib/book";
 import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
@@ -8,7 +9,7 @@ interface WelcomeModalProps {
   onStartTour: () => void;
 }
 
-const STORAGE_KEY = "grn1926-welcome-dismissed";
+const STORAGE_KEY = `grn${BOOK.id}-welcome-dismissed`;
 
 export default function WelcomeModal({ onStartTour }: WelcomeModalProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,7 +55,7 @@ export default function WelcomeModal({ onStartTour }: WelcomeModalProps) {
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-bp-blue/80 backdrop-blur-sm">
       <div 
         className="relative w-full max-w-lg bg-bp-blue border border-bp-amber/40 shadow-2xl overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #0d1e3f 0%, #091429 100%)" }}
+        style={{ background: "linear-gradient(135deg, var(--color-bp-blue-deep) 0%, var(--color-bp-blue-deeper) 100%)" }}
       >
         {/* Decorative corner */}
         <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none opacity-20">

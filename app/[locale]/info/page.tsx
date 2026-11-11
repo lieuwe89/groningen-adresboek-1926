@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import GlobalGrid from "@/components/GlobalGrid";
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
+import { BOOK } from "@/lib/book";
+import Info1854 from "@/components/Info1854";
 
 /* ── Map profiles ──────────────────────────────────────────────────────────── */
 
@@ -226,6 +228,8 @@ export default function InfoPage() {
           >
             {/* ── Page title ────────────────────────────────────────────── */}
             <PageTitle isEnglish={isEnglish} />
+
+            {BOOK.id === "1854" ? <Info1854 isEnglish={isEnglish} Section={Section} Rule={Rule} /> : (<>
 
             {/* ── About the project ─────────────────────────────────────── */}
             <Section label={isEnglish ? "About this project" : "Over dit project"}>
@@ -644,6 +648,8 @@ export default function InfoPage() {
               </div>
             </Section>
 
+            </>)}
+
             {/* Bottom padding */}
             <div style={{ height: 40 }} />
           </div>
@@ -665,7 +671,7 @@ function PageTitle({ isEnglish }: { isEnglish: boolean }) {
           className="text-bp-ink-dim uppercase font-semibold"
           style={{ fontSize: 8.5, letterSpacing: "0.22em" }}
         >
-          {isEnglish ? "Address Book 1926 - Municipality of Groningen" : "Adresboek 1926 - Gemeente Groningen"}
+          {isEnglish ? `Address Book ${BOOK.year} - Groningen` : `Adresboek ${BOOK.year} - Groningen`}
         </div>
         <h1
           className="text-bp-amber uppercase font-bold mt-1"
@@ -707,7 +713,7 @@ function Rule() {
   return (
     <div
       className="my-7"
-      style={{ height: 1, background: "linear-gradient(to right, #cfc39a33, #cfc39a66, #cfc39a33)" }}
+      style={{ height: 1, background: "linear-gradient(to right, color-mix(in srgb, var(--color-bp-ink) 20%, transparent), color-mix(in srgb, var(--color-bp-ink) 40%, transparent), color-mix(in srgb, var(--color-bp-ink) 20%, transparent))" }}
     />
   );
 }
@@ -741,8 +747,8 @@ function MapCard({
   return (
     <div
       style={{
-        border: "1px solid #cfc39a28",
-        background: "#0d1e3f88",
+        border: "1px solid color-mix(in srgb, var(--color-bp-ink) 16%, transparent)",
+        background: "color-mix(in srgb, var(--color-bp-blue-deep) 53%, transparent)",
         display: "grid",
         gridTemplateColumns: "180px 1fr",
         gap: 0,
@@ -756,8 +762,8 @@ function MapCard({
         style={{
           display: "block",
           overflow: "hidden",
-          background: "#091429",
-          borderRight: "1px solid #cfc39a28",
+          background: "var(--color-bp-blue-deeper)",
+          borderRight: "1px solid color-mix(in srgb, var(--color-bp-ink) 16%, transparent)",
         }}
       >
         <img

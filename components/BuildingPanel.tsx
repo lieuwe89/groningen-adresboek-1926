@@ -90,9 +90,9 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
         right: 56, // clear of NavigationControl
         width: 320,
         maxHeight: "calc(100% - 28px)",
-        background: "#182d5cee",
-        border: "1px solid #e8b84c66",
-        color: "#e6d9b0",
+        background: "color-mix(in srgb, var(--color-bp-blue) 93%, transparent)",
+        border: "1px solid color-mix(in srgb, var(--color-bp-amber) 40%, transparent)",
+        color: "var(--color-bp-ink-bright)",
         fontFamily: "monospace",
         fontSize: 11,
       }}
@@ -100,8 +100,8 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
       <div
         className="flex items-center justify-between px-[12px] py-[8px] uppercase"
         style={{
-          borderBottom: "1px solid #cfc39a44",
-          color: "#e8b84c",
+          borderBottom: "1px solid color-mix(in srgb, var(--color-bp-ink) 27%, transparent)",
+          color: "var(--color-bp-amber)",
           fontSize: 9,
           letterSpacing: "0.18em",
           fontWeight: 700,
@@ -112,20 +112,20 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
           type="button"
           onClick={onClose}
           aria-label={t('closeAriaLabel')}
-          style={{ background: "none", border: "none", color: "#e8b84c", cursor: "pointer" }}
+          style={{ background: "none", border: "none", color: "var(--color-bp-amber)", cursor: "pointer" }}
         >
           ✕
         </button>
       </div>
       <div className="flex-1 overflow-y-auto" style={{ padding: "8px 0" }}>
         {loading && (
-          <div style={{ padding: "12px", color: "#7a7054", fontSize: 9 }}>{t('loading')}</div>
+          <div style={{ padding: "12px", color: "var(--color-bp-ink-dim)", fontSize: 9 }}>{t('loading')}</div>
         )}
         {error && (
           <div style={{ padding: "12px", color: "#e89e3b", fontSize: 9 }}>{error}</div>
         )}
         {!loading && !error && data && data.persons.length === 0 && (
-          <div style={{ padding: "12px", color: "#7a7054", fontSize: 9 }}>
+          <div style={{ padding: "12px", color: "var(--color-bp-ink-dim)", fontSize: 9 }}>
             {t('noEntries')}
           </div>
         )}
@@ -141,10 +141,10 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
                 <div
                   style={{
                     padding: "4px 12px",
-                    borderTop: "1px solid #cfc39a22",
-                    borderBottom: "1px solid #cfc39a22",
+                    borderTop: "1px solid color-mix(in srgb, var(--color-bp-ink) 13%, transparent)",
+                    borderBottom: "1px solid color-mix(in srgb, var(--color-bp-ink) 13%, transparent)",
                     background: "#0e1e44",
-                    color: "#e8b84c",
+                    color: "var(--color-bp-amber)",
                     fontSize: 10,
                     letterSpacing: "0.06em",
                     fontWeight: 700,
@@ -157,13 +157,13 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
                       {firstDisplay.badge ? `${firstDisplay.badge}: ` : ""}
                       {headerName}
                     </span>
-                    <span style={{ color: "#7a7054", fontSize: 9 }}>({p.mentions.length})</span>
+                    <span style={{ color: "var(--color-bp-ink-dim)", fontSize: 9 }}>({p.mentions.length})</span>
                   </div>
                   {headerOcc && (
-                    <span style={{ color: "#e6d9b0", fontSize: 9, fontWeight: 400 }}>{headerOcc}</span>
+                    <span style={{ color: "var(--color-bp-ink-bright)", fontSize: 9, fontWeight: 400 }}>{headerOcc}</span>
                   )}
                   {headerAddr && (
-                    <span style={{ color: "#7a7054", fontSize: 9, fontWeight: 400 }}>{headerAddr}</span>
+                    <span style={{ color: "var(--color-bp-ink-dim)", fontSize: 9, fontWeight: 400 }}>{headerAddr}</span>
                   )}
                 </div>
                 {p.mentions.map((m) => (
@@ -176,21 +176,21 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
                       padding: "6px 12px",
                       background: "transparent",
                       borderLeft: "2px solid transparent",
-                      color: "#e6d9b0",
+                      color: "var(--color-bp-ink-bright)",
                       fontSize: 10,
                     }}
                     onMouseEnter={(ev) =>
-                      (ev.currentTarget.style.background = "#e8b84c0c")
+                      (ev.currentTarget.style.background = "color-mix(in srgb, var(--color-bp-amber) 5%, transparent)")
                     }
                     onMouseLeave={(ev) =>
                       (ev.currentTarget.style.background = "transparent")
                     }
                   >
-                    <span style={{ color: "#7a7054", fontSize: 9 }}>
+                    <span style={{ color: "var(--color-bp-ink-dim)", fontSize: 9 }}>
                       {buildingMentionLine(m, entryFallback, entryLabels)}
                     </span>
                     {m.page_number != null && (
-                      <span style={{ color: "#7a7054", fontSize: 9 }}>{t('page')} {m.page_number}</span>
+                      <span style={{ color: "var(--color-bp-ink-dim)", fontSize: 9 }}>{t('page')} {m.page_number}</span>
                     )}
                   </button>
                 ))}

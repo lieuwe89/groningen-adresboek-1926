@@ -1,5 +1,6 @@
 "use client";
 
+import { BOOK } from "@/lib/book";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -51,9 +52,9 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
   const adminButtonStyle = {
     fontSize: 9,
     letterSpacing: "0.18em",
-    border: isAdmin ? "1px solid #e8b84c" : "1px solid #7a705488",
-    color: isAdmin ? "#182d5c" : "#e8b84c",
-    background: isAdmin ? "#e8b84c" : "transparent",
+    border: isAdmin ? "1px solid var(--color-bp-amber)" : "1px solid color-mix(in srgb, var(--color-bp-ink-dim) 53%, transparent)",
+    color: isAdmin ? "var(--color-bp-blue)" : "var(--color-bp-amber)",
+    background: isAdmin ? "var(--color-bp-amber)" : "transparent",
     padding: "3px 9px",
   };
 
@@ -83,7 +84,7 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
         </div>
         <div className="flex gap-[20px] mt-[5px] items-end">
           <SectionJump currentStem={stem} isInfo={isInfo} />
-          <Meta label={t('labelSheet')} value="A-Z" />
+          {BOOK.sheetLabel && <Meta label={t('labelSheet')} value={BOOK.sheetLabel} />}
         </div>
       </div>
       <div className="flex items-center gap-[14px]">
@@ -130,8 +131,8 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
             style={{
               fontSize: 9,
               letterSpacing: "0.18em",
-              border: "1px solid #7a705488",
-              color: "#e8b84c",
+              border: "1px solid color-mix(in srgb, var(--color-bp-ink-dim) 53%, transparent)",
+              color: "var(--color-bp-amber)",
               background: "transparent",
               padding: "3px 9px",
             }}
@@ -197,9 +198,9 @@ function InfoBtn({ label, active, onClick }: { label: string; active: boolean; o
       style={{
         fontSize: 9,
         letterSpacing: "0.18em",
-        border: active ? "1px solid #e8b84c !important" : "1px solid #7a705488",
-        color: active ? "#182d5c !important" : "#e8b84c",
-        background: active ? "#e8b84c !important" : "transparent",
+        border: active ? "1px solid var(--color-bp-amber) !important" : "1px solid color-mix(in srgb, var(--color-bp-ink-dim) 53%, transparent)",
+        color: active ? "var(--color-bp-blue) !important" : "var(--color-bp-amber)",
+        background: active ? "var(--color-bp-amber) !important" : "transparent",
         padding: "3px 9px",
       }}
     >

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import BuildingPanel from "./BuildingPanel";
 import { HISTORIC_MAPS } from "@/lib/historicMaps";
+import { BOOK } from "@/lib/book";
 import { useSelection } from "@/lib/SelectionContext";
 import { useTranslations, useLocale } from 'next-intl';
 
@@ -62,15 +63,15 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           fontSize: 9,
           letterSpacing: "0.18em",
           padding: "7px 10px",
-          border: "1px solid #e8b84c88",
-          background: "#182d5cee",
-          color: "#e8b84c",
+          border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
+          background: "color-mix(in srgb, var(--color-bp-blue) 93%, transparent)",
+          color: "var(--color-bp-amber)",
           opacity: searchOpen ? 0 : 1,
           pointerEvents: searchOpen ? "none" : "auto",
           transition: "opacity 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
         }}
       >
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#e8b84c" strokeWidth="2">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-bp-amber)" strokeWidth="2">
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" />
         </svg>
@@ -88,16 +89,16 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           fontSize: 9,
           letterSpacing: "0.18em",
           padding: "7px 10px",
-          border: "1px solid #e8b84c88",
-          background: "#182d5cee",
-          color: "#e8b84c",
+          border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
+          background: "color-mix(in srgb, var(--color-bp-blue) 93%, transparent)",
+          color: "var(--color-bp-amber)",
           opacity: scanOpen || activePand ? 0 : 1,
           pointerEvents: scanOpen || activePand ? "none" : "auto",
           transition: "opacity 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
         }}
       >
         {t('scan')}
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#e8b84c" strokeWidth="2">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-bp-amber)" strokeWidth="2">
           <rect x="4" y="3" width="16" height="18" rx="1" />
           <path d="M8 8h8M8 12h8M8 16h5" />
         </svg>
@@ -123,9 +124,9 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           onClick={() => setLayersExpanded(!layersExpanded)}
           className="flex items-center justify-between px-[10px] py-[8px] uppercase w-full group"
           style={{
-            border: "1px solid #cfc39a55",
-            background: "#12234dee",
-            color: "#e8b84c",
+            border: "1px solid color-mix(in srgb, var(--color-bp-ink) 33%, transparent)",
+            background: "color-mix(in srgb, var(--color-bp-blue-panel) 93%, transparent)",
+            color: "var(--color-bp-amber)",
             fontSize: 9.5,
             letterSpacing: "0.22em",
             fontWeight: 800,
@@ -179,11 +180,11 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
               className="flex items-center gap-[10px]"
               style={{
                 padding: "8px 12px",
-                border: "1px solid #cfc39a44",
-                background: "#12234def",
+                border: "1px solid color-mix(in srgb, var(--color-bp-ink) 27%, transparent)",
+                background: "color-mix(in srgb, var(--color-bp-blue-panel) 94%, transparent)",
                 fontSize: 8.5,
                 letterSpacing: "0.1em",
-                color: "#cfc39a",
+                color: "var(--color-bp-ink)",
               }}
             >
               <span className="uppercase" style={{ minWidth: 84, fontWeight: 700 }}>{t('opacity')}</span>
@@ -196,7 +197,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
                 style={{
                   flex: 1,
                   height: 2,
-                  accentColor: "#e8b84c",
+                  accentColor: "var(--color-bp-amber)",
                   cursor: "pointer",
                   margin: "0 4px",
                 }}
@@ -209,7 +210,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           )}
 
           <LayerRow label={t('buildings')} on={buildingsOn} onChange={setBuildingsOn} />
-          {buildingsOn && (
+          {buildingsOn && BOOK.builtBeforeFilter && (
             <LayerRow label={t('only1926')} on={only1926} onChange={setOnly1926} />
           )}
         </div>
@@ -238,8 +239,8 @@ function LayerRow({
         letterSpacing: "0.14em",
         fontWeight: on ? 700 : 600,
         padding: "6px 10px",
-        border: on ? "1px solid #e8b84c77" : "1px solid #cfc39a44",
-        background: on ? "#e8b84c1a" : "#12234def",
+        border: on ? "1px solid color-mix(in srgb, var(--color-bp-amber) 47%, transparent)" : "1px solid color-mix(in srgb, var(--color-bp-ink) 27%, transparent)",
+        background: on ? "color-mix(in srgb, var(--color-bp-amber) 10%, transparent)" : "color-mix(in srgb, var(--color-bp-blue-panel) 94%, transparent)",
         color: on ? "#f0e6c8" : "#948a6a",
         cursor: "pointer",
       }}
@@ -249,8 +250,8 @@ function LayerRow({
         style={{
           width: 9,
           height: 9,
-          border: "1px solid #e8b84c99",
-          background: on ? "#e8b84c" : "transparent",
+          border: "1px solid color-mix(in srgb, var(--color-bp-amber) 60%, transparent)",
+          background: on ? "var(--color-bp-amber)" : "transparent",
           borderRadius: radio ? "50%" : 0,
         }}
       />

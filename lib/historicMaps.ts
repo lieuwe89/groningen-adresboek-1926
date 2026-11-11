@@ -13,7 +13,9 @@ export interface HistoricMap {
   year?: string;
 }
 
-export const HISTORIC_MAPS: HistoricMap[] = [
+import { BOOK } from "./book";
+
+const MAPS_1926: HistoricMap[] = [
   {
     id: "1536_1237",
     label: "Pharus, circa 1916",
@@ -51,3 +53,6 @@ export const HISTORIC_MAPS: HistoricMap[] = [
     bbox: [6.4890, 53.1767, 6.6359, 53.2521],
   },
 ];
+
+// 1854 has no georeferenced overlays yet (candidates: kadaster 1832, TMK 1850).
+export const HISTORIC_MAPS: HistoricMap[] = BOOK.id === "1926" ? MAPS_1926 : [];

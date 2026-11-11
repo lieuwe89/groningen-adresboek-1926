@@ -123,9 +123,9 @@ export default function ScanPanel(p: Props) {
                   fontSize: 8,
                   letterSpacing: "0.14em",
                   fontWeight: 700,
-                  color: p.focusMode ? "#182d5c" : "#e8b84c",
-                  background: p.focusMode ? "#e8b84c" : "transparent",
-                  border: "1px solid #e8b84c88",
+                  color: p.focusMode ? "var(--color-bp-blue)" : "var(--color-bp-amber)",
+                  background: p.focusMode ? "var(--color-bp-amber)" : "transparent",
+                  border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
                   padding: "2px 8px",
                 }}
                 aria-pressed={!!p.focusMode}
@@ -143,9 +143,9 @@ export default function ScanPanel(p: Props) {
                   fontSize: 8,
                   letterSpacing: "0.14em",
                   fontWeight: 700,
-                  color: bboxEditMode ? "#182d5c" : "#e8b84c",
-                  background: bboxEditMode ? "#e8b84c" : "transparent",
-                  border: "1px solid #e8b84c88",
+                  color: bboxEditMode ? "var(--color-bp-blue)" : "var(--color-bp-amber)",
+                  background: bboxEditMode ? "var(--color-bp-amber)" : "transparent",
+                  border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
                   padding: "2px 8px",
                 }}
                 aria-pressed={bboxEditMode}
@@ -166,8 +166,8 @@ export default function ScanPanel(p: Props) {
 
         {p.editMode && (
           <div
-            className="bg-[#e8b84c15] border-b border-[#e8b84c44] flex items-center justify-center py-[3px]"
-            style={{ fontSize: 8, letterSpacing: "0.2em", fontWeight: 700, color: "#e8b84c" }}
+            className="bg-[color-mix(in srgb, var(--color-bp-amber) 8%, transparent)] border-b border-[color-mix(in srgb, var(--color-bp-amber) 27%, transparent)] flex items-center justify-center py-[3px]"
+            style={{ fontSize: 8, letterSpacing: "0.2em", fontWeight: 700, color: "var(--color-bp-amber)" }}
           >
             ADMIN EDIT MODE
           </div>
@@ -318,9 +318,9 @@ function ZoomBtn({
       style={{
         width: size,
         height: size,
-        border: "1px solid #e8b84c88",
-        background: "#182d5cee",
-        color: "#e8b84c",
+        border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
+        background: "color-mix(in srgb, var(--color-bp-blue) 93%, transparent)",
+        color: "var(--color-bp-amber)",
         fontSize: 13,
         lineHeight: 1,
       }}

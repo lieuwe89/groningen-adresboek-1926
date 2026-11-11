@@ -16,6 +16,8 @@ export type PresentableEntry = {
   occupation?: string | null;
   occupation_expanded?: string | null;
   address_full?: string | null;
+  /** Present-day address for books with pre-1899 wijk numbering (1854). */
+  address_modern?: string | null;
   notes?: string | null;
   entity_type?: EntryEntityType | null;
   role?: string | null;
@@ -144,7 +146,7 @@ export function presentEntry(
   const occupation = entry?.occupation_expanded || entry?.occupation || "";
   const role = entry?.role || "";
   const description = entry?.description || entry?.notes || "";
-  const address = entry?.address_full || "";
+  const address = [entry?.address_full, entry?.address_modern].filter(Boolean).join(" → ");
   const parent = entry?.parent_organization || "";
   const kind = classifyEntry(entry, section);
   const sectionLabels = buildSectionLabels(labels);

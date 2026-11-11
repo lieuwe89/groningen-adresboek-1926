@@ -6,17 +6,18 @@ import { cogProtocol } from "@geomatico/maplibre-cog-protocol";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { HISTORIC_MAPS } from "@/lib/historicMaps";
+import { BOOK } from "@/lib/book";
 import { resolvePublicAssetUrl } from "@/lib/publicAssetUrls";
 
 const GRONINGEN_CENTER: [number, number] = [6.5665, 53.2194];
-const MAP_POS_KEY = "grn1926-map-pos";
+const MAP_POS_KEY = `grn${BOOK.id}-map-pos`;
 
 // Keep only footprints whose BAG bouwjaar is <= 1926. `to-number` with a high
 // fallback drops features with missing/null bouwjaar (they sort above 1926).
 const ONLY_1926_FILTER: FilterSpecification = [
   "<=",
   ["to-number", ["get", "bouwjaar"], 99999],
-  1926,
+  BOOK.year,
 ];
 
 // Register the cog:// protocol exactly once per JS module load. Calling
@@ -75,7 +76,7 @@ export default function MapView({
         // and referrer-restricted in the Carto basemaps dashboard (403 from other origins).
         carto: {
           type: "raster",
-          tiles: ["https://basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png?key=cb1_3nss_1_48025c3c08804815b71b1d1f"],
+          tiles: [`https://basemaps.cartocdn.com/${BOOK.basemap}/{z}/{x}/{y}.png?key=cb1_3nss_1_48025c3c08804815b71b1d1f`],
           tileSize: 256,
           attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -124,7 +125,7 @@ export default function MapView({
         type: "line",
         source: "buildings",
         paint: {
-          "line-color": "#e8b84c",
+          "line-color": BOOK.mapAccent,
           "line-width": [
             "case",
             ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]],
@@ -147,7 +148,7 @@ export default function MapView({
         type: "fill",
         source: "buildings",
         paint: {
-          "fill-color": "#e8b84c",
+          "fill-color": BOOK.mapAccent,
           "fill-opacity": [
             "case",
             ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]],

@@ -1,0 +1,40 @@
+{
+  "Header": {
+    "subtitle": "Fabrijkanten, kooplieden, winkeliers, enz. te Groningen",
+    "title": "Adresboek 1854",
+    "description": "Interactieve verkenner: Naam-register & Plattegrond"
+  },
+  "WelcomeModal": {
+    "title": "Welkom bij het Adresboek 1854",
+    "body1": "Dit is een hobbyproject van <name>Lieuwe Jongsma</name> (Groninger Archieven). Het doel is om het Groningse adresboek of naam-register uit 1854 doorzoekbaar te maken en op de kaart te zetten.",
+    "disclaimer": "Let op: dit is een werk in uitvoering. Het boek gebruikt de oude wijknummering (wijkletter en nummer). De omrekening naar de adressen van nu kan fouten of hiaten bevatten; ongeveer een kwart van de vermeldingen staat nog niet op de kaart."
+  },
+  "Tour": {
+    "map": {
+      "title": "De kaart",
+      "text": "Dit is de kaart van Groningen anno nu. De gemarkeerde gebouwen staan op de plek van een adres uit het adresboek van 1854. Klik op een gebouw om te zien wie daar zijn bedrijf had."
+    },
+    "layers": {
+      "title": "Kaartlagen",
+      "text": "Zet hier de gemarkeerde adresgebouwen aan of uit."
+    },
+    "scan": {
+      "title": "Paginaweergave",
+      "text": "Bekijk de originele gescande pagina uit het adresboek van 1854. Blader door het boek en zoom in op de details."
+    },
+    "section": {
+      "title": "Secties",
+      "text": "Spring naar de delen van het boek: het register op beroep en de alfabetische naamlijst achterin."
+    }
+  },
+  "Sections": {
+    "other": "Naamlijst & voorwerk",
+    "occupation_register": "Register op beroep",
+    "advertisement": "Uitgaven van Oomkens",
+    "blank": "Schutblad"
+  },
+  "EntryPresentation": {
+    "sectionOccupationRegister": "Register op beroep",
+    "sectionOther": "Naamlijst"
+  }
+}

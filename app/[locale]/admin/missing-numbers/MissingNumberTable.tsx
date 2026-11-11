@@ -60,15 +60,15 @@ export default function MissingNumberTable({ candidates }: { candidates: HouseNu
           <div
             key={item.stable_id}
             style={{
-              border: "1px solid #e8b84c33",
-              background: "#0e1c3c",
+              border: "1px solid color-mix(in srgb, var(--color-bp-amber) 20%, transparent)",
+              background: "var(--color-bp-blue-deep)",
               display: "flex",
               gap: 20,
               alignItems: "flex-start",
               padding: 16,
             }}
           >
-            <div style={{ flex: "0 0 55%", height: 200, background: "#060e22", overflow: "hidden", position: "relative" }}>
+            <div style={{ flex: "0 0 55%", height: 200, background: "var(--color-bp-blue-abyss)", overflow: "hidden", position: "relative" }}>
               <ScanViewer
                 stem={stem}
                 entries={[{ entry_bbox: bbox }] as any}
@@ -108,7 +108,7 @@ export default function MissingNumberTable({ candidates }: { candidates: HouseNu
                     placeholder="bijv. 12a"
                     className="bg-transparent text-bp-ink-bright focus:outline-none"
                     style={{
-                      border: "1px solid #e8b84c66",
+                      border: "1px solid color-mix(in srgb, var(--color-bp-amber) 40%, transparent)",
                       padding: "5px 10px",
                       fontSize: 12,
                       letterSpacing: "0.06em",
@@ -122,8 +122,8 @@ export default function MissingNumberTable({ candidates }: { candidates: HouseNu
                   <button
                     className="uppercase font-bold hover:bg-bp-amber/20 transition-colors"
                     style={{
-                      border: "1px solid #e8b84c88",
-                      color: "#e8b84c",
+                      border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
+                      color: "var(--color-bp-amber)",
                       background: "transparent",
                       padding: "5px 12px",
                       fontSize: 9,
@@ -141,8 +141,8 @@ export default function MissingNumberTable({ candidates }: { candidates: HouseNu
                   <button
                     className="uppercase font-bold hover:bg-white/5 transition-colors"
                     style={{
-                      border: "1px solid #e8b84c33",
-                      color: "#7a7054",
+                      border: "1px solid color-mix(in srgb, var(--color-bp-amber) 20%, transparent)",
+                      color: "var(--color-bp-ink-dim)",
                       background: "transparent",
                       padding: "5px 12px",
                       fontSize: 9,

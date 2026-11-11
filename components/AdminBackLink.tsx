@@ -16,8 +16,8 @@ export default function AdminBackLink({
       style={{
         fontSize: 9,
         letterSpacing: "0.18em",
-        border: "1px solid #e8b84c88",
-        color: "#e8b84c",
+        border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
+        color: "var(--color-bp-amber)",
         background: "transparent",
         padding: "5px 11px",
       }}

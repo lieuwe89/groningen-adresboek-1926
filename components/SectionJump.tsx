@@ -103,8 +103,8 @@ export default function SectionJump({ currentStem, isInfo }: Props) {
           letterSpacing: "0.12em",
           fontWeight: 600,
           background: "transparent",
-          border: "1px solid #7a705488",
-          color: "#e8b84c",
+          border: "1px solid color-mix(in srgb, var(--color-bp-ink-dim) 53%, transparent)",
+          color: "var(--color-bp-amber)",
           padding: "2px 6px",
           minWidth: 150,
         }}
@@ -114,7 +114,7 @@ export default function SectionJump({ currentStem, isInfo }: Props) {
         {sections?.map((s) => {
           const localized = KNOWN_SECTION_KEYS.has(s.section) ? ts(s.section) : s.label;
           return (
-            <option key={s.section} value={s.section} style={{ background: "#182d5c" }}>
+            <option key={s.section} value={s.section} style={{ background: "var(--color-bp-blue)" }}>
               {localized}
               {s.first_scan_number != null ? `: scan ${s.first_scan_number}` : ""}
               {` (${s.count} ${s.count === 1 ? 'page' : 'pages'})`}

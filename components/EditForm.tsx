@@ -158,7 +158,7 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
       <div className="flex gap-[10px] flex-wrap" style={{ paddingBottom: 2 }}>
         <FlagBox
           label="Goed"
-          color="#7fc97f"
+          color="var(--color-bp-ok)"
           checked={flags.verified}
           onChange={(v) => {
             setFlag("verified", v);
@@ -167,7 +167,7 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
         />
         <FlagBox
           label="Twijfel"
-          color="#e8b84c"
+          color="var(--color-bp-amber)"
           checked={flags.needs_review}
           onChange={(v) => {
             setFlag("needs_review", v);
@@ -176,7 +176,7 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
         />
         <FlagBox
           label="Bbox slecht"
-          color="#cc7a7a"
+          color="var(--color-bp-err)"
           checked={flags.bbox_unreliable}
           onChange={(v) => setFlag("bbox_unreliable", v)}
         />
@@ -200,8 +200,8 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
           className="bg-bp-ink-faint outline-none focus:border-bp-amber"
           style={{
             fontSize: 10,
-            color: "#e6d9b0",
-            border: "1px solid #cfc39a55",
+            color: "var(--color-bp-ink-bright)",
+            border: "1px solid color-mix(in srgb, var(--color-bp-ink) 33%, transparent)",
             padding: "4px 6px",
           }}
         >
@@ -260,7 +260,7 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
             fontSize: 8,
             letterSpacing: "0.14em",
             fontWeight: 600,
-            color: "#7a7054",
+            color: "var(--color-bp-ink-dim)",
             padding: "4px 8px",
           }}
         >
@@ -274,9 +274,9 @@ export default function EditForm({ stem, idx, entry, onSaved }: Props) {
             fontSize: 8,
             letterSpacing: "0.14em",
             fontWeight: 700,
-            color: "#e8b84c",
-            border: "1px solid #e8b84c88",
-            background: dirty ? "#e8b84c12" : "transparent",
+            color: "var(--color-bp-amber)",
+            border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
+            background: dirty ? "color-mix(in srgb, var(--color-bp-amber) 7%, transparent)" : "transparent",
             padding: "4px 12px",
           }}
         >
@@ -311,11 +311,11 @@ function FlagBox({
         style={{
           width: 11,
           height: 11,
-          border: `1px solid ${color}88`,
+          border: `1px solid color-mix(in srgb, ${color} 53%, transparent)`,
           background: checked ? color : "transparent",
         }}
       />
-      <span style={{ color: checked ? color : "#7a7054" }} className="uppercase">
+      <span style={{ color: checked ? color : "var(--color-bp-ink-dim)" }} className="uppercase">
         {label}
       </span>
     </label>
@@ -348,8 +348,8 @@ function Field({
         className="bg-bp-ink-faint outline-none focus:border-bp-amber"
         style={{
           fontSize: 10,
-          color: "#e6d9b0",
-          border: "1px solid #cfc39a55",
+          color: "var(--color-bp-ink-bright)",
+          border: "1px solid color-mix(in srgb, var(--color-bp-ink) 33%, transparent)",
           padding: "4px 6px",
         }}
       />

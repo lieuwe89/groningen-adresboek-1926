@@ -1,0 +1,40 @@
+{
+  "Header": {
+    "subtitle": "Manufacturers, merchants, shopkeepers, etc. in Groningen",
+    "title": "Address Book 1854",
+    "description": "Interactive explorer: Name register & Map"
+  },
+  "WelcomeModal": {
+    "title": "Welcome to the Address Book 1854",
+    "body1": "This is a hobby project by <name>Lieuwe Jongsma</name> (Groninger Archieven). The goal is to make the Groningen address book or name register of 1854 searchable and to put it on the map.",
+    "disclaimer": "Note: this is a work in progress. The book uses the old ward numbering (ward letter and number). The conversion to present-day addresses may contain errors or gaps; about a quarter of the entries is not on the map yet."
+  },
+  "Tour": {
+    "map": {
+      "title": "The map",
+      "text": "This is the map of present-day Groningen. The highlighted buildings stand on the site of an address from the 1854 address book. Click a building to see who had their business there."
+    },
+    "layers": {
+      "title": "Map layers",
+      "text": "Switch the highlighted address buildings on or off here."
+    },
+    "scan": {
+      "title": "Page view",
+      "text": "View the original scanned page from the 1854 address book. Browse the book and zoom in on the details."
+    },
+    "section": {
+      "title": "Sections",
+      "text": "Jump to the parts of the book: the register by occupation and the alphabetical name list at the back."
+    }
+  },
+  "Sections": {
+    "other": "Name list & front matter",
+    "occupation_register": "Register by occupation",
+    "advertisement": "Oomkens publications",
+    "blank": "Flyleaf"
+  },
+  "EntryPresentation": {
+    "sectionOccupationRegister": "Register by occupation",
+    "sectionOther": "Name list"
+  }
+}

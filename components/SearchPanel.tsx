@@ -78,13 +78,13 @@ export default function SearchPanel(p: Props) {
           <div
             className="relative flex items-center gap-[8px]"
             style={{
-              border: "1px solid #e8b84c88",
-              background: "#e8b84c08",
+              border: "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)",
+              background: "color-mix(in srgb, var(--color-bp-amber) 3%, transparent)",
               padding: "10px 11px",
             }}
           >
             <CornerTicks />
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e8b84c" strokeWidth="2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-bp-amber)" strokeWidth="2">
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
@@ -107,12 +107,12 @@ export default function SearchPanel(p: Props) {
               id="fuzzy-toggle"
               checked={p.fuzzy ?? false}
               onChange={(e) => p.onFuzzy?.(e.target.checked)}
-              style={{ accentColor: "#e8b84c", width: 10, height: 10, cursor: "pointer" }}
+              style={{ accentColor: "var(--color-bp-amber)", width: 10, height: 10, cursor: "pointer" }}
             />
             <label
               htmlFor="fuzzy-toggle"
               className="text-bp-ink-dim uppercase cursor-pointer select-none"
-              style={{ fontSize: 8, letterSpacing: "0.12em", fontWeight: 600, color: p.fuzzy ? "#e8b84c" : undefined }}
+              style={{ fontSize: 8, letterSpacing: "0.12em", fontWeight: 600, color: p.fuzzy ? "var(--color-bp-amber)" : undefined }}
             >
               Fuzzy search
             </label>
@@ -167,9 +167,9 @@ export default function SearchPanel(p: Props) {
             const statusColor = !p.showStatus
               ? null
               : entry.flags?.verified
-              ? "#7fc97f"
+              ? "var(--color-bp-ok)"
               : entry.flags?.needs_review
-              ? "#e8b84c"
+              ? "var(--color-bp-amber)"
               : null;
             return (
               <button
@@ -178,8 +178,8 @@ export default function SearchPanel(p: Props) {
                 className="w-full text-left flex flex-col gap-[3px]"
                 style={{
                   padding: "10px 13px",
-                  background: active ? "#e8b84c0c" : "transparent",
-                  borderLeft: active ? "2px solid #e8b84c" : "2px solid transparent",
+                  background: active ? "color-mix(in srgb, var(--color-bp-amber) 5%, transparent)" : "transparent",
+                  borderLeft: active ? "2px solid var(--color-bp-amber)" : "2px solid transparent",
                 }}
               >
                 <span
@@ -188,7 +188,7 @@ export default function SearchPanel(p: Props) {
                     fontSize: 11,
                     letterSpacing: "0.08em",
                     fontWeight: 700,
-                    color: active ? "#e8b84c" : "#e6d9b0",
+                    color: active ? "var(--color-bp-amber)" : "var(--color-bp-ink-bright)",
                   }}
                 >
                   {statusColor && (
@@ -259,8 +259,8 @@ function CornerTicks() {
         position: "absolute",
         width: 5,
         height: 5,
-        border: "1px solid #e8b84c",
-        background: "#182d5c",
+        border: "1px solid var(--color-bp-amber)",
+        background: "var(--color-bp-blue)",
         ...style,
       }}
     />
@@ -295,9 +295,9 @@ function FilterBtn({
         letterSpacing: "0.12em",
         fontWeight: 700,
         padding: "5px 4px",
-        border: active ? "1px solid #e8b84c88" : "1px solid #7a705444",
-        background: active ? "#e8b84c10" : "transparent",
-        color: active ? "#e8b84c" : "#7a7054",
+        border: active ? "1px solid color-mix(in srgb, var(--color-bp-amber) 53%, transparent)" : "1px solid color-mix(in srgb, var(--color-bp-ink-dim) 27%, transparent)",
+        background: active ? "color-mix(in srgb, var(--color-bp-amber) 6%, transparent)" : "transparent",
+        color: active ? "var(--color-bp-amber)" : "var(--color-bp-ink-dim)",
       }}
       data-id={id}
     >
@@ -383,7 +383,7 @@ function GlobalResults({
                   fontSize: 11,
                   letterSpacing: "0.08em",
                   fontWeight: 700,
-                  color: "#e6d9b0",
+                  color: "var(--color-bp-ink-bright)",
                 }}
               >
                 {firstDisplay.badge && (
@@ -418,13 +418,13 @@ function GlobalResults({
                     className="w-full text-left flex items-center justify-between"
                     style={{
                       padding: "6px 13px",
-                      background: active ? "#e8b84c1a" : "transparent",
-                      borderLeft: active ? "2px solid #e8b84c" : "2px solid transparent",
+                      background: active ? "color-mix(in srgb, var(--color-bp-amber) 10%, transparent)" : "transparent",
+                      borderLeft: active ? "2px solid var(--color-bp-amber)" : "2px solid transparent",
                     }}
                   >
                     <span
                       className="text-bp-ink-dim truncate"
-                      style={{ fontSize: 8.5, color: active ? "#e8b84c" : undefined }}
+                      style={{ fontSize: 8.5, color: active ? "var(--color-bp-amber)" : undefined }}
                     >
                       {/* Only show address and occ here if they differ or just show "Vermelding" */}
                       {mentionLine(m, entryFallback, entryLabels)}

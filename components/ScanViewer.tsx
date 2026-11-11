@@ -156,10 +156,10 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
       const rect = v.viewport.imageToViewportRectangle(x0, y0, w, h);
       const isActive = i === aidx;
       const canNavigateToAddress = !!entry.pand_id;
-      const linkedBorder = isActive ? "2px solid #e8b84c" : "1px solid #e8b84c66";
-      const linkedBackground = isActive ? "#e8b84c22" : "transparent";
-      const unlinkedBorder = isActive ? "2px dashed #7a7054" : "1px dashed #7a705466";
-      const unlinkedBackground = isActive ? "#cfc39a10" : "transparent";
+      const linkedBorder = isActive ? "2px solid var(--color-bp-amber)" : "1px solid color-mix(in srgb, var(--color-bp-amber) 40%, transparent)";
+      const linkedBackground = isActive ? "color-mix(in srgb, var(--color-bp-amber) 13%, transparent)" : "transparent";
+      const unlinkedBorder = isActive ? "2px dashed var(--color-bp-ink-dim)" : "1px dashed color-mix(in srgb, var(--color-bp-ink-dim) 40%, transparent)";
+      const unlinkedBackground = isActive ? "color-mix(in srgb, var(--color-bp-ink) 6%, transparent)" : "transparent";
 
       const el = document.createElement("div");
       el.setAttribute(
@@ -194,7 +194,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         line-height: 1;
         padding: 2px 4px;
         border-radius: 3px 3px 0 3px;
-        background: ${canNavigateToAddress ? "#e8b84cee" : "#7a7054cc"};
+        background: ${canNavigateToAddress ? "color-mix(in srgb, var(--color-bp-amber) 93%, transparent)" : "color-mix(in srgb, var(--color-bp-ink-dim) 80%, transparent)"};
         color: ${canNavigateToAddress ? "#1a1006" : "#f0ead8"};
         opacity: 0;
         pointer-events: none;
@@ -209,15 +209,15 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
       el.addEventListener("mouseenter", () => {
         label.style.opacity = "1";
         if (!isActive) {
-          el.style.background = canNavigateToAddress ? "#e8b84c18" : "#cfc39a0c";
-          el.style.border = canNavigateToAddress ? "1px solid #e8b84c99" : "1px dashed #7a705499";
+          el.style.background = canNavigateToAddress ? "color-mix(in srgb, var(--color-bp-amber) 9%, transparent)" : "color-mix(in srgb, var(--color-bp-ink) 5%, transparent)";
+          el.style.border = canNavigateToAddress ? "1px solid color-mix(in srgb, var(--color-bp-amber) 60%, transparent)" : "1px dashed color-mix(in srgb, var(--color-bp-ink-dim) 60%, transparent)";
         }
       });
       el.addEventListener("mouseleave", () => {
         label.style.opacity = "0";
         if (!isActive) {
           el.style.background = "transparent";
-          el.style.border = canNavigateToAddress ? "1px solid #e8b84c66" : "1px dashed #7a705466";
+          el.style.border = canNavigateToAddress ? "1px solid color-mix(in srgb, var(--color-bp-amber) 40%, transparent)" : "1px dashed color-mix(in srgb, var(--color-bp-ink-dim) 40%, transparent)";
         }
       });
       el.addEventListener("click", (ev) => {
@@ -273,7 +273,7 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
     <div
       ref={containerRef}
       className="absolute inset-0"
-      style={{ background: "#1a1208", touchAction: "none" }}
+      style={{ background: "var(--color-bp-paper-ink)", touchAction: "none" }}
     />
   );
 });
