@@ -29,6 +29,7 @@ from pipeline.config import (
     OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
     OPENROUTER_MODEL,
+    OPENROUTER_REASONING_EFFORT,
     PROMPTS_DIR,
     SCHEMAS_DIR,
     get_section_for_page,
@@ -192,6 +193,7 @@ def _call_openrouter(prompt: str, image_paths: Path | list[Path], timeout: int =
         "timeout": timeout,
         "temperature": 0.1,
         "max_tokens": 65536,
+        **({"extra_body": {"reasoning": {"effort": OPENROUTER_REASONING_EFFORT}}} if OPENROUTER_REASONING_EFFORT else {}),
         "messages": [{"role": "user", "content": content}],
         "extra_headers": {
             "HTTP-Referer": "https://github.com/groningen-adresboek-1926",
@@ -479,10 +481,12 @@ def process_page_with_gemini(
         Parsed JSON dict from Gemini, or None if all retries failed
     """
     # Determine which prompt to use
+    map_prompt = map_section = None
     if section_override:
         section_type = section_override
     elif page_number is not None:
-        section_type, _, _ = get_section_for_page(page_number)
+        section_type, map_prompt, _ = get_section_for_page(page_number)
+        map_section = section_type
     else:
         section_type = "generic"
 
@@ -491,6 +495,9 @@ def process_page_with_gemini(
         section_type = identify_page_section(scan_image_path, ocr_page)
 
     prompt_file = f"{section_type}.txt"
+    # A book's SECTION_MAP may name its own prompt (occupation_register_1854.txt).
+    if map_prompt and section_type == map_section and (PROMPTS_DIR / map_prompt).exists():
+        prompt_file = map_prompt
     if not (PROMPTS_DIR / prompt_file).exists():
         logger.warning(f"  Prompt file {prompt_file} missing, falling back to generic.txt")
         prompt_file = "generic.txt"

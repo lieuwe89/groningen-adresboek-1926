@@ -7,6 +7,7 @@ The pipeline will try config_local.py first, then fall back to this file.
 
 from pathlib import Path
 import os
+import runpy
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
@@ -14,10 +15,16 @@ import os
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # Input scans directory
-SCANS_DIR = PROJECT_ROOT / "scans"
+# Per-book settings: ADRESBOEK_BOOK=1854 loads books/1854.py, whose UPPERCASE
+# names override this file (and config_local.py). Unset = the 1926 book.
+_BOOK_NAME = os.environ.get("ADRESBOEK_BOOK")
+_BOOK = runpy.run_path(str(PROJECT_ROOT / "books" / f"{_BOOK_NAME}.py")) if _BOOK_NAME else {}
+DATA_ROOT = Path(_BOOK.get("DATA_ROOT", PROJECT_ROOT))
+
+SCANS_DIR = DATA_ROOT / "scans"
 
 # Output directories
-OUTPUT_DIR = PROJECT_ROOT / "output"
+OUTPUT_DIR = DATA_ROOT / "output"
 HOCR_DIR = OUTPUT_DIR / "hocr"
 ALTO_DIR = OUTPUT_DIR / "alto"
 JSON_DIR = OUTPUT_DIR / "json"
@@ -53,6 +60,8 @@ OPENROUTER_MODEL = "google/gemini-2.0-flash-001"
 # max_output_tokens — gets one more shot with this. Pick a more capable /
 # more verbose-tolerant model. Set to None to disable.
 OPENROUTER_FALLBACK_MODEL = "google/gemini-2.5-flash"
+# Reasoning effort for thinking models ("minimal" | "low" | …); None = provider default.
+OPENROUTER_REASONING_EFFORT = None
 
 # vLLM (Local DGX Spark Backend)
 VLLM_API_BASE = os.environ.get("VLLM_API_BASE", "http://localhost:8000/v1")
@@ -88,6 +97,10 @@ LOGHI_MODEL_PATH = os.environ.get("LOGHI_MODEL_PATH", None)
 # so we use a pixel-width heuristic. The Groningen scans are ~1900 px wide,
 # which is plenty for Surya — no upscaling needed at this width.
 MIN_OCR_WIDTH = 1500
+
+# Still imported by preprocess.py (legacy Tesseract path).
+TARGET_DPI = 300
+TESSERACT_LANG = "nld"
 
 # Supported input formats (JPEG only for now)
 # NOTE: Multipage PDF support may be added later if needed.
@@ -210,3 +223,5 @@ try:
     from pipeline.config_local import *  # noqa: F401, F403
 except ImportError:
     pass
+
+globals().update({k: v for k, v in _BOOK.items() if k.isupper()})

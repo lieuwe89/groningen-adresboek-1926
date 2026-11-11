@@ -317,7 +317,9 @@ def stage_ocr_llm_pipelined(
     cheaply (no LLM call). The OCR call itself is cached per page on disk,
     so re-running is fast.
     """
-    from pipeline.config import GEMINI_DELAY_SECONDS, LLM_WORKERS
+    from pipeline.config import GEMINI_DELAY_SECONDS, LLM_PROVIDER, LLM_WORKERS
+    import queue as _queue
+    import threading
     from threading import Lock
 
     logger_ocr = logging.getLogger("ocr")
@@ -339,8 +341,9 @@ def stage_ocr_llm_pipelined(
     counters = {"llm_calls": 0, "from_cache": 0}
     counters_lock = Lock()
 
-    # Scale workers for local vLLM; keep 1 for rate-limited Gemini
-    num_workers = LLM_WORKERS if LLM_PROVIDER in ("vllm", "local") else 1
+    # LLM_WORKERS defaults to 1; raise it for local vLLM or paid OpenRouter
+    # (no per-minute cap), not for the rate-limited Google free tier.
+    num_workers = LLM_WORKERS
     if num_workers > 1:
         logger_llm.info(f"Scaling to {num_workers} parallel LLM workers...")
 

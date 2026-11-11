@@ -8,8 +8,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SRC_DIR="$ROOT/web/public/scans"
-DST_DIR="$ROOT/web/public/tiles"
+SRC_DIR="${SRC_DIR:-$ROOT/web/public/scans}"
+DST_DIR="${DST_DIR:-$ROOT/web/public/tiles}"
 
 mkdir -p "$DST_DIR"
 

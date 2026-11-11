@@ -1,0 +1,77 @@
+You are processing a page from an 1854 Dutch trade directory: "Adresboek of Naam-register van
+Fabrijkanten, Kooplieden, Winkeliers, Notarissen, Makelaars, enz. te Groningen" (J. Oomkens J.Zoon, 1854).
+
+The whole book is one OCCUPATION REGISTER: occupation headings in capitals, in alphabetical order,
+each followed by the practitioners. Every practitioner line has four columns:
+
+    Name, Initials        Street (italic)        Wijk letter        House number
+    Reintjes, L. H.       Poelestraat            C                  95a.
+
+Addresses use the old Groningen ward numbering: a WIJK LETTER (A–Z; "IJ" is one letter) plus a
+number within that ward. The number may carry a letter suffix (95a) or a superscript (26², write "26-2").
+
+Below is a numbered list of words detected by OCR on this page, with their IDs.
+The OCR is poor, especially for the italic street names. Use the attached scan image as the ground
+truth for all text; use the word list only to pick word IDs.
+
+WORD LIST:
+{word_list}
+
+RULES:
+- Keep the original 1854 spelling exactly (Heerestraat, Groote Markt, Vischmarkt, Karolieweg).
+- Ditto marks: "Idem" in the street column means the same street as the line above. A ditto mark
+  („ or ,, or ") in the wijk column means the same wijk letter as the line above; in the number
+  column it means the same number. An empty wijk column also continues the wijk above.
+  ALWAYS resolve these: every entry gets the real street, wijk letter and number. Carry values
+  over from the previous entry, also across occupation headings. If the first entry on the page
+  has a ditto you cannot resolve from this page, use null and set "notes" to "ditto_from_previous_page".
+  Set "address_is_ditto" to true when the street was printed as "Idem".
+- A firm in parentheses, e.g. "Ranitz, G. H. de (Firma Beekhuis Damsté en Comp.)", often wraps onto
+  a second line: it is ONE entry. Put the firm name in "firm".
+- Prefixes such as "Wedw." (weduwe), "Erven", "Gebr.", "Mr.", "Dr." go in "name_prefix".
+  A surname prefix after the initials ("Vries, Jan de") stays in "initials" as printed: "Jan de".
+- Goods or a specialty after the name ("in Piano's", "in Manufacturen") go in "specialization".
+- Headings can have a subtitle line in small capitals ("VAN WERKEN EN LEVERANTIEN"): append it to
+  "occupation_name".
+- A heading followed only by "Zie op …" is a cross-reference: return it with "see": "<target>" and
+  an empty "entries" list.
+- If the page starts with entries that belong to a heading on the previous page, return them under
+  an occupation with "occupation_name": null and "continued_from_previous": true.
+- Do not skip any line. Do not invent entries.
+
+Return ONLY valid JSON:
+{{
+  "page_number": <int>,
+  "section": "occupation_register",
+  "header": {{"text": "...", "word_ids": [...]}},
+  "footer": {{"text": "...", "word_ids": [...]}},
+  "occupations": [
+    {{
+      "occupation_name": "...",
+      "occupation_name_expanded": null,
+      "heading_word_ids": [...],
+      "continued_from_previous": false,
+      "see": null,
+      "entries": [
+        {{
+          "name": "...",
+          "initials": "...",
+          "name_prefix": null,
+          "name_prefix_expanded": null,
+          "firm": null,
+          "address_street": "...",
+          "address_street_expanded": "...",
+          "address_wijk": "...",
+          "address_number": "...",
+          "address_is_ditto": false,
+          "phone": null,
+          "specialization": null,
+          "word_ids": [...],
+          "name_word_ids": [...],
+          "address_word_ids": [...],
+          "notes": null
+        }}
+      ]
+    }}
+  ]
+}}
