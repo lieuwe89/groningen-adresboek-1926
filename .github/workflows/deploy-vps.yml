@@ -17,6 +17,8 @@ jobs:
       packages: write
     strategy:
       fail-fast: false
+      # One at a time: two image pulls on the VPS at once ended in "connection reset by peer".
+      max-parallel: 1
       matrix:
         # One image per address book: NEXT_PUBLIC_BOOK is inlined at build time (lib/book.ts).
         include:

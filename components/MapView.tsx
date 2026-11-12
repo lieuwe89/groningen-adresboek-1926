@@ -83,7 +83,6 @@ export default function MapView({
       sources: vb
         ? {
             parcels: { type: "geojson", data: asset(vb.parcels), attribution: vb.attribution },
-            houses: { type: "geojson", data: asset(vb.houses) },
           }
         : {
             // Carto watermarks keyless tiles ("API KEY REQUIRED"). The key is public by design
@@ -117,13 +116,6 @@ export default function MapView({
                 ],
                 "fill-outline-color": "#cfc4a8",
               },
-            },
-            {
-              id: "houses",
-              type: "fill",
-              source: "houses",
-              // Neutral, so that red on the map only ever means "has entries".
-              paint: { "fill-color": "#dcd1bc", "fill-outline-color": "#b3a78d" },
             },
           ]
         : [{ id: "carto-base", type: "raster", source: "carto" }],
@@ -164,6 +156,8 @@ export default function MapView({
       map.addSource("buildings", { type: "geojson", data, promoteId: "pand_id" });
 
       // Subtle amber outline so the user knows which footprints are clickable.
+      // Over a scanned map the outlines compete with the drawing's own ink: heavier there.
+      const onScan = !!BOOK.vectorBase;
       map.addLayer({
         id: "buildings-line",
         type: "line",
@@ -173,14 +167,14 @@ export default function MapView({
           "line-width": [
             "case",
             ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]],
-            2.0,
-            0.6,
+            onScan ? 3.0 : 2.0,
+            onScan ? 1.4 : 0.6,
           ],
           "line-opacity": [
             "case",
             ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]],
             1.0,
-            0.55,
+            onScan ? 0.95 : 0.55,
           ],
         },
       });
@@ -196,8 +190,8 @@ export default function MapView({
           "fill-opacity": [
             "case",
             ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]],
-            0.32,
-            0.14,
+            onScan ? 0.45 : 0.32,
+            onScan ? 0.16 : 0.14,
           ],
         },
       });
@@ -334,9 +328,11 @@ export default function MapView({
       type: "raster",
       // Using tiles array with {z}/{x}/{y} is often more reliable for custom protocols.
       // Reverting to 256 as the geomatico protocol handler is hardcoded to this size.
-      tiles: [`cog://${fullUrl}/{z}/{x}/{y}`],
+      // An XYZ template: URL() escaped its braces, put them back.
+      tiles: [conf.xyz ? decodeURI(fullUrl) : `cog://${fullUrl}/{z}/{x}/{y}`],
       tileSize: 256,
       bounds: conf.bbox,
+      ...conf.xyz,
     });
 
     // Insert under buildings-line so building outlines stay on top.

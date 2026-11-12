@@ -20,7 +20,7 @@ export interface Book {
   /** Building footprint colour on the map (maplibre paint cannot read CSS variables). */
   mapAccent: string;
   /** Period vector base (GeoJSON under /maps) drawn instead of the Carto raster; null = Carto. */
-  vectorBase: { parcels: string; houses: string; attribution: string } | null;
+  vectorBase: { parcels: string; attribution: string } | null;
   /** Header "Blad" value; null hides it. */
   sheetLabel: string | null;
 }
@@ -50,13 +50,15 @@ const BOOKS: Record<string, Book> = {
     adminStartStem: "1769_19527-1854_0007",
     builtBeforeFilter: false,
     basemap: "light_nolabels",
-    mapAccent: "#8f2a23",
-    // Cadastre of 1832, the nearest survey before 1854 (made in ~/projects/Kadaster).
+    // Not the oxblood of the theme: the plans of 1832 are drawn in red and pink. Prussian blue stands out.
+    mapAccent: "#1b4f8a",
+    // Cadastre of 1832, the nearest survey before 1854: HisGIS parcels as the vector base, the
+    // scanned plans themselves on top (lib/historicMaps.ts). Houses are not traced: reading them
+    // off the scans left too many out and the outlines ragged.
     vectorBase: {
       parcels: "/maps/percelen_1832.geojson",
-      houses: "/maps/huizen_1832.geojson",
       attribution:
-        'Kadaster 1832: percelen &copy; <a href="https://hisgis.nl">HisGIS</a> (ODbL), huizen uit de minuutplans (RCE)',
+        'Kadaster 1832: minuutplans <a href="https://beeldbank.cultureelerfgoed.nl">RCE</a> (publiek domein), percelen &copy; <a href="https://hisgis.nl">HisGIS</a> (ODbL)',
     },
     sheetLabel: null,
   },

@@ -27,6 +27,10 @@
       "text": "Spring naar de delen van het boek: het register op beroep en de alfabetische naamlijst achterin."
     }
   },
+  "Map": {
+    "modern": "Alleen percelen (HisGIS)",
+    "buildings": "Erven met vermeldingen"
+  },
   "Sections": {
     "other": "Naamlijst & voorwerk",
     "occupation_register": "Register op beroep",

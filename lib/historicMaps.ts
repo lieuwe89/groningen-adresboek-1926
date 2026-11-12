@@ -11,6 +11,10 @@ export interface HistoricMap {
   bbox: [number, number, number, number]; // [west, south, east, north]
   // Approximate scan year if known — purely informational for the user.
   year?: string;
+  /** `url` is an XYZ tile template instead of a COG. */
+  xyz?: { minzoom: number; maxzoom: number };
+  /** Shown when the map opens. */
+  default?: boolean;
 }
 
 import { BOOK } from "./book";
@@ -54,5 +58,17 @@ const MAPS_1926: HistoricMap[] = [
   },
 ];
 
-// 1854 has no raster overlays; its base map is the 1832 cadastre (BOOK.vectorBase).
-export const HISTORIC_MAPS: HistoricMap[] = BOOK.id === "1926" ? MAPS_1926 : [];
+// 1854: the cadastral plans of 1832 themselves, over the HisGIS parcels (BOOK.vectorBase).
+// Made by _pipeline/scripts/minuutplan_ligging.py + minuutplan_tegels.sh.
+const MAPS_1854: HistoricMap[] = [
+  {
+    id: "minuutplan1832",
+    label: "Minuutplans 1832",
+    url: "/maps/minuutplan1832/{z}/{x}/{y}.webp",
+    xyz: { minzoom: 12, maxzoom: 20 },
+    bbox: [6.5125, 53.1933, 6.6021, 53.2433],
+    default: true,
+  },
+];
+
+export const HISTORIC_MAPS: HistoricMap[] = BOOK.id === "1926" ? MAPS_1926 : BOOK.id === "1854" ? MAPS_1854 : [];

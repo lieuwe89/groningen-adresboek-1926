@@ -27,6 +27,10 @@
       "text": "Jump to the parts of the book: the register by occupation and the alphabetical name list at the back."
     }
   },
+  "Map": {
+    "modern": "Parcels only (HisGIS)",
+    "buildings": "Yards with entries"
+  },
   "Sections": {
     "other": "Name list & front matter",
     "occupation_register": "Register by occupation",

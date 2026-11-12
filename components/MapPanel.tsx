@@ -22,8 +22,10 @@ interface Props {
 export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenScan, focusPandId }: Props) {
   const [buildingsOn, setBuildingsOn] = useState(true);
   const [only1926, setOnly1926] = useState(false);
-  const [historicId, setHistoricId] = useState<string | null>(null);
-  const [historicOpacity, setHistoricOpacity] = useState(0.85);
+  const defaultMap = HISTORIC_MAPS.find((m) => m.default);
+  const [historicId, setHistoricId] = useState<string | null>(defaultMap?.id ?? null);
+  // A default layer is the base map itself: fully opaque. An overlay starts slightly see-through.
+  const [historicOpacity, setHistoricOpacity] = useState(defaultMap ? 1 : 0.85);
   const [activePand, setActivePand] = useState<string | null>(null);
   const { layersOpen: layersExpanded, setLayersOpen: setLayersExpanded, tourActive } = useSelection();
   const router = useRouter();

@@ -39,8 +39,8 @@ export default function Info1854({ isEnglish, Section, Rule }: Props) {
             the 1854 address and the address today.
           </p>
           <p>
-            The map is the cadastre of 1832, the last survey before the book: parcels from HisGIS, house outlines
-            read from the cadastral plans. About three quarters of the entries are linked to a yard on that map,
+            The map is the cadastre of 1832, the last survey before the book: the surveyors&apos; own plans (scans
+            from the Cultural Heritage Agency, public domain), laid on the parcels of HisGIS. About three quarters of the entries are linked to a yard on that map,
             through the place where the present-day address lies. For the rest only the street is known, or the
             ward was renumbered between 1854 and 1899, or the address can no longer be found. A highlighted yard
             marks the <B>place</B> of the address; between 1832 and 1854 parcels were split and built on, so the
@@ -86,8 +86,9 @@ export default function Info1854({ isEnglish, Section, Rule }: Props) {
           het adres van 1854 en het adres van nu.
         </p>
         <p>
-          De kaart is het kadaster van 1832, de laatste opmeting voor het boek: percelen van HisGIS, huisomtrekken
-          afgelezen van de minuutplans. Ongeveer driekwart van de vermeldingen is gekoppeld aan een erf op die
+          De kaart is het kadaster van 1832, de laatste opmeting voor het boek: de minuutplans van de landmeters
+          zelf (scans van de Rijksdienst voor het Cultureel Erfgoed, publiek domein), gelegd op de percelen van
+          HisGIS. Ongeveer driekwart van de vermeldingen is gekoppeld aan een erf op die
           kaart, via de plek waar het adres van nu ligt. Van de rest kennen we alleen de straat, is de wijk tussen
           1854 en 1899 al eens omgenummerd, of vinden we het adres niet meer terug. Een gemarkeerd erf wijst de{" "}
           <B>plek</B> van het adres aan; tussen 1832 en 1854 zijn percelen gesplitst en bebouwd, dus het huis van

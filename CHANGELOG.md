@@ -2,6 +2,16 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.19.0] — 2026-11-12
+
+### Changed
+- 1854: the map now shows the cadastral plans of 1832 themselves (thirteen scanned sheets from the Cultural Heritage Agency, public domain) as a tile layer over the HisGIS parcels, on by default. The house outlines traced from those scans are gone: too many houses were missing and the edges were ragged.
+- 1854: yards with entries are outlined in Prussian blue and drawn heavier, so they stand out against the red and pink of the plans.
+- Historic map layers can be XYZ tile sets as well as COGs, and one can be marked as shown by default (`lib/historicMaps.ts`).
+
+### Added
+- Pipeline: `minuutplan_ligging.py` (where each sheet lies, which parcels are drawn on it) and `minuutplan_tegels.sh` (GDAL: warp, cut, mosaic, WebP tiles).
+
 ## [0.18.0] — 2026-11-12
 
 ### Added
