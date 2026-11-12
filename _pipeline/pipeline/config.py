@@ -62,6 +62,7 @@ OPENROUTER_MODEL = "google/gemini-2.0-flash-001"
 OPENROUTER_FALLBACK_MODEL = "google/gemini-2.5-flash"
 # Reasoning effort for thinking models ("minimal" | "low" | …); None = provider default.
 OPENROUTER_REASONING_EFFORT = None
+BUILDINGS_DIR = "bag"  # under OUTPUT_DIR: buildings.geojson + match.json for build_db.py
 
 # vLLM (Local DGX Spark Backend)
 VLLM_API_BASE = os.environ.get("VLLM_API_BASE", "http://localhost:8000/v1")

@@ -13,6 +13,9 @@ OPENROUTER_FALLBACK_MODEL = "google/gemini-3.8-flash"
 # Provider-default thinking spent ~47k output tokens (5 min) on one 35-line page.
 OPENROUTER_REASONING_EFFORT = "low"
 
+# The map shows the yards of the 1832 cadastre, not BAG buildings: scripts/match_kadaster_1832.py.
+BUILDINGS_DIR = "kadaster1832"
+
 SCAN_TO_PAGE_OFFSET = 2  # scan 10 = printed page 8
 
 SECTION_MAP = [

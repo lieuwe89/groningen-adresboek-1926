@@ -68,21 +68,65 @@ export default function MapView({
     // Register the cog:// protocol once per module load.
     ensureCogProtocol();
 
+    const asset = (assetPath: string) =>
+      new URL(
+        resolvePublicAssetUrl({
+          assetPath,
+          cdnBaseUrl: process.env.NEXT_PUBLIC_MAPS_BASE_URL || process.env.NEXT_PUBLIC_STATIC_ASSETS_BASE_URL,
+        }),
+        window.location.origin
+      ).href;
+    const vb = BOOK.vectorBase;
     const style: StyleSpecification = {
       version: 8,
       glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
-      sources: {
-        // Carto watermarks keyless tiles ("API KEY REQUIRED"). The key is public by design
-        // and referrer-restricted in the Carto basemaps dashboard (403 from other origins).
-        carto: {
-          type: "raster",
-          tiles: [`https://basemaps.cartocdn.com/${BOOK.basemap}/{z}/{x}/{y}.png?key=cb1_3nss_1_48025c3c08804815b71b1d1f`],
-          tileSize: 256,
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        },
-      },
-      layers: [{ id: "carto-base", type: "raster", source: "carto" }],
+      sources: vb
+        ? {
+            parcels: { type: "geojson", data: asset(vb.parcels), attribution: vb.attribution },
+            houses: { type: "geojson", data: asset(vb.houses) },
+          }
+        : {
+            // Carto watermarks keyless tiles ("API KEY REQUIRED"). The key is public by design
+            // and referrer-restricted in the Carto basemaps dashboard (403 from other origins).
+            carto: {
+              type: "raster",
+              tiles: [`https://basemaps.cartocdn.com/${BOOK.basemap}/{z}/{x}/{y}.png?key=cb1_3nss_1_48025c3c08804815b71b1d1f`],
+              tileSize: 256,
+              attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            },
+          },
+      layers: vb
+        ? [
+            { id: "paper", type: "background", paint: { "background-color": "#f3ecdc" } },
+            {
+              id: "parcels",
+              type: "fill",
+              source: "parcels",
+              paint: {
+                "fill-color": [
+                  "match", ["get", "laag"],
+                  "straat", "#fffdf7",
+                  "water", "#b5d0d6",
+                  "vesting", "#d0d9ba",
+                  "dijk", "#ddd7b4",
+                  "groen", "#cfdeb2",
+                  "land", "#ebe7cb",
+                  "erf", "#efe6d2",
+                  "#e5e0d4",
+                ],
+                "fill-outline-color": "#cfc4a8",
+              },
+            },
+            {
+              id: "houses",
+              type: "fill",
+              source: "houses",
+              // Neutral, so that red on the map only ever means "has entries".
+              paint: { "fill-color": "#dcd1bc", "fill-outline-color": "#b3a78d" },
+            },
+          ]
+        : [{ id: "carto-base", type: "raster", source: "carto" }],
     };
 
     const savedPos = (() => {

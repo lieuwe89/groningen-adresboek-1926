@@ -12,11 +12,11 @@
   "Tour": {
     "map": {
       "title": "De kaart",
-      "text": "Dit is de kaart van Groningen anno nu. De gemarkeerde gebouwen staan op de plek van een adres uit het adresboek van 1854. Klik op een gebouw om te zien wie daar zijn bedrijf had."
+      "text": "Dit is Groningen volgens het kadaster van 1832. De gemarkeerde erven zijn de plekken van adressen uit het adresboek van 1854. Klik op een erf om te zien wie daar zijn bedrijf had."
     },
     "layers": {
       "title": "Kaartlagen",
-      "text": "Zet hier de gemarkeerde adresgebouwen aan of uit."
+      "text": "Zet hier de gemarkeerde erven aan of uit."
     },
     "scan": {
       "title": "Paginaweergave",

@@ -36,12 +36,15 @@ export default function Info1854({ isEnglish, Section, Rule }: Props) {
             Each ward address is converted to a present-day address with{" "}
             <a className="text-bp-amber underline" href="https://grunnlink.lieuwejongsma.nl/omnummering">Grunnlink</a>,
             which is based on the <em>Omnummerboek</em> of 1899 (Groninger Archieven). In the page view you see both:
-            the 1854 address, an arrow, and the address today.
+            the 1854 address and the address today.
           </p>
           <p>
-            About three quarters of the entries are linked to a building on the map. For the rest only the street
-            is known, or the ward was renumbered between 1854 and 1899, or the house no longer exists. A highlighted
-            building marks the <B>place</B> of the 1854 address; the building itself is often younger.
+            The map is the cadastre of 1832, the last survey before the book: parcels from HisGIS, house outlines
+            read from the cadastral plans. About three quarters of the entries are linked to a yard on that map,
+            through the place where the present-day address lies. For the rest only the street is known, or the
+            ward was renumbered between 1854 and 1899, or the address can no longer be found. A highlighted yard
+            marks the <B>place</B> of the address; between 1832 and 1854 parcels were split and built on, so the
+            house of 1854 may differ from the one drawn.
           </p>
         </Section>
         <Rule />
@@ -80,12 +83,15 @@ export default function Info1854({ isEnglish, Section, Rule }: Props) {
           Elk wijkadres rekenen we om naar een adres van nu met{" "}
           <a className="text-bp-amber underline" href="https://grunnlink.lieuwejongsma.nl/omnummering">Grunnlink</a>,
           dat steunt op het <em>Omnummerboek</em> van 1899 (Groninger Archieven). In de paginaweergave zie je beide:
-          het adres van 1854, een pijl, en het adres van nu.
+          het adres van 1854 en het adres van nu.
         </p>
         <p>
-          Ongeveer driekwart van de vermeldingen is gekoppeld aan een gebouw op de kaart. Van de rest kennen we
-          alleen de straat, is de wijk tussen 1854 en 1899 al eens omgenummerd, of bestaat het huis niet meer. Een
-          gemarkeerd gebouw wijst de <B>plek</B> van het adres uit 1854 aan; het gebouw zelf is vaak jonger.
+          De kaart is het kadaster van 1832, de laatste opmeting voor het boek: percelen van HisGIS, huisomtrekken
+          afgelezen van de minuutplans. Ongeveer driekwart van de vermeldingen is gekoppeld aan een erf op die
+          kaart, via de plek waar het adres van nu ligt. Van de rest kennen we alleen de straat, is de wijk tussen
+          1854 en 1899 al eens omgenummerd, of vinden we het adres niet meer terug. Een gemarkeerd erf wijst de{" "}
+          <B>plek</B> van het adres aan; tussen 1832 en 1854 zijn percelen gesplitst en bebouwd, dus het huis van
+          1854 kan afwijken van wat er getekend staat.
         </p>
       </Section>
       <Rule />

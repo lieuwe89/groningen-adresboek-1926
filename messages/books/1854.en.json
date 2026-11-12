@@ -12,11 +12,11 @@
   "Tour": {
     "map": {
       "title": "The map",
-      "text": "This is the map of present-day Groningen. The highlighted buildings stand on the site of an address from the 1854 address book. Click a building to see who had their business there."
+      "text": "This is Groningen according to the cadastre of 1832. The highlighted yards are the sites of addresses from the 1854 address book. Click a yard to see who had their business there."
     },
     "layers": {
       "title": "Map layers",
-      "text": "Switch the highlighted address buildings on or off here."
+      "text": "Switch the highlighted yards on or off here."
     },
     "scan": {
       "title": "Page view",

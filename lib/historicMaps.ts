@@ -54,5 +54,5 @@ const MAPS_1926: HistoricMap[] = [
   },
 ];
 
-// 1854 has no georeferenced overlays yet (candidates: kadaster 1832, TMK 1850).
+// 1854 has no raster overlays; its base map is the 1832 cadastre (BOOK.vectorBase).
 export const HISTORIC_MAPS: HistoricMap[] = BOOK.id === "1926" ? MAPS_1926 : [];

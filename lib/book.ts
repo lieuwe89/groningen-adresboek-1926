@@ -18,6 +18,8 @@ export interface Book {
   basemap: "dark_nolabels" | "light_nolabels";
   /** Building footprint colour on the map (maplibre paint cannot read CSS variables). */
   mapAccent: string;
+  /** Period vector base (GeoJSON under /maps) drawn instead of the Carto raster; null = Carto. */
+  vectorBase: { parcels: string; houses: string; attribution: string } | null;
   /** Header "Blad" value; null hides it. */
   sheetLabel: string | null;
 }
@@ -33,6 +35,7 @@ const BOOKS: Record<string, Book> = {
     builtBeforeFilter: true,
     basemap: "dark_nolabels",
     mapAccent: "#e8b84c",
+    vectorBase: null,
     sheetLabel: "A-Z",
   },
   "1854": {
@@ -45,6 +48,13 @@ const BOOKS: Record<string, Book> = {
     builtBeforeFilter: false,
     basemap: "light_nolabels",
     mapAccent: "#8f2a23",
+    // Cadastre of 1832, the nearest survey before 1854 (made in ~/projects/Kadaster).
+    vectorBase: {
+      parcels: "/maps/percelen_1832.geojson",
+      houses: "/maps/huizen_1832.geojson",
+      attribution:
+        'Kadaster 1832: percelen &copy; <a href="https://hisgis.nl">HisGIS</a> (ODbL), huizen uit de minuutplans (RCE)',
+    },
     sheetLabel: null,
   },
 };

@@ -30,15 +30,16 @@ sys.path.insert(0, str(ROOT))
 
 from pipeline.json_export import _collect_entries_for_index  # noqa: E402
 
-from pipeline.config import DATA_ROOT, OUTPUT_DIR  # noqa: E402
+from pipeline.config import BUILDINGS_DIR, DATA_ROOT, OUTPUT_DIR  # noqa: E402
 
 # 1926 (no ADRESBOEK_BOOK): DATA_ROOT == ROOT, DB in the repo. Other books keep
 # their DB next to their data, outside the repo.
 JSON_DIR = OUTPUT_DIR / "json"
 OVERRIDES_DIR = OUTPUT_DIR / "overrides"
 GEOCODED_PATH = OUTPUT_DIR / "geocoded" / "addresses.json"
-BAG_BUILDINGS_PATH = OUTPUT_DIR / "bag" / "buildings.geojson"
-BAG_MATCH_PATH = OUTPUT_DIR / "bag" / "match.json"
+# "bag" for BAG buildings; a book may point at other footprints in the same format (1854: yards of 1832).
+BAG_BUILDINGS_PATH = OUTPUT_DIR / BUILDINGS_DIR / "buildings.geojson"
+BAG_MATCH_PATH = OUTPUT_DIR / BUILDINGS_DIR / "match.json"
 DB_PATH = (PROJECT_ROOT if DATA_ROOT == ROOT else DATA_ROOT) / "data" / "adresboek.sqlite"
 
 logging.basicConfig(
