@@ -17,8 +17,6 @@ jobs:
       packages: write
     strategy:
       fail-fast: false
-      # One at a time: two image pulls on the VPS at once ended in "connection reset by peer".
-      max-parallel: 1
       matrix:
         # One image per address book: NEXT_PUBLIC_BOOK is inlined at build time (lib/book.ts).
         include:
@@ -69,7 +67,8 @@ jobs:
           script: |
             set -euo pipefail
             cd /srv/apps/${{ matrix.app }} 2>/dev/null || { echo "${{ matrix.app }} is not set up on this host: image pushed, nothing to restart"; exit 0; }
-            docker compose pull
+            # ghcr.io over IPv6 now and then resets the connection mid-pull: try again before giving up.
+            docker compose pull || { sleep 15; docker compose pull; }
             docker compose up -d --remove-orphans
             sleep 5
             docker compose ps --status running --format '{{.Service}} {{.Status}}' | grep -q '^app ' || { echo "app container not running"; docker compose logs --tail=40; exit 1; }
