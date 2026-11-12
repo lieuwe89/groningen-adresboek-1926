@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   title: BOOK.title,
   description: BOOK.description,
   icons: {
-    icon: "/favicon.png",
+    icon: BOOK.favicon,
   },
 };
 

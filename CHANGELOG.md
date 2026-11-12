@@ -2,6 +2,18 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.18.0] — 2026-11-12
+
+### Added
+- **A second address book from the same codebase: the trade directory of 1854.** `NEXT_PUBLIC_BOOK` picks the book at build time (`lib/book.ts`); each book has its own image, data volume, texts (`messages/books/`), theme (`html[data-book]`) and favicon. Deployed at `groningen-1854.lieuwejongsma.nl`.
+- 1854: ward addresses (wijk letter + number) are converted to present-day addresses with Grunnlink; cards and panels show both.
+- 1854: the map is the cadastre of 1832 (HisGIS parcels, house outlines from the cadastral plans) and entries are placed on its yards.
+- Pipeline: per-book configuration (`ADRESBOEK_BOOK`, `_pipeline/books/`), scans and word boxes straight from an archive PDF.
+
+### Changed
+- Palette colours in components are theme tokens instead of hex literals, so a book theme can re-value them. No visible change for 1926.
+- The deploy workflow builds one image per book.
+
 ## [0.17.3] — 2026-09-16
 
 ### Changed

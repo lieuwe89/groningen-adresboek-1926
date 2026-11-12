@@ -10,6 +10,7 @@ export interface Book {
   year: number;
   title: string; // <title>
   description: string;
+  favicon: string;
   startStem: string; // page the home route opens
   adminStartStem: string;
   /** Show the "only buildings built ≤ year" toggle (BAG bouwjaar is unreliable before ~1900). */
@@ -30,6 +31,7 @@ const BOOKS: Record<string, Book> = {
     year: 1926,
     title: "Adresboek 1926: Gemeente Groningen",
     description: "Interactieve verkenner van het Groninger adresboek 1926",
+    favicon: "/favicon.png",
     startStem: "1769_19525-1926_0121", // first page of the Naamregister
     adminStartStem: "1769_19525-1926_0150",
     builtBeforeFilter: true,
@@ -43,6 +45,7 @@ const BOOKS: Record<string, Book> = {
     year: 1854,
     title: "Adresboek 1854: Fabrijkanten, kooplieden en winkeliers te Groningen",
     description: "Interactieve verkenner van het Groninger adresboek of naam-register van 1854",
+    favicon: "/favicon-1854.png",
     startStem: "1769_19527-1854_0007", // first page of the register (Aannemers)
     adminStartStem: "1769_19527-1854_0007",
     builtBeforeFilter: false,

@@ -7,6 +7,9 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Which address book this image serves (lib/book.ts); inlined into the client bundle.
+ARG NEXT_PUBLIC_BOOK=1926
+ENV NEXT_PUBLIC_BOOK=$NEXT_PUBLIC_BOOK
 RUN npm run build
 
 FROM node:20-alpine AS runner

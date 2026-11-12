@@ -15,6 +15,19 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # One image per address book: NEXT_PUBLIC_BOOK is inlined at build time (lib/book.ts).
+        include:
+          - book: "1926"
+            tag: latest
+            sha_prefix: ""
+            app: groningen-1926
+          - book: "1854"
+            tag: "1854"
+            sha_prefix: "1854-"
+            app: groningen-1854
     steps:
       - uses: actions/checkout@v4
 
@@ -36,11 +49,13 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            NEXT_PUBLIC_BOOK=${{ matrix.book }}
           tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}:latest
-            ghcr.io/${{ steps.repo.outputs.name }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ghcr.io/${{ steps.repo.outputs.name }}:${{ matrix.tag }}
+            ghcr.io/${{ steps.repo.outputs.name }}:${{ matrix.sha_prefix }}${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.book }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.book }}
           platforms: linux/amd64
 
       - name: SSH deploy
@@ -51,7 +66,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -euo pipefail
-            cd /srv/apps/groningen-1926
+            cd /srv/apps/${{ matrix.app }} 2>/dev/null || { echo "${{ matrix.app }} is not set up on this host: image pushed, nothing to restart"; exit 0; }
             docker compose pull
             docker compose up -d --remove-orphans
             sleep 5
