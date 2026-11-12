@@ -326,6 +326,7 @@ CREATE TABLE entries (
     address_street_expanded TEXT,
     address_number TEXT,
     address_full TEXT,
+    address_modern TEXT,               -- present-day address (books with wijk numbering)
     address_full_normalized TEXT,
     phone TEXT,
     notes TEXT,
@@ -597,7 +598,7 @@ def main() -> None:
                        entity_type, role, parent_organization, description,
                        occupation, occupation_expanded,
                        address_street, address_street_expanded, address_number,
-                       address_full, address_full_normalized,
+                       address_full, address_full_normalized, address_modern,
                        phone, notes,
                        entry_bbox, name_bbox, address_bbox,
                        word_ids, name_word_ids, address_word_ids,
@@ -608,7 +609,7 @@ def main() -> None:
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                            ?, ?, ?, ?, ?, ?,
-                           ?)""",
+                           ?, ?)""",
                 (
                     page_id, idx, stable_id,
                     entry.get("name"),
@@ -626,6 +627,7 @@ def main() -> None:
                     entry.get("address_number"),
                     address_full,
                     address_norm,
+                    entry.get("address_modern"),
                     entry.get("phone"),
                     entry.get("notes"),
                     jdumps(entry.get("entry_bbox")),

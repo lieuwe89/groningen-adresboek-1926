@@ -91,3 +91,17 @@ test("presentEntry gives advertisements their own display model", () => {
   assert.equal(display.detailLabel, "Beschrijving");
   assert.equal(display.detail, "Beleefd aanbevelend");
 });
+
+test("presentEntry labels the present-day address next to the book address", () => {
+  const display = presentEntry({
+    section: "occupation_register",
+    name: "Vries",
+    address_full: "Martini Kerkhof C 117",
+    address_modern: "Schuitendiep 10",
+  });
+
+  assert.equal(display.address, "Martini Kerkhof C 117 · nu Schuitendiep 10");
+  assert.equal(display.addressBook, "Martini Kerkhof C 117");
+  assert.equal(display.addressModern, "Schuitendiep 10");
+  assert.equal(presentEntry({ name: "Jansen", address_full: "A-straat 1" }).address, "A-straat 1");
+});

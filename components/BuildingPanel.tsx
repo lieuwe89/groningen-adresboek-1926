@@ -22,6 +22,7 @@ type Mention = {
   description: string | null;
   occupation: string | null;
   address_full: string | null;
+  address_modern?: string | null;
 };
 
 type Person = {
@@ -122,7 +123,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
           <div style={{ padding: "12px", color: "var(--color-bp-ink-dim)", fontSize: 9 }}>{t('loading')}</div>
         )}
         {error && (
-          <div style={{ padding: "12px", color: "#e89e3b", fontSize: 9 }}>{error}</div>
+          <div style={{ padding: "12px", color: "var(--color-bp-err)", fontSize: 9 }}>{error}</div>
         )}
         {!loading && !error && data && data.persons.length === 0 && (
           <div style={{ padding: "12px", color: "var(--color-bp-ink-dim)", fontSize: 9 }}>
@@ -134,7 +135,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
             const firstDisplay = presentEntry(p.mentions[0], p.mentions[0].section, entryLabels);
             const headerName = p.canonical_name || formatEntryName(p.mentions[0]) || "—";
             const headerOcc = p.canonical_occupation || firstDisplay.subtitle || "";
-            const headerAddr = p.canonical_address || firstDisplay.address || "";
+            const headerAddr = firstDisplay.addressModern ? firstDisplay.address : p.canonical_address || firstDisplay.address || "";
             
             return (
               <div key={p.cluster_id} style={{ marginBottom: 12 }}>
@@ -143,7 +144,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
                     padding: "4px 12px",
                     borderTop: "1px solid color-mix(in srgb, var(--color-bp-ink) 13%, transparent)",
                     borderBottom: "1px solid color-mix(in srgb, var(--color-bp-ink) 13%, transparent)",
-                    background: "#0e1e44",
+                    background: "var(--color-bp-blue-deep)",
                     color: "var(--color-bp-amber)",
                     fontSize: 10,
                     letterSpacing: "0.06em",

@@ -40,7 +40,10 @@ export type EntryPresentation = {
   subtitle: string;
   detailLabel: string;
   detail: string;
+  /** Book address, plus the labelled present-day address when there is one. */
   address: string;
+  addressBook: string;
+  addressModern: string;
   sectionLabel: string;
   showMapStatus: boolean;
 };
@@ -55,6 +58,7 @@ export type EntryPresentationLabels = {
   detailContext: string;
   detailRole: string;
   detailOccupation: string;
+  addressNow: string;
   sectionAdvertisement: string;
   sectionInstitutional: string;
   sectionNameRegister: string;
@@ -74,6 +78,7 @@ const DUTCH_LABELS: EntryPresentationLabels = {
   detailContext: "Context",
   detailRole: "Rol",
   detailOccupation: "Beroep",
+  addressNow: "nu",
   sectionAdvertisement: "Advertentie",
   sectionInstitutional: "Instellingen",
   sectionNameRegister: "Naamregister",
@@ -107,6 +112,7 @@ export function buildEntryPresentationLabels(
     detailContext: t("detailContext"),
     detailRole: t("detailRole"),
     detailOccupation: t("detailOccupation"),
+    addressNow: t("addressNow"),
     sectionAdvertisement: t("sectionAdvertisement"),
     sectionInstitutional: t("sectionInstitutional"),
     sectionNameRegister: t("sectionNameRegister"),
@@ -146,7 +152,9 @@ export function presentEntry(
   const occupation = entry?.occupation_expanded || entry?.occupation || "";
   const role = entry?.role || "";
   const description = entry?.description || entry?.notes || "";
-  const address = [entry?.address_full, entry?.address_modern].filter(Boolean).join(" → ");
+  const addressBook = entry?.address_full || "";
+  const addressModern = entry?.address_modern || "";
+  const address = [addressBook, addressModern && `${labels.addressNow} ${addressModern}`].filter(Boolean).join(" · ");
   const parent = entry?.parent_organization || "";
   const kind = classifyEntry(entry, section);
   const sectionLabels = buildSectionLabels(labels);
@@ -161,6 +169,8 @@ export function presentEntry(
       detailLabel: description ? labels.detailDescription : labels.detailMention,
       detail: description || occupation || "-",
       address,
+      addressBook,
+      addressModern,
       sectionLabel: sectionLabelResolved,
       showMapStatus: true,
     };
@@ -175,6 +185,8 @@ export function presentEntry(
       detailLabel: description ? labels.detailDescription : labels.detailContext,
       detail: description || occupation || parent || "-",
       address,
+      addressBook,
+      addressModern,
       sectionLabel: sectionLabelResolved,
       showMapStatus: true,
     };
@@ -189,6 +201,8 @@ export function presentEntry(
       detailLabel: role ? labels.detailRole : labels.detailContext,
       detail: role || parent || description || "-",
       address,
+      addressBook,
+      addressModern,
       sectionLabel: sectionLabelResolved,
       showMapStatus: address.length > 0,
     };
@@ -203,6 +217,8 @@ export function presentEntry(
       detailLabel: labels.detailMention,
       detail: description || occupation || "-",
       address,
+      addressBook,
+      addressModern,
       sectionLabel: sectionLabelResolved,
       showMapStatus: address.length > 0,
     };
@@ -216,6 +232,8 @@ export function presentEntry(
     detailLabel: labels.detailOccupation,
     detail: occupation || "-",
     address,
+    addressBook,
+    addressModern,
     sectionLabel: sectionLabelResolved,
     showMapStatus: true,
   };

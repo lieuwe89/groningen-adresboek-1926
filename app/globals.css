@@ -32,24 +32,25 @@ body { font-family: var(--font-sans); color: var(--color-bp-ink); }
    The token names are 1926's (blueprint blue, cream ink); a book theme only
    re-values them. 1854 is the Oomkens trade directory: cream book paper, black
    letterpress ink, the oxblood of the ribbon marker as accent, the sea-green
-   cover label for raised panels. "blue" = page ground, "ink" = text. */
+   cover label for raised panels. "blue" = page ground, "ink" = text.
+   Text tokens are chosen for 4.5:1 or better on every ground below. */
 html[data-book="1854"] {
-  --color-bp-blue: #f1e9d6;
-  --color-bp-blue-mid: #e7dcc3;
-  --color-bp-blue-deep: #e9dfc8;
-  --color-bp-blue-deeper: #dfd3b8;
-  --color-bp-blue-abyss: #d6c8aa;
-  --color-bp-blue-panel: #cfe3d3;
+  --color-bp-blue: #faf6ec;
+  --color-bp-blue-mid: #f3ecdc;
+  --color-bp-blue-deep: #f5efe1;
+  --color-bp-blue-deeper: #ede4d1;
+  --color-bp-blue-abyss: #e5dac4;
+  --color-bp-blue-panel: #e0eee3;
   --color-bp-ink: #3a3025;
   --color-bp-ink-bright: #17120c;
-  --color-bp-ink-dim: #7c6f5c;
+  --color-bp-ink-dim: #5c5142; /* 4.5:1 or better on every ground of this theme */
   --color-bp-ink-faint: #3a302518;
   --color-bp-amber: #8f2a23;
   --color-bp-amber-dim: #8f2a2318;
-  --color-bp-paper: #fbf6e9;
+  --color-bp-paper: #fffdf7;
   --color-bp-paper-ink: #17120c;
-  --color-bp-ok: #2f6b4f;
-  --color-bp-err: #a23b2e;
+  --color-bp-ok: #245a41;
+  --color-bp-err: #8c2f24;
 }
 /* Components name the 1926 font variables directly; alias them on the element
    where next/font defines the 1854 ones (the layout wrapper). */

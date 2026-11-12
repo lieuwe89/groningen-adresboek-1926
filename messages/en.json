@@ -82,6 +82,7 @@
     "closeAriaLabel": "Close scan panel",
     "pageLong": "Page {page}",
     "locationNotLinked": "Location not yet linked",
+    "addressModern": "Present-day address",
     "pageShort": "Pg {page}"
   },
   "Map": {
@@ -125,6 +126,7 @@
     "detailContext": "Context",
     "detailRole": "Role",
     "detailOccupation": "Occupation",
+    "addressNow": "now",
     "sectionAdvertisement": "Advertisement",
     "sectionInstitutional": "Institutions",
     "sectionNameRegister": "Name register",

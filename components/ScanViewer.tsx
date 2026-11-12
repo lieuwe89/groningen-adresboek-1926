@@ -194,8 +194,8 @@ const ScanViewer = forwardRef<ScanViewerHandle, Props>(function ScanViewer(
         line-height: 1;
         padding: 2px 4px;
         border-radius: 3px 3px 0 3px;
-        background: ${canNavigateToAddress ? "color-mix(in srgb, var(--color-bp-amber) 93%, transparent)" : "color-mix(in srgb, var(--color-bp-ink-dim) 80%, transparent)"};
-        color: ${canNavigateToAddress ? "#1a1006" : "#f0ead8"};
+        background: ${canNavigateToAddress ? "color-mix(in srgb, var(--color-bp-amber) 93%, transparent)" : "color-mix(in srgb, var(--color-bp-ink) 90%, transparent)"};
+        color: var(--color-bp-blue);
         opacity: 0;
         pointer-events: none;
         transition: opacity 120ms;

@@ -241,7 +241,7 @@ function LayerRow({
         padding: "6px 10px",
         border: on ? "1px solid color-mix(in srgb, var(--color-bp-amber) 47%, transparent)" : "1px solid color-mix(in srgb, var(--color-bp-ink) 27%, transparent)",
         background: on ? "color-mix(in srgb, var(--color-bp-amber) 10%, transparent)" : "color-mix(in srgb, var(--color-bp-blue-panel) 94%, transparent)",
-        color: on ? "#f0e6c8" : "#948a6a",
+        color: on ? "var(--color-bp-ink-bright)" : "var(--color-bp-ink-dim)",
         cursor: "pointer",
       }}
       onClick={() => onChange(!on)}

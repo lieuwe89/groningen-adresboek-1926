@@ -82,6 +82,7 @@
     "closeAriaLabel": "Sluit scanpanel",
     "pageLong": "Pagina {page}",
     "locationNotLinked": "Locatie nog niet gelinkt",
+    "addressModern": "Huidig adres",
     "pageShort": "Blz {page}"
   },
   "Map": {
@@ -125,6 +126,7 @@
     "detailContext": "Context",
     "detailRole": "Rol",
     "detailOccupation": "Beroep",
+    "addressNow": "nu",
     "sectionAdvertisement": "Advertentie",
     "sectionInstitutional": "Instellingen",
     "sectionNameRegister": "Naamregister",

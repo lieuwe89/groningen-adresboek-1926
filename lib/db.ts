@@ -69,6 +69,7 @@ export type SearchMention = {
   occupation: string | null;
   occupation_expanded: string | null;
   address_full: string | null;
+  address_modern: string | null;
   lat: number | null;
   lng: number | null;
   geocode_type: string | null;
@@ -94,7 +95,14 @@ export type SearchResult = {
   results: SearchRow[];
 };
 
-const SEARCH_SQL = `
+// DBs built before the 1854 work have no address_modern column.
+let modernCol: string | undefined;
+const modernSql = () =>
+  (modernCol ??= getDb().prepare("SELECT 1 FROM pragma_table_info('entries') WHERE name = 'address_modern'").get()
+    ? "e.address_modern"
+    : "NULL");
+
+const searchSql = () => `
   SELECT
     COALESCE(CAST(e.person_id AS TEXT), 'u-' || e.id) as cluster_id,
     MIN(f.rank) as min_rank,
@@ -103,7 +111,7 @@ const SEARCH_SQL = `
       'name', e.name, 'initials', e.initials,
       'entity_type', e.entity_type, 'role', e.role, 'parent_organization', e.parent_organization, 'description', e.description,
       'occupation', e.occupation, 'occupation_expanded', e.occupation_expanded,
-      'address_full', e.address_full, 'lat', e.lat, 'lng', e.lng, 'geocode_type', e.geocode_type, 'geocode_flags', e.geocode_flags,
+      'address_full', e.address_full, 'address_modern', ${modernSql()}, 'lat', e.lat, 'lng', e.lng, 'geocode_type', e.geocode_type, 'geocode_flags', e.geocode_flags,
       'flag_verified', e.flag_verified, 'flag_needs_review', e.flag_needs_review, 'flag_bbox_unreliable', e.flag_bbox_unreliable,
       'entry_bbox', e.entry_bbox, 'name_bbox', e.name_bbox, 'address_bbox', e.address_bbox
     )) as mentions_json,
@@ -300,6 +308,7 @@ export type BuildingMention = {
   description: string | null;
   occupation: string | null;
   address_full: string | null;
+  address_modern: string | null;
 };
 
 export type BuildingPerson = {
@@ -344,7 +353,7 @@ export function getBuilding(pand_id: string): BuildingDetail | null {
         'name', e.name, 'initials', e.initials,
         'entity_type', e.entity_type, 'role', e.role, 'parent_organization', e.parent_organization, 'description', e.description,
         'occupation', COALESCE(e.occupation_expanded, e.occupation),
-        'address_full', e.address_full
+        'address_full', e.address_full, 'address_modern', ${modernSql()}
       )) as mentions_json,
       pr.canonical_name, pr.canonical_occupation, pr.canonical_address
      FROM entries e 
@@ -389,7 +398,7 @@ export function search(query: string, limit = 50, offset = 0, fuzzy = false): Se
   if (!fts) return { total: 0, results: [] };
   const db = getDb();
   const total = (db.prepare(COUNT_SQL).get(fts) as { n: number }).n;
-  const rawResults = db.prepare(SEARCH_SQL).all(fts, limit, offset) as any[];
+  const rawResults = db.prepare(searchSql()).all(fts, limit, offset) as any[];
   const results: SearchRow[] = rawResults.map((r) => ({
     cluster_id: r.cluster_id,
     canonical_name: r.canonical_name,
@@ -411,7 +420,7 @@ function searchFuzzy(query: string, limit: number, offset: number): SearchResult
 
   const ftsQuery = buildFuzzyFtsQuery(rawTokens);
   const db = getDb();
-  const rawCandidates = db.prepare(SEARCH_SQL).all(ftsQuery, FUZZY_CANDIDATE_LIMIT, 0) as any[];
+  const rawCandidates = db.prepare(searchSql()).all(ftsQuery, FUZZY_CANDIDATE_LIMIT, 0) as any[];
   if (!rawCandidates.length) return { total: 0, results: [] };
 
   const maxDist = maxTotalDist(rawTokens);

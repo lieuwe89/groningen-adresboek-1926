@@ -371,7 +371,7 @@ function GlobalResults({
         const firstDisplay = presentEntry(p.mentions[0], p.mentions[0].section, entryLabels);
         const headerName = p.canonical_name || formatMentionName(p.mentions[0]) || "—";
         const headerOcc = p.canonical_occupation || firstDisplay.subtitle || "";
-        const headerAddr = p.canonical_address || firstDisplay.address || "";
+        const headerAddr = firstDisplay.addressModern ? firstDisplay.address : p.canonical_address || firstDisplay.address || "";
         
         return (
           <div key={p.cluster_id} className="w-full flex flex-col mb-[8px] border-b border-bp-ink/15 pb-[8px]">

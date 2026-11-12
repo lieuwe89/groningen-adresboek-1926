@@ -16,6 +16,7 @@ export type SearchMention = {
   occupation: string | null;
   occupation_expanded: string | null;
   address_full: string | null;
+  address_modern?: string | null;
   lat: number | null;
   lng: number | null;
   geocode_type: string | null;

@@ -8,6 +8,7 @@ import type { Entry } from "@/lib/data";
 import EditForm from "@/components/EditForm";
 import type { ScanViewerHandle } from "@/components/ScanViewer";
 import { useTranslations, useLocale } from 'next-intl';
+import { BOOK } from "@/lib/book";
 import { presentEntry, buildEntryPresentationLabels } from "@/lib/entryPresentation";
 import { buildPageModeHref, type PageMode } from "@/lib/entryRouteTargets";
 
@@ -197,11 +198,11 @@ export default function ScanPanel(p: Props) {
                 className="text-bp-ink-dim uppercase"
                 style={{ fontSize: 7.5, letterSpacing: "0.14em" }}
               >
-                {tc('address')}
+                {tc('address')}{display.addressModern && ` ${BOOK.year}`}
               </span>
               {p.activeEntry && display.showMapStatus && !p.activeEntry.pand_id && (
                 <span
-                  className="text-bp-amber/50 italic"
+                  className="text-bp-ink-dim italic"
                   style={{ fontSize: 7.5, letterSpacing: "0.05em" }}
                 >
                   {t('locationNotLinked')}
@@ -212,8 +213,24 @@ export default function ScanPanel(p: Props) {
               className="text-bp-amber"
               style={{ fontSize: 10, letterSpacing: "0.1em" }}
             >
-              {display.address || "—"}
+              {display.addressBook || "—"}
             </span>
+            {display.addressModern && (
+              <>
+                <span
+                  className="text-bp-ink-dim uppercase mt-[4px]"
+                  style={{ fontSize: 7.5, letterSpacing: "0.14em" }}
+                >
+                  {t('addressModern')}
+                </span>
+                <span
+                  className="text-bp-ink-bright"
+                  style={{ fontSize: 10, letterSpacing: "0.1em" }}
+                >
+                  {display.addressModern}
+                </span>
+              </>
+            )}
           </div>
         </div>
         )}
