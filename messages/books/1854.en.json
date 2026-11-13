@@ -12,7 +12,7 @@
   "Tour": {
     "map": {
       "title": "The map",
-      "text": "This is Groningen according to the cadastre of 1832. The highlighted yards are the sites of addresses from the 1854 address book. Click a yard to see who had their business there."
+      "text": "This is Groningen on the city map of 1857; zoom in and you see the cadastre of 1832. The highlighted yards are the sites of addresses from the 1854 address book. Click a yard to see who had their business there."
     },
     "layers": {
       "title": "Map layers",

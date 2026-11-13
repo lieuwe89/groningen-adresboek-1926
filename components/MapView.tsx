@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl, { type Map as MLMap, type StyleSpecification, type FilterSpecification } from "maplibre-gl";
+import maplibregl, { type Map as MLMap, type StyleSpecification, type FilterSpecification, type ExpressionSpecification } from "maplibre-gl";
 import { cogProtocol } from "@geomatico/maplibre-cog-protocol";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -158,18 +158,17 @@ export default function MapView({
       // Subtle amber outline so the user knows which footprints are clickable.
       // Over a scanned map the outlines compete with the drawing's own ink: heavier there.
       const onScan = !!BOOK.vectorBase;
+      const active: ExpressionSpecification = ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]];
       map.addLayer({
         id: "buildings-line",
         type: "line",
         source: "buildings",
         paint: {
           "line-color": BOOK.mapAccent,
-          "line-width": [
-            "case",
-            ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]],
-            onScan ? 3.0 : 2.0,
-            onScan ? 1.4 : 0.6,
-          ],
+          // On a scanned map: hairlines on the city overview (a yard is a few pixels there), heavier when zoomed in.
+          "line-width": onScan
+            ? ["interpolate", ["linear"], ["zoom"], 14, ["case", active, 2.0, 0.3], 17, ["case", active, 3.0, 1.4]]
+            : ["case", active, 2.0, 0.6],
           "line-opacity": [
             "case",
             ["any", ["boolean", ["feature-state", "hover"], false], ["boolean", ["feature-state", "focus"], false]],
@@ -301,61 +300,61 @@ export default function MapView({
     const map = mapRef.current;
     if (!map || !ready) return;
 
-    // Remove any previously added historic source/layer.
+    // Remove any previously added historic source/layer (a map has one raster, or two: see `over`).
     for (const m of HISTORIC_MAPS) {
-      const layerId = `historic-${m.id}`;
-      const sourceId = `historic-${m.id}-src`;
-      if (map.getLayer(layerId)) map.removeLayer(layerId);
-      if (map.getSource(sourceId)) map.removeSource(sourceId);
+      for (const i of [0, 1]) {
+        if (map.getLayer(`historic-${m.id}-${i}`)) map.removeLayer(`historic-${m.id}-${i}`);
+        if (map.getSource(`historic-${m.id}-${i}-src`)) map.removeSource(`historic-${m.id}-${i}-src`);
+      }
     }
 
     if (!historicId) return;
     const conf = HISTORIC_MAPS.find((m) => m.id === historicId);
     if (!conf) return;
 
-    const sourceId = `historic-${conf.id}-src`;
-    const layerId = `historic-${conf.id}`;
-
-    const assetUrl = resolvePublicAssetUrl({
-      assetPath: conf.url,
-      cdnBaseUrl:
-        process.env.NEXT_PUBLIC_MAPS_BASE_URL ||
-        process.env.NEXT_PUBLIC_STATIC_ASSETS_BASE_URL,
-    });
-    const fullUrl = new URL(assetUrl, window.location.origin).href;
-
-    map.addSource(sourceId, {
-      type: "raster",
-      // Using tiles array with {z}/{x}/{y} is often more reliable for custom protocols.
-      // Reverting to 256 as the geomatico protocol handler is hardcoded to this size.
-      // An XYZ template: URL() escaped its braces, put them back.
-      tiles: [conf.xyz ? decodeURI(fullUrl) : `cog://${fullUrl}/{z}/{x}/{y}`],
-      tileSize: 256,
-      bounds: conf.bbox,
-      ...conf.xyz,
-    });
-
     // Insert under buildings-line so building outlines stay on top.
     // Fallback to undefined (top of stack) if buildings-line isn't ready.
     const beforeId = map.getLayer("buildings-line") ? "buildings-line" : undefined;
-    map.addLayer(
-      {
-        id: layerId,
+    [conf, conf.over].forEach((raster, i) => {
+      if (!raster) return;
+      const assetUrl = resolvePublicAssetUrl({
+        assetPath: raster.url,
+        cdnBaseUrl:
+          process.env.NEXT_PUBLIC_MAPS_BASE_URL ||
+          process.env.NEXT_PUBLIC_STATIC_ASSETS_BASE_URL,
+      });
+      const fullUrl = new URL(assetUrl, window.location.origin).href;
+
+      map.addSource(`historic-${conf.id}-${i}-src`, {
         type: "raster",
-        source: sourceId,
-        paint: { "raster-opacity": historicOpacity },
-      },
-      beforeId
-    );
+        // Using tiles array with {z}/{x}/{y} is often more reliable for custom protocols.
+        // Reverting to 256 as the geomatico protocol handler is hardcoded to this size.
+        // An XYZ template: URL() escaped its braces, put them back.
+        tiles: [raster.xyz ? decodeURI(fullUrl) : `cog://${fullUrl}/{z}/{x}/{y}`],
+        tileSize: 256,
+        bounds: raster.bbox,
+        ...raster.xyz,
+      });
+      map.addLayer(
+        {
+          id: `historic-${conf.id}-${i}`,
+          type: "raster",
+          source: `historic-${conf.id}-${i}-src`,
+          ...(raster.show ? { minzoom: raster.show[0], maxzoom: raster.show[1] } : {}),
+          paint: { "raster-opacity": historicOpacity },
+        },
+        beforeId
+      );
+    });
   }, [historicId, ready]);
 
   // Update opacity without re-adding the layer.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !historicId) return;
-    const layerId = `historic-${historicId}`;
-    if (map.getLayer(layerId)) {
-      map.setPaintProperty(layerId, "raster-opacity", historicOpacity);
+    for (const i of [0, 1]) {
+      const layerId = `historic-${historicId}-${i}`;
+      if (map.getLayer(layerId)) map.setPaintProperty(layerId, "raster-opacity", historicOpacity);
     }
   }, [historicOpacity, historicId, ready]);
 

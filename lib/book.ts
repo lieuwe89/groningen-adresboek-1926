@@ -58,7 +58,7 @@ const BOOKS: Record<string, Book> = {
     vectorBase: {
       parcels: "/maps/percelen_1832.geojson",
       attribution:
-        'Kadaster 1832: minuutplans <a href="https://beeldbank.cultureelerfgoed.nl">RCE</a> (publiek domein), percelen &copy; <a href="https://hisgis.nl">HisGIS</a> (ODbL)',
+        'Plattegrond 1857: <a href="https://www.beeldbankgroningen.nl">Groninger Archieven</a> · kadaster 1832: minuutplans <a href="https://beeldbank.cultureelerfgoed.nl">RCE</a>, percelen &copy; <a href="https://hisgis.nl">HisGIS</a> (ODbL)',
     },
     sheetLabel: null,
   },

@@ -2,6 +2,16 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.20.0] — 2026-11-13
+
+### Added
+- 1854: W. Tietsema's city map of 1857 (Groninger Archieven) as the overview. Zoomed out the map shows it, zoomed in the cadastral plans of 1832 take over; both are also available as layers of their own.
+- A historic layer can carry a second raster with its own zoom range (`over` and `show` in `lib/historicMaps.ts`).
+- Pipeline: `kaart_ligging.py` fits a rectified image-bank map on the HisGIS parcels (the bank's own placement was 18 m off in the centre for the 1857 map); `kaart_tegels.sh` tiles any set of fitted maps.
+
+### Changed
+- 1854: outlines of yards with entries thin out on the overview.
+
 ## [0.19.0] — 2026-11-12
 
 ### Changed
