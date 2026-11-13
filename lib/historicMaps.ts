@@ -88,7 +88,6 @@ const MAPS_1854: HistoricMap[] = [
     ...TIETSEMA_1857,
     show: [0, DETAIL_FROM],
     over: { ...MINUUTPLANS_1832, show: [DETAIL_FROM, 24] },
-    default: true,
   },
   { id: "tietsema1857", label: "Plattegrond 1857 (Tietsema)", ...TIETSEMA_1857 },
   { id: "minuutplan1832", label: "Kadaster 1832 (minuutplans)", ...MINUUTPLANS_1832 },

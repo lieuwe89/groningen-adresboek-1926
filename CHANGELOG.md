@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.20.4] — 2026-11-13
+
+### Changed
+- 1854 opens with only the parcels and the yards with entries. The city map of 1857 and the cadastral plans of 1832 load when a visitor picks them under Kaartlagen.
+
 ## [0.20.3] — 2026-11-13
 
 ### Added
