@@ -24,6 +24,11 @@ export default function Info1854({ isEnglish, Section, Rule }: Props) {
             occupations, from <em>Aannemers</em> to <em>Zoutzieders</em>. According to the preface it only lists
             the person who paid the business licence tax (<em>patentregt</em>) for a trade.
           </p>
+          <p>
+            For the city more than seventy years later, see the address book of 1926 at{" "}
+            <a className="text-bp-amber underline" href="https://groningen-1926.lieuwejongsma.nl/en">groningen-1926.lieuwejongsma.nl</a>:
+            there you look up residents by name, street and house number.
+          </p>
         </Section>
         <Rule />
         <Section label="Ward letters and numbers">
@@ -71,6 +76,11 @@ export default function Info1854({ isEnglish, Section, Rule }: Props) {
           Het boek is geen bewonerslijst. Het is een bedrijvengids: ongeveer 3.000 vermeldingen onder ruim 200
           beroepen, van <em>Aannemers</em> tot <em>Zoutzieders</em>. Volgens het voorbericht staat er alleen in wie
           voor een beroep of bedrijf in het <em>patentregt</em> was aangeslagen.
+        </p>
+        <p>
+          Wil je de stad ruim zeventig jaar later zien? Het adresboek van 1926 vind je op{" "}
+          <a className="text-bp-amber underline" href="https://groningen-1926.lieuwejongsma.nl/nl">groningen-1926.lieuwejongsma.nl</a>:
+          daar zoek je bewoners op naam, straat en huisnummer.
         </p>
       </Section>
       <Rule />

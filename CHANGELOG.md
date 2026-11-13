@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.20.3] — 2026-11-13
+
+### Added
+- The info pages of the two books point to each other: 1854 to groningen-1926.lieuwejongsma.nl and 1926 to groningen-1854.lieuwejongsma.nl, in Dutch and English.
+
 ## [0.20.2] — 2026-11-13
 
 ### Changed

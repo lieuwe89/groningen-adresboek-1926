@@ -280,6 +280,18 @@ export default function InfoPage() {
                     </a>
                     .
                   </p>
+                  <p>
+                    For the city more than seventy years earlier, see the trade
+                    directory of 1854 at{" "}
+                    <a
+                      href="https://groningen-1854.lieuwejongsma.nl/en"
+                      className="text-bp-amber hover:underline"
+                    >
+                      groningen-1854.lieuwejongsma.nl
+                    </a>
+                    : there you look up tradespeople by name, occupation and
+                    ward number.
+                  </p>
                   <p className="text-bp-ink-dim">
                     Questions or comments? Get in touch at{" "}
                     <a
@@ -337,6 +349,17 @@ export default function InfoPage() {
                       GitHub
                     </a>
                     .
+                  </p>
+                  <p>
+                    Wil je de stad ruim zeventig jaar eerder zien? Het adresboek
+                    van 1854 vind je op{" "}
+                    <a
+                      href="https://groningen-1854.lieuwejongsma.nl/nl"
+                      className="text-bp-amber hover:underline"
+                    >
+                      groningen-1854.lieuwejongsma.nl
+                    </a>
+                    : daar zoek je ondernemers op naam, beroep en wijknummer.
                   </p>
                   <p className="text-bp-ink-dim">
                     Vragen of opmerkingen? Neem contact op via{" "}
