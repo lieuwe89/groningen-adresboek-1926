@@ -54,11 +54,13 @@ const BOOKS: Record<string, Book> = {
     mapAccent: "#1b4f8a",
     // Cadastre of 1832, the nearest survey before 1854: HisGIS parcels as the vector base, the
     // scanned plans themselves on top (lib/historicMaps.ts). Houses are not traced: reading them
-    // off the scans left too many out and the outlines ragged.
+    // off the scans left too many out and the outlines ragged. The scans are those of the Groninger
+    // Archieven (toegang 44); sheets A 1 and B 1 come from the RCE, where the archive's rectified
+    // images are bent.
     vectorBase: {
       parcels: "/maps/percelen_1832.geojson",
       attribution:
-        'Plattegrond 1857: <a href="https://www.beeldbankgroningen.nl">Groninger Archieven</a> · kadaster 1832: minuutplans <a href="https://beeldbank.cultureelerfgoed.nl">RCE</a>, percelen &copy; <a href="https://hisgis.nl">HisGIS</a> (ODbL)',
+        'Plattegrond 1857 en minuutplans 1832: <a href="https://www.beeldbankgroningen.nl">Groninger Archieven</a> (twee bladen <a href="https://beeldbank.cultureelerfgoed.nl">RCE</a>) · percelen &copy; <a href="https://hisgis.nl">HisGIS</a> (ODbL)',
     },
     sheetLabel: null,
   },

@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.20.1] — 2026-11-13
+
+### Changed
+- 1854: the cadastral plans are now the Groninger Archieven's own copies (toegang 44): cleaner sheets, a little sharper in the inner city, and sheet D 2 is there. Sheets A 1 and B 1 stay with the RCE scans, because the archive's rectified images of those are bent and cannot be fitted on the parcels.
+
 ## [0.20.0] — 2026-11-13
 
 ### Added

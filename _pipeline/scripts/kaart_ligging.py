@@ -174,7 +174,8 @@ if __name__ == "__main__":
         G0, mask = annotation(image_id)
         native = np.sqrt(abs(np.linalg.det(G0[:2, :2])))
         if kind == "minuutplans":
-            feats, mpx = [f for f in parcels if f["properties"]["sectie"] == name[8]], 0.2 if native < 0.12 else 0.43
+            # 1:1250 sheets (inner city, scanned at 0.08-0.13 m) are fitted at 0.2 m, 1:2500 sheets (0.27 m) at 0.43 m
+            feats, mpx = [f for f in parcels if f["properties"]["sectie"] == name[8]], 0.2 if native < 0.2 else 0.43
         else:
             feats, mpx = [f for f in parcels if f["properties"]["laag"] in ("straat", "water")], 0.4
         P, report, size = fit(f"{scans}/{name}.jpg", G0, feats, mpx)

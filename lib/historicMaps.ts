@@ -73,7 +73,8 @@ const TIETSEMA_1857: Raster = {
   bbox: [6.5353, 53.2026, 6.5903, 53.2368],
 };
 const MINUUTPLANS_1832: Raster = {
-  url: "/maps/minuutplan1832/{z}/{x}/{y}.webp",
+  // A new tile set gets a new directory: tiles are cached for a day, and old and new sheets must not mix.
+  url: "/maps/kadaster1832/{z}/{x}/{y}.webp",
   xyz: { minzoom: 12, maxzoom: 20 },
   bbox: [6.5125, 53.1933, 6.6021, 53.2433],
 };
