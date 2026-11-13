@@ -8,7 +8,7 @@
 # All maps in <in dir> become one mosaic; where they overlap the later name wins.
 #
 # 1854 book (run from the data root ~/projects/groningen-adresboek-1854):
-#   kaart_tegels.sh output/minuutplan_ga scans_kaarten/ga maps/kadaster1832 12-20
+#   kaart_tegels.sh output/minuutplan_ga scans_kaarten/ga maps/kadaster1832ga 12-20
 #   kaart_tegels.sh output/stadskaart scans_kaarten    maps/tietsema1857   12-18
 #
 # Tiles, not a COG like the 1926 overlays: fourteen sheets as lossless COGs are well over a

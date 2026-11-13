@@ -2,6 +2,15 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.20.2] — 2026-11-13
+
+### Changed
+- 1854: all cadastral sheets now come from the Groninger Archieven. A 1, B 1 and D 2 are fitted on the original scans (the image bank holds them next to its rectified images), so the RCE scans are no longer needed and D 2 lies within a metre of the parcels instead of eleven.
+- 1854: the layer that switches from the 1857 map to the cadastre is now called "Beide, wisselt bij inzoomen"; its old name read as a second "Plattegrond 1857".
+
+### Fixed
+- `kaart_ligging.py` stopped after two rounds of tile fitting, before a strongly skewed sheet (D 2) had settled; it now goes on until the fit stands still.
+
 ## [0.20.1] — 2026-11-13
 
 ### Changed

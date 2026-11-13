@@ -11,7 +11,9 @@ map goes through the tile shifts. The fitting functions are those of ~/projects/
   kaart_ligging.py stadskaart <out> tietsema1857=<image id>       a city map: only streets and water are matched
 
 Input:  <scans>/<name>.jpg  the image at full resolution (Kadaster/extractie/fetch_scan.py <image id> <file>),
-        scans = <out>/../../scans_kaarten/{ga,} (see SCANS); the annotation of ~/projects/GroningenMaps.
+        scans = <out>/../../scans_kaarten/{ga,}; the annotation of ~/projects/GroningenMaps.
+        Bent rectified image? An image bank record also holds the original scan, as its asset without
+        `isgeotiff`. Save that one as <name>.jpg and the rectified image as <name>.ga-krom.jpeg.
 Output, per map, what kaart_tegels.sh needs:
   <out>/<name>.gcps           "-gcp px line X Y ..." (image pixels -> RD, EPSG:28992)
   <out>/<name>.json           the same map as a 3x3 matrix
@@ -48,6 +50,24 @@ def annotation(image_id: str):
     return np.r_[A.T, [[0, 0, 1]]], Polygon(mask)
 
 
+def from_original(original: str, rectified: str) -> np.ndarray:
+    """Pixels of the original scan -> pixels of the image bank's rectified image of the same sheet (3x3 affine).
+
+    The rectified image carries the georeference, the original scan the undistorted drawing: some
+    sheets were rectified with a bend that an affine fit cannot undo. Matching the two gives the
+    original a starting position; the fit on HisGIS does the rest.
+    """
+    K = 8
+    a, b = (cv2.resize(cv2.imread(p, cv2.IMREAD_GRAYSCALE), None, fx=1 / K, fy=1 / K, interpolation=cv2.INTER_AREA) for p in (original, rectified))
+    sift = cv2.SIFT_create(8000)
+    (ka, da), (kb, db) = sift.detectAndCompute(a, None), sift.detectAndCompute(b, None)
+    pairs = [m for m, n in cv2.BFMatcher().knnMatch(da, db, k=2) if m.distance < 0.75 * n.distance]
+    T, inl = cv2.estimateAffine2D(np.float32([ka[m.queryIdx].pt for m in pairs]) * K, np.float32([kb[m.trainIdx].pt for m in pairs]) * K,
+                                  method=cv2.RANSAC, ransacReprojThreshold=5 * K)
+    assert T is not None and inl.sum() >= 30, f"{original}: too few matches with {rectified} ({len(pairs)} pairs)"
+    return np.r_[T, [[0, 0, 1]]]
+
+
 def to_px(g, M):
     polys = g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]
     px = [[apply_h(M, np.array(h.TO_RD.transform(*np.array(ring).T)).T) for ring in poly] for poly in polys]
@@ -82,13 +102,17 @@ def fit(image: str, G0: np.ndarray, feats: list, mpx: float) -> tuple:
     if row2["score_grof"] > row["score_grof"]:
         A, row = A2 @ A, row2
     M = R @ np.linalg.inv(A)
-    for _ in range(2):  # the tiles see what scale and rotation cannot: skew and uneven shrinkage of the paper
+    corners = np.array([[0, 0], [w, 0], [w, hh], [0, hh]], float)
+    for _ in range(8):  # the tiles see what scale and rotation cannot: skew and uneven shrinkage of the paper
         v = h.per_tegel(rings(M), ink)
         good = v[v[:, 4] >= h.MIN_SCORE]
         T = cv2.estimateAffine2D(np.float32(good[:, :2]), np.float32(good[:, :2] + good[:, 2:4]), method=cv2.RANSAC, ransacReprojThreshold=8)[0] if len(good) >= 6 else None
         if T is None:
             break
         M = M @ np.linalg.inv(np.r_[T, [[0, 0, 1]]])
+        # A tile sees a shift of at most h.ZOEK pixels, so a strong skew (D 2) takes several rounds; stop once it stands still.
+        if np.abs(apply_h(np.r_[T, [[0, 0, 1]]], corners) - corners).max() < 1:
+            break
     v = h.per_tegel(rings(M), ink)
     good = v[v[:, 4] >= h.MIN_SCORE]
     centre = np.array([[w / 2, hh / 2]])
@@ -172,6 +196,8 @@ if __name__ == "__main__":
     parcels = json.load(open(PARCELS))["features"]
     for name, image_id in maps.items():
         G0, mask = annotation(image_id)
+        if os.path.exists(f"{scans}/{name}.ga-krom.jpeg"):  # <name>.jpg is the original scan, this its rectified image
+            G0 = G0 @ from_original(f"{scans}/{name}.jpg", f"{scans}/{name}.ga-krom.jpeg")
         native = np.sqrt(abs(np.linalg.det(G0[:2, :2])))
         if kind == "minuutplans":
             # 1:1250 sheets (inner city, scanned at 0.08-0.13 m) are fitted at 0.2 m, 1:2500 sheets (0.27 m) at 0.43 m
