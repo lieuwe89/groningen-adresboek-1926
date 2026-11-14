@@ -11,6 +11,8 @@ export interface Raster {
   xyz?: { minzoom: number; maxzoom: number };
   /** Map zoom range in which the raster is drawn; always when absent. */
   show?: [number, number];
+  /** Shown in the map's attribution control while this raster is on. */
+  attribution?: string;
 }
 
 export interface HistoricMap extends Raster {
@@ -22,6 +24,8 @@ export interface HistoricMap extends Raster {
   default?: boolean;
   /** A second raster drawn on top, e.g. detailed plans that take over when zoomed in. */
   over?: Raster;
+  /** Hide the raster outside its bbox. Tiles are whole squares, so `bbox` alone leaves ragged edges. */
+  clip?: boolean;
 }
 
 import { BOOK } from "./book";
@@ -91,6 +95,17 @@ const MAPS_1854: HistoricMap[] = [
   },
   { id: "tietsema1857", label: "Plattegrond 1857 (Tietsema)", ...TIETSEMA_1857 },
   { id: "minuutplan1832", label: "Kadaster 1832 (minuutplans)", ...MINUUTPLANS_1832 },
+  {
+    // Same area as the HisGIS parcels (MINUUTPLANS_1832.bbox is their extent).
+    // Tile server: https://operations.osmfoundation.org/policies/tiles/ (fine for light use; move to a provider if traffic grows).
+    id: "osm",
+    label: "Modern (OpenStreetMap)",
+    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    xyz: { minzoom: 10, maxzoom: 19 },
+    bbox: MINUUTPLANS_1832.bbox,
+    clip: true,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-bijdragers',
+  },
 ];
 
 export const HISTORIC_MAPS: HistoricMap[] = BOOK.id === "1926" ? MAPS_1926 : BOOK.id === "1854" ? MAPS_1854 : [];

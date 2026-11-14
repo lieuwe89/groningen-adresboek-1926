@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.21.0] — 2026-11-14
+
+### Added
+- 1854: a modern map layer, "Modern (OpenStreetMap)", under Kaartlagen. It covers the same area as the HisGIS parcels of 1832 and is cut off at that edge.
+
 ## [0.20.4] — 2026-11-13
 
 ### Changed

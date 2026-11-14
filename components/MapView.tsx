@@ -306,6 +306,8 @@ export default function MapView({
         if (map.getLayer(`historic-${m.id}-${i}`)) map.removeLayer(`historic-${m.id}-${i}`);
         if (map.getSource(`historic-${m.id}-${i}-src`)) map.removeSource(`historic-${m.id}-${i}-src`);
       }
+      if (map.getLayer(`historic-${m.id}-mask`)) map.removeLayer(`historic-${m.id}-mask`);
+      if (map.getSource(`historic-${m.id}-mask-src`)) map.removeSource(`historic-${m.id}-mask-src`);
     }
 
     if (!historicId) return;
@@ -333,6 +335,7 @@ export default function MapView({
         tiles: [raster.xyz ? decodeURI(fullUrl) : `cog://${fullUrl}/{z}/{x}/{y}`],
         tileSize: 256,
         bounds: raster.bbox,
+        ...(raster.attribution ? { attribution: raster.attribution } : {}),
         ...raster.xyz,
       });
       map.addLayer(
@@ -346,6 +349,29 @@ export default function MapView({
         beforeId
       );
     });
+
+    if (conf.clip) {
+      // World with the bbox cut out, in the paper colour of the base style.
+      const [w, s, e, n] = conf.bbox;
+      map.addSource(`historic-${conf.id}-mask-src`, {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "Polygon",
+            coordinates: [
+              [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]],
+              [[w, s], [w, n], [e, n], [e, s], [w, s]],
+            ],
+          },
+        },
+      });
+      map.addLayer(
+        { id: `historic-${conf.id}-mask`, type: "fill", source: `historic-${conf.id}-mask-src`, paint: { "fill-color": "#f3ecdc" } },
+        beforeId
+      );
+    }
   }, [historicId, ready]);
 
   // Update opacity without re-adding the layer.

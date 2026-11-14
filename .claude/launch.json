@@ -4,8 +4,23 @@
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "web-1854",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "NEXT_PUBLIC_BOOK=1854",
+        "npm",
+        "run",
+        "dev"
+      ],
+      "port": 3001,
       "autoPort": true
     }
   ]
