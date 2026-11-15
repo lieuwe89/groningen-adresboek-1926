@@ -2,6 +2,12 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.24.2] — 2026-11-15
+
+### Fixed
+- 1854: the parcels of 1832 lay about 5 m west and 2 m south of the modern map. HisGIS itself is off by that much in the inner city (measured against the facades of BAG buildings from before 1900 in 25 squares of 250 m; after the shift the median deviation per square is about 1 m). The parcels, the cadastral plans and the 1857 city map all move 5.0 m east and 1.75 m north; the A-kerk outline comes from the BAG and stays put. New tile directories (`kadaster1832ga-v2`, `tietsema1857-v2`), so no browser mixes old and new tiles.
+- 1854: entries re-linked to the shifted yards. 95% of the exactly placed address points now fall inside a yard (was 74%), yards with three or more wijk numbers went from 39 to 30, and 2,269 entries are on the map (was 2,276: 12 lost their yard within 8 m, 5 gained one).
+
 ## [0.24.1] — 2026-11-15
 
 ### Fixed

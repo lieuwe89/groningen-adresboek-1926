@@ -72,13 +72,13 @@ const MAPS_1926: HistoricMap[] = [
 // 1854. Tiles made by _pipeline/scripts/annotatie_tegels.py (city map) and
 // minuutplan_ligging.py + minuutplan_tegels.sh (cadastral plans), over the HisGIS parcels (BOOK.vectorBase).
 const TIETSEMA_1857: Raster = {
-  url: "/maps/tietsema1857/{z}/{x}/{y}.webp",
+  url: "/maps/tietsema1857-v2/{z}/{x}/{y}.webp",
   xyz: { minzoom: 12, maxzoom: 18 },
   bbox: [6.5353, 53.2026, 6.5903, 53.2368],
 };
 const MINUUTPLANS_1832: Raster = {
   // A new tile set gets a new directory: tiles are cached for a day, and old and new sheets must not mix.
-  url: "/maps/kadaster1832ga/{z}/{x}/{y}.webp",
+  url: "/maps/kadaster1832ga-v2/{z}/{x}/{y}.webp",
   xyz: { minzoom: 12, maxzoom: 20 },
   bbox: [6.5125, 53.1933, 6.6021, 53.2433],
 };
