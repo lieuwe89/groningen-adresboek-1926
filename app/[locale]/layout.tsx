@@ -54,12 +54,10 @@ export const metadata: Metadata = {
   // Absolute og:image URL for link previews (LinkedIn etc.); each book has its own domain.
   metadataBase: new URL(`https://groningen-${BOOK.id}.lieuwejongsma.nl`),
   authors: [{ name: "Lieuwe Jongsma" }],
-  // LinkedIn reads the publish date from this name; article:published_time covers other sites.
+  // LinkedIn reads the publish date from this name. No article:* tags: the site is a website, not an article.
   other: { publish_date: BOOK.publishDate },
   openGraph: {
-    type: "article",
-    publishedTime: BOOK.publishDate,
-    authors: ["Lieuwe Jongsma"],
+    type: "website",
     title: BOOK.title,
     description: BOOK.description,
     images: [{ url: `/og-${BOOK.id}.png`, width: 1200, height: 630 }],
