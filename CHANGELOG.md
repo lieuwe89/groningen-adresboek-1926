@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.21.2] — 2026-11-15
+
+### Changed
+- Both books have a description of more than 100 characters; LinkedIn asks for that length in link previews.
+
 ## [0.21.1] — 2026-11-15
 
 ### Added

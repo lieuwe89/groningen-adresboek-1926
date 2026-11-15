@@ -30,7 +30,8 @@ const BOOKS: Record<string, Book> = {
     id: "1926",
     year: 1926,
     title: "Adresboek 1926: Gemeente Groningen",
-    description: "Interactieve verkenner van het Groninger adresboek 1926",
+    description:
+      "Doorzoek het Groninger adresboek van 1926 op naam, adres of beroep en bekijk op de kaart wie er honderd jaar geleden in elk huis woonde.",
     favicon: "/favicon.png",
     startStem: "1769_19525-1926_0121", // first page of the Naamregister
     adminStartStem: "1769_19525-1926_0150",
@@ -44,7 +45,8 @@ const BOOKS: Record<string, Book> = {
     id: "1854",
     year: 1854,
     title: "Adresboek 1854: Fabrijkanten, kooplieden en winkeliers te Groningen",
-    description: "Interactieve verkenner van het Groninger adresboek of naam-register van 1854",
+    description:
+      "Doorzoek het Groninger adresboek van 1854 op naam, adres of beroep en bekijk fabrikanten, kooplieden en winkeliers op de kaart van toen.",
     favicon: "/favicon-1854.png",
     startStem: "1769_19527-1854_0007", // first page of the register (Aannemers)
     adminStartStem: "1769_19527-1854_0007",
