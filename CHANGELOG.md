@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.22.0] — 2026-11-15
+
+### Added
+- 1854: entries on four quay sides (Noorderhaven N.Z., Damsterdiep N.Z. and Z.Z., Schuitendiep O.Z. from nr 44) are placed on the 1832 map again, as an approximation. Each quay side had its own house numbers 1..N in 1899; `match_kadaster_1832.py` converts them to today's odd/even number per side. The yard panel says "Ligging bij benadering: dit erf of het erf ernaast" for these entries (`geocode_type = 'approx'`).
+
 ## [0.21.3] — 2026-11-15
 
 ### Added

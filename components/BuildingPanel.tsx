@@ -23,6 +23,7 @@ type Mention = {
   occupation: string | null;
   address_full: string | null;
   address_modern?: string | null;
+  geocode_type?: string | null;
 };
 
 type Person = {
@@ -190,6 +191,9 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
                     <span style={{ color: "var(--color-bp-ink-dim)", fontSize: 9 }}>
                       {buildingMentionLine(m, entryFallback, entryLabels)}
                     </span>
+                    {m.geocode_type === "approx" && (
+                      <span style={{ color: "var(--color-bp-amber)", fontSize: 9 }}>{t('approx')}</span>
+                    )}
                     {m.page_number != null && (
                       <span style={{ color: "var(--color-bp-ink-dim)", fontSize: 9 }}>{t('page')} {m.page_number}</span>
                     )}

@@ -309,6 +309,7 @@ export type BuildingMention = {
   occupation: string | null;
   address_full: string | null;
   address_modern: string | null;
+  geocode_type: string | null; // "approx": this yard or the next (1854 quays)
 };
 
 export type BuildingPerson = {
@@ -353,7 +354,7 @@ export function getBuilding(pand_id: string): BuildingDetail | null {
         'name', e.name, 'initials', e.initials,
         'entity_type', e.entity_type, 'role', e.role, 'parent_organization', e.parent_organization, 'description', e.description,
         'occupation', COALESCE(e.occupation_expanded, e.occupation),
-        'address_full', e.address_full, 'address_modern', ${modernSql()}
+        'address_full', e.address_full, 'address_modern', ${modernSql()}, 'geocode_type', e.geocode_type
       )) as mentions_json,
       pr.canonical_name, pr.canonical_occupation, pr.canonical_address
      FROM entries e 

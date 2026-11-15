@@ -505,6 +505,7 @@ def main() -> None:
     # BAG match: stable_id -> pand_id; pand_id -> entry_count
     pand_for_entry: dict[str, str] = {}
     pand_entry_count: dict[str, int] = {}
+    approx_entries: set[str] = set()  # placed to the neighbouring house only (match_kadaster_1832.py)
     if BAG_MATCH_PATH.exists():
         match = json.loads(BAG_MATCH_PATH.read_text(encoding="utf-8"))
         for pand_id, b in match.items():
@@ -515,6 +516,8 @@ def main() -> None:
                 for sid in info.get("entries", []):
                     pand_for_entry[sid] = pand_id
                     cnt += 1
+                if info.get("approx"):
+                    approx_entries.update(info["entries"])
             pand_entry_count[pand_id] = cnt
         log.info(f"Loaded BAG match: {len(pand_for_entry)} entries → {len(pand_entry_count)} pand")
     else:
@@ -639,7 +642,7 @@ def main() -> None:
                     jdumps(entry.get("address_word_ids")),
                     geo_lat, geo_lng,
                     geo.get("score") if geo else None,
-                    geo.get("type") if geo else None,
+                    geo.get("type") if geo else "approx" if stable_id in approx_entries else None,
                     geo.get("matched") if geo else None,
                     jdumps(geo.get("flags")) if geo else None,
                     1 if flags.get("verified") else 0,

@@ -10,7 +10,8 @@ build_db.py reads for BAG buildings (set BUILDINGS_DIR in the book config):
 The BAG address point sits at the front door, a metre or two outside the yard on
 the 1832 street, so a point takes the nearest yard within SNAP_M. A house number
 PDOK no longer knows falls back to the BAG building with that or a neighbouring
-number (demolished/merged houses).
+number (demolished/merged houses). Entries on a quay side in QUAY_SIDES are placed to the
+neighbouring house only; their address carries "approx": true.
 
 Needs DATA_ROOT/maps/percelen_1832.geojson (HisGIS parcels, from ~/projects/Kadaster).
 Run build_db.py afterwards.
@@ -47,6 +48,26 @@ PDOK = "https://api.pdok.nl/bzk/locatieserver/search/v3_1/free"
 SNAP_M = 8
 # Degrees -> metres around Groningen; good to a few cm over the city.
 KX, KY = 111_320 * math.cos(math.radians(53.22)), 110_574
+
+
+# Quay sides whose house number of 1899 converts to today's. In 1899 each side of a quay had its own series
+# 1..N (Omnummerboek, GA 1700 nr 25: "Noorderhaven (N/Z/)" 1-28, "(Z/Z/)" 1-35); today one side is even, the
+# other odd. (Grunnlink street, wijk) -> c, with today's number = 2 * number of 1899 + c.
+# Fitted 2026-11-15 on corner houses: a wijk number that also has an address in a side street, found today
+# within 12 m of the quay. Every check on the same wijk number is at most one house off, so the yard is
+# "this one or the next": the entry is placed as approximate.
+# Left out, the street stays unlinked there: Noorderhaven Z.Z. (wijk I), Boterdiep O.Z., Schuitendiep W.Z.,
+# Spilsluizen, Lopendediep (no or one check) and Boterdiep W.Z. (checks up to two houses off).
+# Schuitendiep O.Z. 1-43 of 1899 is not today's Schuitendiep: those numbers come out below 1 and are skipped.
+QUAY_SIDES = {("Noorderhaven", "L"): 1, ("Damsterdiep", "Q"): -3, ("Damsterdiep", "P"): -2,
+              ("Schuitendiep", "O"): -86, ("Schuitendiep", "P"): -86}
+
+
+def quay_number_today(street: str, wijk: str, number: str) -> str | None:
+    c = QUAY_SIDES.get((street, wijk))
+    k = re.fullmatch(r"(\d+)[a-z]?", number)  # not "20/4": a dwelling in the alley behind 20, not on the quay
+    today = c is not None and k and 2 * int(k.group(1)) + c
+    return str(today) if today and today > 0 else None
 
 
 def metres(geom):
@@ -153,14 +174,19 @@ def main() -> None:
                     stats["address_not_found"] += 1
                     continue
                 found.append((row, street, number, xy))
-    finally:
-        CACHE.write_text(json.dumps(cache, ensure_ascii=False))
 
-    renumbered = renumbered_streets(found)
-    for row, street, number, xy in found:
-                if street in renumbered:
-                    stats["street_renumbered_since_1899"] += 1
-                    continue
+        renumbered = renumbered_streets(found)
+        for row, street, number, xy in found:
+                approx = street in renumbered
+                if approx:
+                    # two streets on one wijk number: the first number need not belong to the first street
+                    number = " / " not in row["modern_street"] and quay_number_today(street, row["wijk"], number)
+                    if number:
+                        bag = bag or bag_index()
+                        xy = pdok_point(street, number, cache) or bag_point(bag, street, number)
+                    if not (number and xy):
+                        stats["street_renumbered_since_1899"] += 1
+                        continue
                 p = metres(Point(xy))
                 i = int(tree.nearest(p))
                 if geoms[i].distance(p) > SNAP_M:
@@ -173,8 +199,14 @@ def main() -> None:
                 a = matches.setdefault(pid, {"addresses": {}})["addresses"].setdefault(
                     modern.lower(), {"lat": xy[1], "lng": xy[0], "entries": [], "raw": modern})
                 a["entries"].append(f"{scan}:{int(idx)}")
+                if approx:
+                    a["approx"] = True  # build_db.py: geocode_type "approx"
+                    stats["on_map_approx"] += 1
                 stats["on_map"] += 1
+    finally:
+        CACHE.write_text(json.dumps(cache, ensure_ascii=False))
 
+    assert quay_number_today("Damsterdiep", "Q", "31") == "59" and not quay_number_today("Schuitendiep", "P", "40") and not quay_number_today("Damsterdiep", "Q", "20/4")
     assert stats["on_map"] > 1500, f"only {stats['on_map']} entries placed: wrong parcels file or PDOK down?"
     features = [{"type": "Feature", "geometry": f["geometry"],
                  "properties": {"pand_id": pid, "address_count": len(matches[pid]["addresses"]), "bouwjaar": None,
