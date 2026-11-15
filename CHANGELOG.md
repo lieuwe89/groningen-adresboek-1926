@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.23.0] — 2026-11-15
+
+### Added
+- 1854: churches and public buildings stand out on the map. 101 parcels of 1832 with a public use (kerk, raadhuis, hospitaal, waag, wachthuis, koornmolen and the like) are drawn in rose with the kind the cadastre gives them, shown when zoomed in. Martinikerk, A-kerk and Nieuwe Kerk, each one parcel with its churchyard, get an outline of their own and a name from the overview on (two from HisGIS, the A-kerk from the BAG). The parcels were in the file all along, but without an entry in the book they were beige on beige.
+
 ## [0.22.0] — 2026-11-15
 
 ### Added

@@ -117,6 +117,30 @@ export default function MapView({
                 "fill-outline-color": "#cfc4a8",
               },
             },
+            // Churches and public buildings carry a `naam` in the parcel file. Hardly any has an entry in the
+            // book, so without a colour of their own they vanish into the paper and the map loses its bearings.
+            {
+              id: "landmarks",
+              type: "fill",
+              source: "parcels",
+              filter: ["has", "naam"],
+              paint: { "fill-color": "#d9b3a6", "fill-outline-color": "#9c6558" },
+            },
+            {
+              id: "landmark-labels",
+              type: "symbol",
+              source: "parcels",
+              filter: ["has", "naam"],
+              // Named churches from the overview on; the kinds of the cadastre ("kerk", "wachthuis") when zoomed in.
+              minzoom: 14,
+              layout: {
+                "text-field": ["step", ["zoom"], ["case", ["==", ["get", "laag"], "gebouw"], ["get", "naam"], ""], 16, ["get", "naam"]],
+                "text-font": ["Noto Sans Regular"],
+                "text-size": 11,
+                "text-max-width": 7,
+              },
+              paint: { "text-color": "#5c3a31", "text-halo-color": "#f3ecdc", "text-halo-width": 1.4 },
+            },
           ]
         : [{ id: "carto-base", type: "raster", source: "carto" }],
     };
