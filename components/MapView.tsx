@@ -177,7 +177,8 @@ export default function MapView({
 
     map.on("load", async () => {
       // Buildings: GeoJSON with a `pand_id` and `entry_count` per feature.
-      const res = await fetch("/api/buildings");
+      // ?v=: browsers still hold the list of older releases (cached a day); a new URL drops it.
+      const res = await fetch(`/api/buildings?v=${packageJson.version}`);
       const data = await res.json();
       buildingsDataRef.current = data;
       map.addSource("buildings", { type: "geojson", data, promoteId: "pand_id" });

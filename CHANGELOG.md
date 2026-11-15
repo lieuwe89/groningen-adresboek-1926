@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.24.3] — 2026-11-15
+
+### Fixed
+- Clicking a house on the map could give a 404. Browsers kept the list of houses (`/api/buildings`) for a day, plus a week of stale use, and after a database rebuild that list held house ids that no longer exist. The list now carries an ETag and is revalidated on every load (a cheap 304 when nothing changed), so a rebuild on the server reaches visitors at once. The map also adds the release version to the URL, so browsers that still hold the old list drop it.
+
 ## [0.24.2] — 2026-11-15
 
 ### Fixed

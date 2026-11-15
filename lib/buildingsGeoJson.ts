@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import fs from "fs";
 
 import { getDb } from "./db";
@@ -9,6 +10,7 @@ import {
 type CachedPayload = {
   cacheKey: string;
   json: string;
+  etag: string;
 };
 
 let cachedPayload: CachedPayload | null = null;
@@ -23,10 +25,10 @@ function currentCacheKey(dbPath: string): string {
   }
 }
 
-export function getBuildingsGeoJsonPayload(): string {
+export function getBuildingsGeoJsonPayload(): { json: string; etag: string } {
   const db = getDb();
   const cacheKey = currentCacheKey(db.name);
-  if (cachedPayload?.cacheKey === cacheKey) return cachedPayload.json;
+  if (cachedPayload?.cacheKey === cacheKey) return cachedPayload;
 
   const rows = db
     .prepare(
@@ -35,8 +37,9 @@ export function getBuildingsGeoJsonPayload(): string {
     )
     .all() as BuildingRow[];
   const json = serializeBuildingRows(rows);
-  cachedPayload = { cacheKey, json };
-  return json;
+  const etag = `"${createHash("sha1").update(json).digest("base64url")}"`;
+  cachedPayload = { cacheKey, json, etag };
+  return cachedPayload;
 }
 
 export function clearBuildingsGeoJsonCacheForTests(): void {
