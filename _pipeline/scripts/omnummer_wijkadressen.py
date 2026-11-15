@@ -73,6 +73,8 @@ def main(year: int) -> None:
             for occ in page.get("occupations") or []:
                 for e in occ.get("entries") or []:
                     wijk, number = (e.get("address_wijk") or "").strip().upper(), (e.get("address_number") or "").strip().rstrip(".")
+                    while wijk and (number.upper() + " ").startswith(wijk + " "):  # apply_omnummering.py already put the wijk letter in front
+                        number = number[len(wijk) + 1:]
                     row = {"uid": e.get("uid"), "scan": f.stem, "name": e.get("name"), "book_street": e.get("address_street"),
                            "wijk": wijk, "number": number, "status": "none", "modern_street": "", "modern_number": "",
                            "base_number_used": "", "street_check": "", "notes": ""}
@@ -91,7 +93,9 @@ def main(year: int) -> None:
                         row["modern_street"] = " / ".join(streets)
                         row["modern_number"] = " / ".join(numbers)
                         row["base_number_used"] = "y" if data.get("baseNumberUsed") else ""
-                        row["street_check"] = "ok" if any(same_street(row["book_street"], s) for s in streets) else "differs"
+                        # a house followed over a renumbering carries its later street; the street of the old number is in `before`
+                        before = ((data.get("renumbered") or {}).get("before") or {}).get("street")
+                        row["street_check"] = "ok" if any(same_street(row["book_street"], s) for s in streets + [before]) else "differs"
                     row["notes"] = ",".join(n for n in data.get("notes", []) if n not in ("city", "snapshot"))
                     if data.get("results") and not hits:
                         row["notes"] += ",known_only_in_other_period"
