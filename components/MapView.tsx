@@ -8,6 +8,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { HISTORIC_MAPS } from "@/lib/historicMaps";
 import { BOOK } from "@/lib/book";
 import { resolvePublicAssetUrl } from "@/lib/publicAssetUrls";
+import packageJson from "@/package.json";
 
 const GRONINGEN_CENTER: [number, number] = [6.5665, 53.2194];
 const MAP_POS_KEY = `grn${BOOK.id}-map-pos`;
@@ -82,7 +83,9 @@ export default function MapView({
       glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
       sources: vb
         ? {
-            parcels: { type: "geojson", data: asset(vb.parcels), attribution: vb.attribution },
+            // The file keeps its name when it is replaced and /maps/ is cached for a day; the map's worker
+            // fetch ignores a hard reload. The version in the URL makes every release fetch it fresh.
+            parcels: { type: "geojson", data: `${asset(vb.parcels)}?v=${packageJson.version}`, attribution: vb.attribution },
           }
         : {
             // Carto watermarks keyless tiles ("API KEY REQUIRED"). The key is public by design

@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.24.1] — 2026-11-15
+
+### Fixed
+- 1854: returning visitors kept the old parcel file for a day after it was replaced, so the churches of 0.23.0 did not show; a hard reload did not help, because the map fetches the file from a worker. The URL of the file now carries the release version.
+
 ## [0.24.0] — 2026-11-15
 
 ### Added
