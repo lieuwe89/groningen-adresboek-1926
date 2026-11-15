@@ -100,7 +100,7 @@
     "noEntries": "No entries linked to this building.",
     "page": "pg",
     "closeAriaLabel": "Close building panel",
-    "approx": "Approximate location: this yard or the one next to it",
+    "approx": "Approximate location: this yard or one close by",
     "entryFallback": "Entry"
   },
   "Footer": {

@@ -2,6 +2,19 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.24.0] — 2026-11-15
+
+### Added
+- 1854: more entries on the 1832 map, placed as an approximation. Where the parcel number runs along with the wijk number (wijk K 191-195 on parcels K 236-240), the parcel follows from the number (`parcel_run`); an unlinked wijk number next to a linked one goes on the neighbour's yard (`interpolate`). Both are tested against the exactly placed numbers at every run; the outcome is in `match.json` under `_summary.holdout`.
+
+### Changed
+- 1854: an entry whose address point of today falls on a church, a bare yard, a garden or a bleaching field of 1832 is no longer placed there: it goes to the parcel its wijk number points at, else to the nearest premises within 8 m, as an approximation. Warehouses, stables and workshops keep their entries; the book is a trade directory.
+- 1854: a yard that collects three or more wijk numbers (moved street lines, one modern building) is no longer shown as exact; its entries are approximate.
+- The yard panel says "Ligging bij benadering: dit erf of een erf vlakbij".
+
+### Fixed
+- 1854: the present-day address of entries on the seven quay streets showed the house number of 1899. It now shows today's number with a "±" where it could be converted, and the street alone elsewhere.
+
 ## [0.23.0] — 2026-11-15
 
 ### Added
