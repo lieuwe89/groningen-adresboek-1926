@@ -11,6 +11,8 @@ export interface Book {
   title: string; // <title>
   description: string;
   favicon: string;
+  /** First public release, ISO date; link previews (LinkedIn) show it. */
+  publishDate: string;
   startStem: string; // page the home route opens
   adminStartStem: string;
   /** Show the "only buildings built ≤ year" toggle (BAG bouwjaar is unreliable before ~1900). */
@@ -33,6 +35,7 @@ const BOOKS: Record<string, Book> = {
     description:
       "Doorzoek het Groninger adresboek van 1926 op naam, adres of beroep en bekijk op de kaart wie er honderd jaar geleden in elk huis woonde.",
     favicon: "/favicon.png",
+    publishDate: "2026-05-04",
     startStem: "1769_19525-1926_0121", // first page of the Naamregister
     adminStartStem: "1769_19525-1926_0150",
     builtBeforeFilter: true,
@@ -48,6 +51,7 @@ const BOOKS: Record<string, Book> = {
     description:
       "Doorzoek het Groninger adresboek van 1854 op naam, adres of beroep en bekijk fabrikanten, kooplieden en winkeliers op de kaart van toen.",
     favicon: "/favicon-1854.png",
+    publishDate: "2026-11-12",
     startStem: "1769_19527-1854_0007", // first page of the register (Aannemers)
     adminStartStem: "1769_19527-1854_0007",
     builtBeforeFilter: false,
