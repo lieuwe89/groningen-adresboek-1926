@@ -51,6 +51,14 @@ export const metadata: Metadata = {
   icons: {
     icon: BOOK.favicon,
   },
+  // Absolute og:image URL for link previews (LinkedIn etc.); each book has its own domain.
+  metadataBase: new URL(`https://groningen-${BOOK.id}.lieuwejongsma.nl`),
+  openGraph: {
+    type: "website",
+    title: BOOK.title,
+    description: BOOK.description,
+    images: [{ url: `/og-${BOOK.id}.png`, width: 1200, height: 630 }],
+  },
 };
 
 export default async function LocaleLayout({

@@ -2,6 +2,14 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.21.1] — 2026-11-15
+
+### Added
+- Link previews: both books send `og:image` (a 1200×630 screenshot of the site), `og:title` and `og:description`, so LinkedIn and other sites show a card.
+
+### Fixed
+- 1854: the building card follows the selected person.
+
 ## [0.21.0] — 2026-11-14
 
 ### Added
