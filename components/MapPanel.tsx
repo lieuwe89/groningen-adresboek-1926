@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import BuildingPanel from "./BuildingPanel";
@@ -31,6 +31,11 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('Map');
+
+  // An open card follows the selected person; no building (null) closes it.
+  useEffect(() => {
+    setActivePand((open) => (open ? focusPandId : open));
+  }, [focusPandId]);
 
   return (
     <section id="tour-map" className="relative flex-1 min-w-0 overflow-hidden bg-bp-blue">
