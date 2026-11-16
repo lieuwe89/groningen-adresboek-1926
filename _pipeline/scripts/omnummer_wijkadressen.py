@@ -11,6 +11,10 @@ status:  house        one modern house number
          none         not found
 street_check: "ok" / "differs" — the book prints the street too, so a mismatch
 with Grunnlink's street flags a wrong reading or an earlier renumbering of the wijk.
+side: the quay side Grunnlink reads from the Omnummerboek ("noordzijde"); each side had its own house numbers.
+parcel1832 / parcel_certainty: the parcel of the 1832 cadastre Grunnlink gives for the wijk number ("K 865"),
+found through the population registers of 1830/1840 and the owner tables ("owner"), or counted on from such a
+number ("run").
 
 Usage:  ADRESBOEK_BOOK=1854 python scripts/omnummer_wijkadressen.py [YEAR=1854]
 """
@@ -77,7 +81,7 @@ def main(year: int) -> None:
                         number = number[len(wijk) + 1:]
                     row = {"uid": e.get("uid"), "scan": f.stem, "name": e.get("name"), "book_street": e.get("address_street"),
                            "wijk": wijk, "number": number, "status": "none", "modern_street": "", "modern_number": "",
-                           "base_number_used": "", "street_check": "", "notes": ""}
+                           "base_number_used": "", "street_check": "", "notes": "", "side": "", "parcel1832": "", "parcel_certainty": ""}
                     rows.append(row)
                     if not (wijk and re.match(r"\d", number)):
                         row["notes"] = "no wijk address in entry"
@@ -96,6 +100,10 @@ def main(year: int) -> None:
                         # a house followed over a renumbering carries its later street; the street of the old number is in `before`
                         before = ((data.get("renumbered") or {}).get("before") or {}).get("street")
                         row["street_check"] = "ok" if any(same_street(row["book_street"], s) for s in streets + [before]) else "differs"
+                        row["side"] = " / ".join(sorted({r["side"] for r in hits if r.get("side")}))
+                    parcel = data.get("parcel1832") or {}
+                    if parcel.get("sectie") and parcel.get("perceel"):
+                        row["parcel1832"], row["parcel_certainty"] = f'{parcel["sectie"]} {parcel["perceel"]}', parcel.get("certainty") or ""
                     row["notes"] = ",".join(n for n in data.get("notes", []) if n not in ("city", "snapshot"))
                     if data.get("results") and not hits:
                         row["notes"] += ",known_only_in_other_period"

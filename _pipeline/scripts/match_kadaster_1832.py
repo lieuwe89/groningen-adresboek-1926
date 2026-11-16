@@ -14,7 +14,11 @@ number (demolished/merged houses). Five groups are placed to a nearby yard only 
 "approx": true: entries on a quay side in QUAY_SIDES; wijk numbers in a stretch where the
 parcel number runs along with the wijk number (parcel_run); entries on a yard where PILE or
 more wijk numbers come together; entries whose point falls on a parcel without premises
-(NO_PREMISES); and unlinked wijk numbers next to a linked one (interpolate). For the quay streets the script also corrects address_modern in
+(NO_PREMISES); and unlinked wijk numbers next to a linked one (interpolate). Where the owner
+tables of 1832 are there (output/oat/oat_groningen.csv, transcribed from the RCE scans), the owner's
+name corrects a link that is one yard off and places unlinked entries (owner_yards). A wijk number for
+which Grunnlink gives the parcel of 1832 itself (column parcel1832: population registers of 1830/1840
+against the owner tables) goes straight to that yard, before anything else. For the quay streets the script also corrects address_modern in
 the page JSONs: apply_omnummering.py wrote the house number of 1899 there as today's.
 
 Needs DATA_ROOT/maps/percelen_1832.geojson (HisGIS parcels, from ~/projects/Kadaster).
@@ -23,6 +27,7 @@ Run build_db.py afterwards.
 
 import bisect
 import csv
+import unicodedata
 import json
 import math
 import re
@@ -50,6 +55,7 @@ PARCELS = DATA_ROOT / "maps" / "percelen_1832.geojson"
 BAG = OUTPUT_DIR / "bag" / "buildings.geojson"
 OUT = OUTPUT_DIR / "kadaster1832"
 CACHE = OUT / "pdok_cache.json"
+OAT = OUTPUT_DIR / "oat" / "oat_groningen.csv"  # owners per parcel in 1832; the steps that use them are skipped without it
 PDOK = "https://api.pdok.nl/bzk/locatieserver/search/v3_1/free"
 SNAP_M = 8
 # Degrees -> metres around Groningen; good to a few cm over the city.
@@ -65,15 +71,21 @@ KX, KY = 111_320 * math.cos(math.radians(53.22)), 110_574
 # Left out, the street stays unlinked there: Noorderhaven Z.Z. (wijk I), Boterdiep O.Z., Schuitendiep W.Z.,
 # Spilsluizen, Lopendediep (no or one check) and Boterdiep W.Z. (checks up to two houses off).
 # Schuitendiep O.Z. 1-43 of 1899 is not today's Schuitendiep: those numbers come out below 1 and are skipped.
-QUAY_SIDES = {("Noorderhaven", "L"): 1, ("Damsterdiep", "Q"): -3, ("Damsterdiep", "P"): -2,
-              ("Schuitendiep", "O"): -86, ("Schuitendiep", "P"): -86}
+# Value: (c, first and last number of 1899 the fit was made on). Outside that range nothing is converted:
+# Grunnlink also files wijk X ("Buiten") under Damsterdiep zuidzijde, further out than the corner houses reach.
+QUAY_SIDES = {("Noorderhaven", "noordzijde"): (1, 1, 28), ("Damsterdiep", "zuidzijde"): (-3, 4, 36),
+              ("Damsterdiep", "noordzijde"): (-2, 1, 33), ("Schuitendiep", "oostzijde"): (-86, 44, 91)}
+# The side comes from Grunnlink (column side, v0.40.0). Where it gives none, the wijk tells the side.
+QUAY_WIJK = {("Noorderhaven", "L"): "noordzijde", ("Damsterdiep", "Q"): "zuidzijde", ("Damsterdiep", "P"): "noordzijde",
+             ("Schuitendiep", "O"): "oostzijde", ("Schuitendiep", "P"): "oostzijde"}
 
 
-def quay_number_today(street: str, wijk: str, number: str) -> str | None:
-    c = QUAY_SIDES.get((street, wijk))
+def quay_number_today(street: str, side: str, number: str) -> str | None:
+    c, first, last = QUAY_SIDES.get((street, side), (None, 0, 0))
     k = re.fullmatch(r"(\d+)[a-z]?", number)  # not "20/4": a dwelling in the alley behind 20, not on the quay
-    today = c is not None and k and 2 * int(k.group(1)) + c
-    return str(today) if today and today > 0 else None
+    if c is None or not k or not first <= int(k.group(1)) <= last:
+        return None
+    return str(2 * int(k.group(1)) + c)
 
 
 # Today's address point can lie on a parcel of 1832 where nobody had premises: Oude Kijk in 't Jatstraat 19 falls
@@ -88,6 +100,82 @@ RUN_W, RUN_MIN, RUN_SHARE = 6, 3, 0.6
 # are approximate; parcel_run may still give them their own parcel (it can for few: 7 of 144 numbers, 2026-11-15).
 PILE = 3
 GAP, NEAR_M = 3, 15
+# Owners of 1832 against the names of 1854 (measured 2026-11-16 on 1,962 exact links): the owner's surname stands
+# on the linked yard for 11.5% of the entries and on the adjoining yard for 5%, against 0.3% by chance. So a
+# namesake who owns a yard in the entry's street is evidence, strongest when he is the only one in the street.
+# It is evidence of ownership, not of use (owner, 2026-11-16): the book lists where a trade was carried on, and an
+# owner may let the house. So nothing placed or moved on an owner's name is exact; it is approximate and no anchor.
+# An unlinked entry is placed only on the one yard in its street whose owner has its surname and first initial,
+# and only for a surname that owns at most OWNER_MAX yards in town: with common names 18% lay further than 10 m.
+OWNER_MAX = 8
+NOT_A_SURNAME = {"van", "de", "der", "den", "ter", "ten", "te", "wed", "weduwe", "wedw", "wd", "erven", "erv", "jz", "hz",
+                 "cs", "en", "mede", "eigenaren", "d", "v", "vander", "het", "junior", "senior", "jr", "sr", "bis"}
+
+
+def surname(text) -> str:
+    """'Veen van der' / 'Bruin / de' / 'Duinen (van)' -> 'veen' / 'bruin' / 'duinen'"""
+    s = unicodedata.normalize("NFKD", str(text or "").lower()).replace("ij", "y")
+    words = [w for w in re.findall(r"[a-z]+", s) if w not in NOT_A_SURNAME]
+    return words[0] if words else ""
+
+
+def same_name(a: str, b: str) -> bool:
+    """Equal, or one letter apart for names of six letters and more: Loffens / Loffers is a reading slip."""
+    if a == b:
+        return bool(a)
+    if min(len(a), len(b)) < 6 or abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        return sum(x != y for x, y in zip(a, b)) == 1
+    a, b = sorted((a, b), key=len)
+    return any(a == b[:i] + b[i + 1:] for i in range(len(b)))
+
+
+def load_owners(parcel: list) -> dict:
+    """yard index -> {(surname, first initial)} of the owners of 1832, both readings, struck rows too."""
+    by_parcel = defaultdict(list)
+    for i, key in enumerate(parcel):
+        if key:
+            by_parcel[key].append(i)
+    out = defaultdict(set)
+    for r in csv.DictReader(OAT.open(encoding="utf-8", newline="")):
+        if r["instantie"] == "1" or not r["perceelnr"].isdecimal():
+            continue
+        names = {(surname(r[n]), (re.search(r"[A-Za-z]", r[v] or "") or [""])[0].lower())
+                 for n, v in (("naam", "voornamen"), ("naam_gemini", "voornamen_gemini"), ("naam_claude", "voornamen_claude"))}
+        for i in by_parcel.get((r["sectie"], int(r["perceelnr"])), ()):
+            out[i] |= {n for n in names if n[0]}
+    return out
+
+
+def entry_initials() -> dict:
+    """uid -> first initial of the entry, from the page JSONs (addresses.csv has the surname only)."""
+    out = {}
+    for f in JSON_DIR.glob("*.json"):
+        for occ in json.loads(f.read_text(encoding="utf-8")).get("occupations") or []:
+            for e in occ.get("entries") or []:
+                m = re.search(r"[A-Za-z]", e.get("initials") or "")
+                out[e.get("uid")] = m.group().lower() if m else ""
+    return out
+
+
+def owner_yards(row: dict, initial, owners: dict, by_street: dict) -> set:
+    """Yards along the entry's street of today whose owner of 1832 carries the entry's surname.
+
+    initial None: the surname is enough. Otherwise the owner's first name must start with that letter too.
+    """
+    name = surname(row["name"])
+    along = {y for s in row["modern_street"].split(" / ") if s for c in expanded_streets(s) for y in by_street.get(c, ())}
+    return {y for y in along if any(same_name(name, o) and (initial is None or (initial and initial == i)) for o, i in owners.get(y, ()))}
+
+
+def owner_place(row: dict, initial: str, owners: dict, by_street: dict, spread: Counter):
+    """The yard an unlinked entry goes to on its owner's name, or None (see OWNER_MAX)."""
+    found = owner_yards(row, initial, owners, by_street)
+    name = surname(row["name"])
+    if len(found) == 1 and sum(n for o, n in spread.items() if same_name(name, o)) <= OWNER_MAX:
+        return next(iter(found))
+    return None
 
 
 def wijk_number(row: dict) -> int | None:
@@ -268,10 +356,12 @@ def main() -> None:
     geoms = [metres(shape(f["geometry"]).buffer(0)) for f in yards]
     premises = [not NO_PREMISES.search(f["properties"]["soort"] or "") for f in yards]
     parcel = [(f["properties"]["sectie"], int(f["properties"]["perceelnr"])) if str(f["properties"]["perceelnr"]).isdigit() else None for f in yards]
-    yard_of = {}
+    yard_of, yard_any = {}, {}
     for i, key in enumerate(parcel):
-        if key and premises[i]:
-            yard_of.setdefault(key, i)
+        if key:
+            yard_any.setdefault(key, i)
+            if premises[i]:
+                yard_of.setdefault(key, i)
     tree = STRtree(geoms)
     bag = None
     matches: dict = {}
@@ -284,6 +374,7 @@ def main() -> None:
     streets = defaultdict(set)       # (wijk, number) -> streets the book prints for those entries
     quay_modern: dict = {}           # uid -> today's address of a quay entry placed as approximate
     off_premises = []                # (row, point, xy, today's address, quay): the point lies on a church, a bare yard
+    by_register = []                 # (row, yard index): the parcel of 1832 as Grunnlink gives it
     tentative = []                   # (row, yard index, today's address, xy): placed by today's point, before the pile test
     rejected = street_rejected()
 
@@ -303,6 +394,12 @@ def main() -> None:
         with CSV_PATH.open(encoding="utf-8", newline="") as fh:
             for row in csv.DictReader(fh):
                 rows.append(row)
+                if row.get("parcel1832"):  # Grunnlink names the parcel of 1832 itself: no detour through today
+                    section, number = row["parcel1832"].split()
+                    if (section, int(number)) in yard_any:
+                        by_register.append((row, yard_any[(section, int(number))]))
+                        continue
+                    stats["register_parcel_not_on_map"] += 1
                 if row["street_check"] == "differs" and review_key(row) in rejected:
                     stats["street_review_rejected"] += 1
                     continue
@@ -326,7 +423,8 @@ def main() -> None:
                 quay = street in renumbered
                 if quay:
                     # two streets on one wijk number: the first number need not belong to the first street
-                    number = " / " not in row["modern_street"] and quay_number_today(street, row["wijk"], number)
+                    side = row.get("side") or QUAY_WIJK.get((street, row["wijk"]), "")
+                    number = " / " not in row["modern_street"] and quay_number_today(street, side, number)
                     if number:
                         bag = bag or bag_index()
                         xy = pdok_point(street, number, cache) or bag_point(bag, street, number)
@@ -350,12 +448,44 @@ def main() -> None:
     finally:
         CACHE.write_text(json.dumps(cache, ensure_ascii=False))
 
+    owners, by_street, initials, owner_check, owner_moved = {}, defaultdict(set), {}, Counter(), set()
+    if OAT.exists():
+        owners, initials = load_owners(parcel), entry_initials()
+        spread = Counter(o for names in owners.values() for o in {n for n, _ in names})  # surname -> yards owned in town
+        for (street, _, _), xy in (bag or bag_index()).items():  # the yards under today's addresses of a street
+            p = metres(Point(xy))
+            i = int(tree.nearest(p))
+            if geoms[i].distance(p) <= SNAP_M:
+                by_street[street].add(i)
+        corrected = []
+        for row, i, raw, xy in tentative:
+            # hold-out of the placing rule below, on the links as today's address gives them
+            j = owner_place(row, initials.get(row["uid"], ""), owners, by_street, spread)
+            if j is not None:
+                d = geoms[i].distance(geoms[j])
+                owner_check["same yard" if i == j else "adjoining" if d < 1 else "within 10 m" if d <= 10 else "further"] += 1
+            # The only namesake in the street owns the yard next door (apothecary Hoitsema, wijk F 327: point on
+            # I 365, Hoitsema owns I 366). Probably today's point is one yard off; he may also own the one and
+            # work in the other. The entry goes to the owner's yard as approximate: both yards are "this or the next".
+            namesakes = owner_yards(row, None, owners, by_street)
+            if namesakes == {i}:
+                stats["confirmed_by_owner"] += 1
+            elif len(namesakes) == 1 and geoms[i].distance(geoms[next(iter(namesakes))]) < 1 and premises[next(iter(namesakes))]:
+                i = next(iter(namesakes))
+                owner_moved.add(row["uid"])
+                stats["moved_to_owner_yard"] += 1
+            corrected.append((row, i, raw, xy))
+        tentative = corrected
+
     numbers_on = defaultdict(set)
     for row, i, raw, xy in tentative:
-        if wijk_number(row) is not None:
+        if wijk_number(row) is not None and row["uid"] not in owner_moved:
             numbers_on[i].add((row["wijk"], wijk_number(row)))
     piled = []
     for row, i, raw, xy in tentative:
+        if row["uid"] in owner_moved:
+            place(row, i, raw, xy, True)
+            continue
         if len(numbers_on[i]) >= PILE:
             piled.append((row, i, raw, xy))
             continue
@@ -371,7 +501,17 @@ def main() -> None:
             place(row, i, f'{row["book_street"]} {row["wijk"]} {row["number"]}', (pt.x, pt.y), True)
             stats[counter] += 1
 
+    # Grunnlink's own check on wijk K: 9 of 10 such parcels on the house or its neighbour. So approximate, like the rest.
+    place_by_number(by_register, "on_map_register")
     place_by_number(parcel_run(rows, placed, exact, parcel, yard_of), "on_map_parcel_run")
+    # Not placed yet (unlinked, piled, off premises): one owner in the street with the same surname and first initial.
+    by_owner = []
+    for row in rows:
+        if row["uid"] not in placed and row["status"] != "none":
+            j = owner_place(row, initials.get(row["uid"], ""), owners, by_street, spread) if owners else None
+            if j is not None and premises[j]:
+                by_owner.append((row, j))
+    place_by_number(by_owner, "on_map_owner")
     for row, i, raw, xy in piled:
         if row["uid"] not in placed:
             place(row, i, raw, xy, True)
@@ -396,7 +536,7 @@ def main() -> None:
                   if r["status"] in ("house", "ambiguous") and renumbered & set(r["modern_street"].split(" / "))
                   and not (r["street_check"] == "differs" and review_key(r) in rejected)})
 
-    assert quay_number_today("Damsterdiep", "Q", "31") == "59" and not quay_number_today("Schuitendiep", "P", "40") and not quay_number_today("Damsterdiep", "Q", "20/4")
+    assert quay_number_today("Damsterdiep", "zuidzijde", "31") == "59" and not quay_number_today("Schuitendiep", "oostzijde", "40") and not quay_number_today("Damsterdiep", "zuidzijde", "20/4")
     assert stats["on_map"] > 1500, f"only {stats['on_map']} entries placed: wrong parcels file or PDOK down?"
     features = [{"type": "Feature", "geometry": f["geometry"],
                  "properties": {"pand_id": pid, "address_count": len(matches[pid]["addresses"]), "bouwjaar": None,
@@ -407,6 +547,9 @@ def main() -> None:
              "interpolate": holdout(lambda r, pl, ex: interpolate(r, pl, ex, streets, geoms), exact, streets, geoms)}
     for name, c in check.items():
         assert c.get("further", 0) <= 0.1 * sum(c.values()), f"{name}: hold-out got worse: {c}"
+    if owner_check:  # namesakes do live elsewhere in a street: a wider margin than for the number rules
+        assert owner_check["further"] <= 0.15 * sum(owner_check.values()), f"owner: hold-out got worse: {owner_check}"
+        check["owner"] = dict(owner_check)
     matches["_summary"] = dict(stats, renumbered_streets=sorted(renumbered), holdout=check)
     (OUT / "match.json").write_text(json.dumps(matches, ensure_ascii=False), encoding="utf-8")
     print(dict(stats), "on", len(features), "yards →", OUT)

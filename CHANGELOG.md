@@ -2,6 +2,16 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.25.0] — 2026-11-16
+
+### Added
+- 1854: a wijk number for which Grunnlink gives the parcel of the 1832 cadastre itself (`parcel1832`, from the population registers of 1830/1840 matched to the owner tables) goes straight to that parcel, as an approximation. 25 entries in wijk T, a wijk renumbered in 1878 where the detour through today's address fails.
+- 1854: the owner tables of 1832 (OAT), transcribed from the RCE scans, as a check on the links. Where the only namesake in the street owns the linked yard the link is confirmed; where he owns the yard next door the entry moves there as an approximation; an unlinked entry is placed on the one yard in its street whose owner has its surname and first initial, for surnames that own at most eight yards in town. The tables record ownership, not use, so nothing rests on them as exact. Skipped when `output/oat/oat_groningen.csv` is absent.
+
+### Changed
+- 1854: the quay conversion takes the side from Grunnlink (`side`, "noordzijde") instead of deriving it from the wijk, and converts only within the range of house numbers it was fitted on.
+- `omnummer_wijkadressen.py` writes `side`, `parcel1832` and `parcel_certainty` to `addresses.csv`.
+
 ## [0.24.3] — 2026-11-15
 
 ### Fixed
