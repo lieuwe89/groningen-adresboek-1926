@@ -2,6 +2,11 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.25.1] — 2026-11-16
+
+### Changed
+- 1854: where Grunnlink gives other houses than when a street in the street review was judged, the review no longer rejects Grunnlink's street; Grunnlink's current answer counts (owner decision). Five entries gain today's address: Stoeldraaijerstraat O 215 (Boterdiep) and Buiten Heerepoort Z 51/72/73 (Hereweg); Z 51 goes on the map at Hereweg 21.
+
 ## [0.25.0] — 2026-11-16
 
 ### Added

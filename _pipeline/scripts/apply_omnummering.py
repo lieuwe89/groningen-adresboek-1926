@@ -21,18 +21,23 @@ from pipeline.config import JSON_DIR, OUTPUT_DIR  # noqa: E402
 
 CSV_PATH = OUTPUT_DIR / "omnummering" / "addresses.csv"
 REVIEW_PATH = OUTPUT_DIR / "omnummering" / "straatreview.csv"
+# straatreview_maken.py opens the reasoning with this when Grunnlink's houses changed after the verdict
+STALE_PREFIX = "Let op: Grunnlink geeft hier nu andere huizen"
 
 
-def street_rejected() -> set:
+def street_rejected(path: Path = REVIEW_PATH) -> set:
     """(book street, wijk, Grunnlink street) where the street review does not back Grunnlink's house.
 
     Lieuwe's verdict counts; an open row counts only with a proposal Y of certainty hoog/middel (owner decision
-    2026-11-15: no house rather than the wrong house). Rows with matching streets are never in the review.
+    2026-11-15: no house rather than the wrong house). A row whose Grunnlink houses changed since the verdict
+    never rejects: Grunnlink goes first (owner decision 2026-11-16). Rows with matching streets are never in the review.
     """
-    if not REVIEW_PATH.exists():
+    if not path.exists():
         return set()
     out = set()
-    for r in csv.DictReader(REVIEW_PATH.open(encoding="utf-8", newline="")):
+    for r in csv.DictReader(path.open(encoding="utf-8", newline="")):
+        if r["onderbouwing"].startswith(STALE_PREFIX):
+            continue
         ok = r["review"] == "Y" if r["review"] in ("Y", "N") else r["voorstel"] == "Y" and r["zekerheid"] in ("hoog", "middel")
         if not ok:
             out.add((r["straat_in_boek"], r["wijk"], r["straat_grunnlink"]))
