@@ -128,6 +128,7 @@
     "detailRole": "Role",
     "detailOccupation": "Occupation",
     "addressNow": "now",
+    "addressGone": "building gone, no present-day address",
     "sectionAdvertisement": "Advertisement",
     "sectionInstitutional": "Institutions",
     "sectionNameRegister": "Name register",

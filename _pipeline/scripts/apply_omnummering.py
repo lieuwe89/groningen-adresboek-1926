@@ -31,8 +31,10 @@ def street_rejected(path: Path = REVIEW_PATH) -> set:
     Lieuwe's verdict counts; an open row counts only with a proposal Y of certainty hoog/middel (owner decision
     2026-11-15: no house rather than the wrong house). A row whose Grunnlink houses changed since the verdict
     never rejects: Grunnlink goes first (owner decision 2026-11-16). Rows with matching streets are never in the review.
+    Switched off (owner, 2026-11-16): the verdicts are not backed by sources, so Grunnlink's street counts everywhere
+    until a source settles a case. Pass a path to read the review anyway.
     """
-    if not path.exists():
+    if path is REVIEW_PATH or not path.exists():
         return set()
     out = set()
     for r in csv.DictReader(path.open(encoding="utf-8", newline="")):

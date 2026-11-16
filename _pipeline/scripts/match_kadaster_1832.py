@@ -46,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from match_addresses import expanded_streets  # noqa: E402
 from apply_omnummering import review_key, street_rejected  # noqa: E402
-from omnummer_wijkadressen import same_street  # noqa: E402
+from omnummer_wijkadressen import CACHE as GRUNNLINK_CACHE, lookup, same_street  # noqa: E402
 
 from pipeline.config import DATA_ROOT, JSON_DIR, OUTPUT_DIR  # noqa: E402
 
@@ -99,6 +99,7 @@ RUN_W, RUN_MIN, RUN_SHARE = 6, 3, 0.6
 # yard that collects PILE or more wijk numbers this way is not house-accurate. Its entries are no anchors and
 # are approximate; parcel_run may still give them their own parcel (it can for few: 7 of 144 numbers, 2026-11-15).
 PILE = 3
+MODERN_GONE = "verdwenen"  # address_modern of a placed entry without an address of today; lib/entryPresentation.ts matches it
 GAP, NEAR_M = 3, 15
 # Owners of 1832 against the names of 1854 (measured 2026-11-16 on 1,962 exact links): the owner's surname stands
 # on the linked yard for 11.5% of the entries and on the adjoining yard for 5%, against 0.3% by chance. So a
@@ -215,6 +216,80 @@ def interpolate(rows: list, placed: set, exact: dict, streets: dict, geoms: list
             continue
         if any(same_street(row["book_street"], s) for k in near for s in streets[(w, k)]):
             out.append((row, i))
+    return out
+
+
+def grunnlink_anchors(rows: list, placed: set, renumbered: set, bag: dict, tree, geoms: list, premises: list) -> dict:
+    """(wijk, number) -> (Grunnlink street, yard index) for the wijk numbers within GAP of an unplaced entry.
+
+    Also numbers the book never prints: Grunnlink knows A 37 and A 40 around A 39, the book only A 36 and A 41.
+    Fetched once per number into omnummer_wijkadressen.py's cache; today's point from the BAG, quay streets left out.
+    """
+    cache = json.loads(GRUNNLINK_CACHE.read_text()) if GRUNNLINK_CACHE.exists() else {}
+    try:
+        for row in rows:
+            n = wijk_number(row)
+            if row["uid"] not in placed and n is not None and re.fullmatch(r"[A-Z]+", row["wijk"]):
+                for k in range(max(1, n - GAP), n + GAP + 1):
+                    lookup(row["wijk"], str(k), cache)
+    finally:
+        GRUNNLINK_CACHE.write_text(json.dumps(cache, ensure_ascii=False))
+    out = {}
+    for key, v in cache.items():
+        w, _, n = key.partition(" ")
+        if not (n.isdecimal() and v and v.get("kind") == "house" and len(v["results"]) == 1):
+            continue
+        street, number = v["results"][0]["street"], v["results"][0].get("newNumber") or ""
+        xy = street not in renumbered and re.match(r"\d", number) and bag_point(bag, street, number)
+        if not xy:
+            continue
+        p = metres(Point(xy))
+        i = int(tree.nearest(p))
+        if geoms[i].distance(p) <= SNAP_M and premises[i]:
+            out[(w, int(n))] = (street, i)
+    return out
+
+
+def interpolate_grunnlink(rows: list, placed: set, anchors: dict, geoms: list) -> list:
+    """Unplaced entries between two wijk numbers Grunnlink places, printed in the book or not: [(row, yard index)].
+
+    Rule: a known number within GAP on either side, their yards the same or within NEAR_M, and Grunnlink puts one
+    of them in the street the book prints. The entry goes to the yard of the nearer one. Measured 2026-11-16 on
+    the exact links: 696 predictions, 5.6% further than 10 m (interpolate(): 3.9%); holdout() checks every run.
+    """
+    out = []
+    for row in rows:
+        w, n = row["wijk"], wijk_number(row)
+        if row["uid"] in placed or n is None:
+            continue
+        lo = next((n - d for d in range(1, GAP + 1) if (w, n - d) in anchors), None)
+        hi = next((n + d for d in range(1, GAP + 1) if (w, n + d) in anchors), None)
+        if lo is None or hi is None:
+            continue
+        (sa, a), (sb, b) = anchors[(w, lo)], anchors[(w, hi)]
+        if (a == b or geoms[a].distance(geoms[b]) <= NEAR_M) and (same_street(row["book_street"], sa) or same_street(row["book_street"], sb)):
+            out.append((row, a if n - lo <= hi - n else b))
+    return out
+
+
+def same_person(rows: list, placed: set, yard_of_uid: dict, initials: dict) -> list:
+    """Unplaced entries whose person is placed elsewhere in the book, in the same street, on one yard: [(row, yard index)].
+
+    The book lists a person once per trade. P. de Vries stands on Martini Kerkhof C 170 and C 117, the second a
+    misprint (straatreview). Of the 16 found on 2026-11-16 most are a misread digit: H 30/50, F 280/180, P 97/79.
+    """
+    who = lambda r: (surname(r["name"]), initials.get(r["uid"], ""))
+    seen = defaultdict(list)
+    for row in rows:
+        if row["uid"] in yard_of_uid:
+            seen[who(row)].append(row)
+    out = []
+    for row in rows:
+        if row["uid"] in placed or not all(who(row)):
+            continue
+        found = {yard_of_uid[o["uid"]] for o in seen.get(who(row), ()) if same_street(row["book_street"], o["book_street"])}
+        if len(found) == 1:
+            out.append((row, found.pop()))
     return out
 
 
@@ -377,10 +452,12 @@ def main() -> None:
     by_register = []                 # (row, yard index): the parcel of 1832 as Grunnlink gives it
     tentative = []                   # (row, yard index, today's address, xy): placed by today's point, before the pile test
     rejected = street_rejected()
+    yard_of_uid: dict = {}
 
     def place(row, i, raw, xy, approx):
         pid = "hisgis-" + yards[i]["properties"]["osm"].replace("/", "-")
         used[pid] = yards[i]
+        yard_of_uid[row["uid"]] = i
         scan, idx = row["uid"].rsplit(":", 1)
         a = matches.setdefault(pid, {"addresses": {}})["addresses"].setdefault(
             raw.lower(), {"lat": xy[1], "lng": xy[0], "entries": [], "raw": raw})
@@ -529,12 +606,22 @@ def main() -> None:
         if quay:
             quay_modern[row["uid"]] = f"± {raw}"
     place_by_number(interpolate(rows, placed, exact, streets, geoms), "on_map_interpolated")
+    # Both rules below go by the book's street. Where Grunnlink gives another street (C 117: Schuitendiep, the book
+    # Martini Kerkhof) two sources disagree; such an entry stays out until a source settles it.
+    by_book = [r for r in rows if r["street_check"] != "differs" or review_key(r) in rejected]
+    place_by_number(same_person(by_book, placed, yard_of_uid, initials or entry_initials()), "on_map_same_person")
+    bag = bag or bag_index()
+    anchors = grunnlink_anchors(by_book, placed, renumbered, bag, tree, geoms, premises)
+    place_by_number(interpolate_grunnlink(by_book, placed, anchors, geoms), "on_map_grunnlink_neighbours")
 
     # Quay streets: the number Grunnlink gives is that of 1899, not today's. Show today's (approximate) number
     # for the entries placed through QUAY_SIDES and the street alone for the rest.
-    write_modern({r["uid"]: quay_modern.get(r["uid"], r["modern_street"]) for r in rows
-                  if r["status"] in ("house", "ambiguous") and renumbered & set(r["modern_street"].split(" / "))
-                  and not (r["street_check"] == "differs" and review_key(r) in rejected)})
+    modern = {r["uid"]: quay_modern.get(r["uid"], r["modern_street"]) for r in rows
+              if r["status"] in ("house", "ambiguous") and renumbered & set(r["modern_street"].split(" / "))
+              and not (r["street_check"] == "differs" and review_key(r) in rejected)}
+    # On the map, but Grunnlink knows no address of today: the house is gone. The site shows a label for MODERN_GONE.
+    modern.update({r["uid"]: MODERN_GONE for r in rows if r["status"] == "none" and r["uid"] in placed})
+    write_modern(modern)
 
     assert quay_number_today("Damsterdiep", "zuidzijde", "31") == "59" and not quay_number_today("Schuitendiep", "oostzijde", "40") and not quay_number_today("Damsterdiep", "zuidzijde", "20/4")
     assert stats["on_map"] > 1500, f"only {stats['on_map']} entries placed: wrong parcels file or PDOK down?"
@@ -544,7 +631,9 @@ def main() -> None:
                 for pid, f in used.items()]
     (OUT / "buildings.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": features}, ensure_ascii=False), encoding="utf-8")
     check = {"parcel_run": holdout(lambda r, pl, ex: parcel_run(r, pl, ex, parcel, yard_of), exact, streets, geoms),
-             "interpolate": holdout(lambda r, pl, ex: interpolate(r, pl, ex, streets, geoms), exact, streets, geoms)}
+             "interpolate": holdout(lambda r, pl, ex: interpolate(r, pl, ex, streets, geoms), exact, streets, geoms),
+             # anchors were fetched around the unplaced numbers only, so this measures the exact numbers that lie near them
+             "grunnlink_neighbours": holdout(lambda r, pl, ex: interpolate_grunnlink(r, pl, anchors, geoms), exact, streets, geoms)}
     for name, c in check.items():
         assert c.get("further", 0) <= 0.1 * sum(c.values()), f"{name}: hold-out got worse: {c}"
     if owner_check:  # namesakes do live elsewhere in a street: a wider margin than for the number rules

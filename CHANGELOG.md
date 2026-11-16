@@ -2,6 +2,17 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.26.0] — 2026-11-16
+
+### Added
+- 1854: unlinked entries between two wijk numbers that Grunnlink places, also numbers the book never prints, go on the nearer neighbour's yard as an approximation (R. Weeshuisstraatje A 39 between A 37 and A 40). The neighbours lie at most 3 numbers away, their yards within 15 m, and Grunnlink puts one of them in the street the book prints. 53 entries; hold-out on the exact links: 39 of 697 further than 10 m.
+- 1854: an unlinked entry goes to the yard of the same person (surname and first initial) placed elsewhere in the book in the same street, as an approximation. 7 entries, mostly a misread digit (H 30/50, F 280/180, P 97/79).
+- An entry on the map without an address of today shows "pand verdwenen, geen huidig adres".
+
+### Changed
+- 1854: the street review no longer decides anything (owner decision): its verdicts were not backed by sources. Where the book prints another street than Grunnlink, Grunnlink's street counts, as it did for streets nobody reviewed. 30 entries gain today's address.
+- 1854: neither new rule touches an entry where the book and Grunnlink give different streets (Martini Kerkhof C 117: the book against the Omnummerboek's Schuitendiep). Two sources disagree there; it stays unlinked until a third settles it.
+
 ## [0.25.1] — 2026-11-16
 
 ### Changed

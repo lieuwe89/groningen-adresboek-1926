@@ -59,6 +59,7 @@ export type EntryPresentationLabels = {
   detailRole: string;
   detailOccupation: string;
   addressNow: string;
+  addressGone: string;
   sectionAdvertisement: string;
   sectionInstitutional: string;
   sectionNameRegister: string;
@@ -79,6 +80,7 @@ const DUTCH_LABELS: EntryPresentationLabels = {
   detailRole: "Rol",
   detailOccupation: "Beroep",
   addressNow: "nu",
+  addressGone: "pand verdwenen, geen huidig adres",
   sectionAdvertisement: "Advertentie",
   sectionInstitutional: "Instellingen",
   sectionNameRegister: "Naamregister",
@@ -113,6 +115,7 @@ export function buildEntryPresentationLabels(
     detailRole: t("detailRole"),
     detailOccupation: t("detailOccupation"),
     addressNow: t("addressNow"),
+    addressGone: t("addressGone"),
     sectionAdvertisement: t("sectionAdvertisement"),
     sectionInstitutional: t("sectionInstitutional"),
     sectionNameRegister: t("sectionNameRegister"),
@@ -153,8 +156,10 @@ export function presentEntry(
   const role = entry?.role || "";
   const description = entry?.description || entry?.notes || "";
   const addressBook = entry?.address_full || "";
-  const addressModern = entry?.address_modern || "";
-  const address = [addressBook, addressModern && `${labels.addressNow} ${addressModern}`].filter(Boolean).join(" · ");
+  // "verdwenen": placed on the 1832 map, but no address of today (MODERN_GONE in match_kadaster_1832.py)
+  const gone = entry?.address_modern === "verdwenen";
+  const addressModern = gone ? labels.addressGone : entry?.address_modern || "";
+  const address = [addressBook, addressModern && (gone ? addressModern : `${labels.addressNow} ${addressModern}`)].filter(Boolean).join(" · ");
   const parent = entry?.parent_organization || "";
   const kind = classifyEntry(entry, section);
   const sectionLabels = buildSectionLabels(labels);
