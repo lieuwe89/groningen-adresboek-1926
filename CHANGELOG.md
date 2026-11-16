@@ -2,6 +2,14 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.27.0] — 2026-11-16
+
+### Added
+- 1854: Grunnlink v0.42 gives the parcel of 1832 for wijk A to S (was T only), from the population registers of 1830/1840 and the owner tables. 163 more entries go on the map through it, quays included. On the 434 exact links that also have such a parcel, 350 lie on the same or the adjoining yard and 50 further than 10 m, so these entries stay approximate.
+
+### Changed
+- 1854: an exact link through today's address goes before Grunnlink's parcel; the parcel fills in where today's address gives no exact yard. Before, the parcel went first, which with parcels for all wijken would have turned hundreds of exact links into approximations.
+
 ## [0.26.0] — 2026-11-16
 
 ### Added

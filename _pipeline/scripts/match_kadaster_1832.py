@@ -18,7 +18,7 @@ more wijk numbers come together; entries whose point falls on a parcel without p
 tables of 1832 are there (output/oat/oat_groningen.csv, transcribed from the RCE scans), the owner's
 name corrects a link that is one yard off and places unlinked entries (owner_yards). A wijk number for
 which Grunnlink gives the parcel of 1832 itself (column parcel1832: population registers of 1830/1840
-against the owner tables) goes straight to that yard, before anything else. For the quay streets the script also corrects address_modern in
+against the owner tables) goes to that yard where today's address gives no exact one. For the quay streets the script also corrects address_modern in
 the page JSONs: apply_omnummering.py wrote the house number of 1899 there as today's.
 
 Needs DATA_ROOT/maps/percelen_1832.geojson (HisGIS parcels, from ~/projects/Kadaster).
@@ -453,6 +453,7 @@ def main() -> None:
     tentative = []                   # (row, yard index, today's address, xy): placed by today's point, before the pile test
     rejected = street_rejected()
     yard_of_uid: dict = {}
+    exact_uid: dict = {}             # uid -> yard index, exact links only
 
     def place(row, i, raw, xy, approx):
         pid = "hisgis-" + yards[i]["properties"]["osm"].replace("/", "-")
@@ -471,12 +472,12 @@ def main() -> None:
         with CSV_PATH.open(encoding="utf-8", newline="") as fh:
             for row in csv.DictReader(fh):
                 rows.append(row)
-                if row.get("parcel1832"):  # Grunnlink names the parcel of 1832 itself: no detour through today
+                if row.get("parcel1832"):  # Grunnlink names the parcel of 1832 itself; used where today's address gives no exact yard
                     section, number = row["parcel1832"].split()
                     if (section, int(number)) in yard_any:
                         by_register.append((row, yard_any[(section, int(number))]))
-                        continue
-                    stats["register_parcel_not_on_map"] += 1
+                    else:
+                        stats["register_parcel_not_on_map"] += 1
                 if row["street_check"] == "differs" and review_key(row) in rejected:
                     stats["street_review_rejected"] += 1
                     continue
@@ -567,6 +568,7 @@ def main() -> None:
             piled.append((row, i, raw, xy))
             continue
         place(row, i, raw, xy, False)
+        exact_uid[row["uid"]] = i
         if wijk_number(row) is not None:
             exact.setdefault((row["wijk"], wijk_number(row)), i)
             streets[(row["wijk"], wijk_number(row))].add(row["book_street"])
@@ -579,7 +581,14 @@ def main() -> None:
             stats[counter] += 1
 
     # Grunnlink's own check on wijk K: 9 of 10 such parcels on the house or its neighbour. So approximate, like the rest.
-    place_by_number(by_register, "on_map_register")
+    # Grunnlink v0.42 gives parcels for wijk A-S (84% same or adjoining yard in its own hold-out): an exact link through
+    # today's address goes first, the register parcel fills in where that failed or only gave an approximation.
+    place_by_number([(r, i) for r, i in by_register if r["uid"] not in placed], "on_map_register")
+    check_register = Counter()
+    for r, i in by_register:  # the register parcel against the exact links: is it as good as Grunnlink says?
+        if r["uid"] in exact_uid:
+            d = geoms[i].distance(geoms[exact_uid[r["uid"]]])
+            check_register["same yard" if i == exact_uid[r["uid"]] else "adjoining" if d < 1 else "within 10 m" if d <= 10 else "further"] += 1
     place_by_number(parcel_run(rows, placed, exact, parcel, yard_of), "on_map_parcel_run")
     # Not placed yet (unlinked, piled, off premises): one owner in the street with the same surname and first initial.
     by_owner = []
@@ -639,6 +648,9 @@ def main() -> None:
     if owner_check:  # namesakes do live elsewhere in a street: a wider margin than for the number rules
         assert owner_check["further"] <= 0.15 * sum(owner_check.values()), f"owner: hold-out got worse: {owner_check}"
         check["owner"] = dict(owner_check)
+    # 2026-11-16, Grunnlink v0.42: 50 of 434 further than 10 m; the same margin as the owner rule
+    assert check_register["further"] <= 0.15 * max(1, sum(check_register.values())), f"register: hold-out got worse: {check_register}"
+    check["register"] = dict(check_register)
     matches["_summary"] = dict(stats, renumbered_streets=sorted(renumbered), holdout=check)
     (OUT / "match.json").write_text(json.dumps(matches, ensure_ascii=False), encoding="utf-8")
     print(dict(stats), "on", len(features), "yards →", OUT)
