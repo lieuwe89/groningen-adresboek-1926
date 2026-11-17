@@ -8,6 +8,7 @@ import { HISTORIC_MAPS } from "@/lib/historicMaps";
 import { BOOK } from "@/lib/book";
 import { useSelection } from "@/lib/SelectionContext";
 import { useTranslations, useLocale } from 'next-intl';
+import { isPhone } from "@/lib/isPhone";
 
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
@@ -38,7 +39,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
   }, [focusPandId]);
 
   return (
-    <section id="tour-map" className="relative flex-1 min-w-0 overflow-hidden bg-bp-blue">
+    <section id="tour-map" className="relative flex-1 min-w-0 overflow-hidden bg-bp-blue max-md:isolate">
       <MapView
         buildingsVisible={buildingsOn}
         only1926={only1926}
@@ -55,6 +56,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
           onSelectEntry={(stem, stableId) => {
             const params = new URLSearchParams({ entry: stableId });
             router.push(`/${locale}/page/${stem}?${params.toString()}`);
+            if (isPhone()) onOpenScan(); // the scan panel covers the map there; wider screens keep it as it was
           }}
         />
       )}
@@ -63,7 +65,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
       <button
         id="tour-search"
         onClick={onOpenSearch}
-        className="absolute flex items-center gap-[6px] uppercase font-bold transition-opacity"
+        className="absolute flex items-center gap-[6px] uppercase font-bold transition-opacity max-md:hidden"
         style={{
           top: 14,
           left: 14,
@@ -89,7 +91,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
       <button
         id="tour-scan"
         onClick={onOpenScan}
-        className="absolute flex items-center gap-[6px] uppercase font-bold transition-opacity"
+        className="absolute flex items-center gap-[6px] uppercase font-bold transition-opacity max-md:hidden"
         style={{
           top: 84,
           right: 14,
@@ -114,7 +116,7 @@ export default function MapPanel({ searchOpen, scanOpen, onOpenSearch, onOpenSca
       {/* Layers panel (left side) */}
       <div
         id="tour-layers-panel"
-        className="absolute flex flex-col gap-[1px]"
+        className="absolute flex flex-col gap-[1px] max-md:[zoom:1.3] max-md:!bottom-[52px]" // phones: clear of the map attribution
         style={{
           left: 14,
           bottom: 14,

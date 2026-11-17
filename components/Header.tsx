@@ -59,35 +59,36 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
   };
 
   return (
+    // Phones: two rows (title + language, section + info). Both wrappers dissolve (`contents`) so `order` can regroup their children.
     <header
-      className="relative flex items-end justify-between border-b border-bp-ink/55 px-[22px] pt-[10px] pb-[8px]"
+      className="relative flex items-end justify-between border-b border-bp-ink/55 px-[22px] pt-[10px] pb-[8px] max-md:[zoom:1.3] max-md:flex-wrap max-md:items-center max-md:gap-x-[10px] max-md:gap-y-[6px] max-md:px-[10px] max-md:py-[6px] max-md:!min-h-0"
       style={{ minHeight: 68 }}
     >
-      <div className="flex flex-col gap-[3px]">
+      <div className="flex flex-col gap-[3px] max-md:contents">
         <div
-          className="text-bp-ink-dim font-semibold uppercase"
+          className="text-bp-ink-dim font-semibold uppercase max-md:hidden"
           style={{ fontSize: 8.5, letterSpacing: "0.22em" }}
         >
           {t('subtitle')}
         </div>
         <h1
-          className="text-bp-amber font-bold uppercase"
+          className="text-bp-amber font-bold uppercase max-md:order-1 max-md:flex-1 max-md:basis-[55%] max-md:!tracking-[0.16em]"
           style={{ fontSize: 15, letterSpacing: "0.28em" }}
         >
           {t('title')}
         </h1>
         <div
-          className="text-bp-ink-bright uppercase"
+          className="text-bp-ink-bright uppercase max-md:hidden"
           style={{ fontSize: 8.5, letterSpacing: "0.18em" }}
         >
           {t('description')}
         </div>
-        <div className="flex gap-[20px] mt-[5px] items-end">
+        <div className="flex gap-[20px] mt-[5px] items-end max-md:order-3 max-md:mt-0 max-md:flex-1 max-md:basis-[55%]">
           <SectionJump currentStem={stem} isInfo={isInfo} />
-          {BOOK.sheetLabel && <Meta label={t('labelSheet')} value={BOOK.sheetLabel} />}
+          {BOOK.sheetLabel && <Meta label={t('labelSheet')} value={BOOK.sheetLabel} className="max-md:hidden" />}
         </div>
       </div>
-      <div className="flex items-center gap-[14px]">
+      <div className="flex items-center gap-[14px] max-md:contents">
         <InfoBtn 
           label={t('info')}
           active={isInfo} 
@@ -101,10 +102,10 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
             }
           }}
         />
-        <div className="flex gap-[2px]">
+        <div className="flex gap-[2px] max-md:order-2">
           <button 
             onClick={() => switchLocale('nl')}
-            className={`px-[7px] py-[3px] uppercase font-bold border transition-colors text-[9px] tracking-[0.18em] ${
+            className={`px-[7px] py-[3px] max-md:px-[10px] max-md:py-[7px] uppercase font-bold border transition-colors text-[9px] tracking-[0.18em] ${
               locale === 'nl' 
                 ? "text-bp-amber border-bp-amber/60 cursor-default" 
                 : "text-bp-ink-dim border-bp-ink-dim/20 hover:text-bp-amber hover:border-bp-amber/40"
@@ -114,7 +115,7 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
           </button>
           <button 
             onClick={() => switchLocale('en')}
-            className={`px-[7px] py-[3px] uppercase font-bold border transition-colors text-[9px] tracking-[0.18em] ${
+            className={`px-[7px] py-[3px] max-md:px-[10px] max-md:py-[7px] uppercase font-bold border transition-colors text-[9px] tracking-[0.18em] ${
               locale === 'en' 
                 ? "text-bp-amber border-bp-amber/60 cursor-default" 
                 : "text-bp-ink-dim border-bp-ink-dim/20 hover:text-bp-amber hover:border-bp-amber/40"
@@ -127,7 +128,7 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
           <Link
             href={`/${locale}/admin/stats`}
             prefetch={false}
-            className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
+            className="uppercase font-bold transition-colors hover:bg-bp-amber/15 max-md:order-5"
             style={{
               fontSize: 9,
               letterSpacing: "0.18em",
@@ -144,7 +145,7 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
           <Link
             href={adminHref}
             prefetch={false}
-            className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
+            className="uppercase font-bold transition-colors hover:bg-bp-amber/15 max-md:order-5"
             style={adminButtonStyle}
           >
             {t('public')}
@@ -153,14 +154,14 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
           <button
             type="button"
             onClick={handleAdminClick}
-            className="uppercase font-bold transition-colors hover:bg-bp-amber/15"
+            className="uppercase font-bold transition-colors hover:bg-bp-amber/15 max-md:hidden"
             style={adminButtonStyle}
           >
             {t('admin')}
           </button>
         )}
         <div
-          className="text-bp-ink-dim"
+          className="text-bp-ink-dim max-md:hidden"
           style={{ fontSize: 7.5, letterSpacing: "0.14em" }}
         >
           53°13′N · 6°34′E
@@ -170,9 +171,9 @@ export default function Header({ activeIdx = -1, currentSearch = "" }: HeaderPro
   );
 }
 
-function Meta({ label, value }: { label: string; value: string }) {
+function Meta({ label, value, className = "" }: { label: string; value: string; className?: string }) {
   return (
-    <div className="flex flex-col gap-[1px]">
+    <div className={`flex flex-col gap-[1px] ${className}`}>
       <span
         className="text-bp-ink-dim uppercase"
         style={{ fontSize: 7.5, letterSpacing: "0.18em", fontWeight: 600 }}
@@ -194,7 +195,7 @@ function InfoBtn({ label, active, onClick }: { label: string; active: boolean; o
     <button
       id="tour-info"
       onClick={onClick}
-      className="flex items-center gap-[5px] uppercase font-bold transition-colors hover:bg-bp-amber/15"
+      className="flex items-center gap-[5px] uppercase font-bold transition-colors hover:bg-bp-amber/15 max-md:order-4 max-md:!py-[7px]"
       style={{
         fontSize: 9,
         letterSpacing: "0.18em",

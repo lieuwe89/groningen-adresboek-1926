@@ -2,12 +2,12 @@ import Link from "next/link";
 import { useTranslations } from 'next-intl';
 import packageJson from '@/package.json';
 
-export default function Footer() {
+export default function Footer({ className = "" }: { className?: string }) {
   const t = useTranslations('Footer');
   
   return (
     <footer
-      className="flex items-center justify-between border-t border-bp-ink/55 px-[22px]"
+      className={`flex items-center justify-between border-t border-bp-ink/55 px-[22px] ${className}`}
       style={{ height: 26 }}
     >
       <span

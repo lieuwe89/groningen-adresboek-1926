@@ -769,6 +769,7 @@ function MapCard({
 
   return (
     <div
+      className="max-md:!grid-cols-1" // phones: thumbnail above the text
       style={{
         border: "1px solid color-mix(in srgb, var(--color-bp-ink) 16%, transparent)",
         background: "color-mix(in srgb, var(--color-bp-blue-deep) 53%, transparent)",
@@ -782,6 +783,7 @@ function MapCard({
         href={map.hdl}
         target="_blank"
         rel="noopener noreferrer"
+        className="max-md:h-[180px]"
         style={{
           display: "block",
           overflow: "hidden",

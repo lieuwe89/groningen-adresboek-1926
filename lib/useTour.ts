@@ -3,6 +3,7 @@
 import { useCallback, useRef } from "react";
 import { useSelection } from "./SelectionContext";
 import { useTranslations } from 'next-intl';
+import { isPhone } from "./isPhone";
 
 export function useTour() {
   // shepherd.js v15 ships no TS declarations — typed as any
@@ -33,6 +34,11 @@ export function useTour() {
 
     // 3. Mark tour as active (disables some UI hover effects)
     setTourActive(true);
+    // Phones: the panels lie over the map, and the tour starts at the map.
+    if (isPhone()) {
+      setSearchOpen(false);
+      setScanOpen(false);
+    }
 
     // Step 1: Welcome / Map Overview
     tour.addStep({

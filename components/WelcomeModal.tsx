@@ -52,9 +52,9 @@ export default function WelcomeModal({ onStartTour }: WelcomeModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-bp-blue/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 max-md:p-3 bg-bp-blue/80 backdrop-blur-sm">
       <div 
-        className="relative w-full max-w-lg bg-bp-blue border border-bp-amber/40 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-lg bg-bp-blue border border-bp-amber/40 shadow-2xl overflow-hidden max-md:max-h-full max-md:overflow-y-auto"
         style={{ background: "linear-gradient(135deg, var(--color-bp-blue-deep) 0%, var(--color-bp-blue-deeper) 100%)" }}
       >
         {/* Decorative corner */}
@@ -62,7 +62,7 @@ export default function WelcomeModal({ onStartTour }: WelcomeModalProps) {
           <div className="absolute top-4 right-4 w-full h-full border-t border-r border-bp-amber" />
         </div>
 
-        <div className="p-8">
+        <div className="p-8 max-md:p-5">
           <div className="flex items-center justify-between mb-6">
             <h2 
               className="text-bp-amber uppercase font-bold text-xl tracking-widest"
@@ -104,10 +104,6 @@ export default function WelcomeModal({ onStartTour }: WelcomeModalProps) {
             <p className="text-bp-ink-dim italic border-l-2 border-bp-amber/20 pl-4 py-1">
               {t('disclaimer')}
             </p>
-
-            <div className="sm:hidden p-3 border border-bp-amber/20 bg-bp-amber/5 text-bp-amber text-[11px] font-bold uppercase tracking-wider text-center flex items-center justify-center gap-2">
-              <span>📱</span> {t('mobileNotice')}
-            </div>
           </div>
 
           <div className="flex items-center gap-3 mb-8">

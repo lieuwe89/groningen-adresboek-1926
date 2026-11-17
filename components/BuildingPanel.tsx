@@ -86,7 +86,7 @@ export default function BuildingPanel({ pandId, onClose, onSelectEntry }: Props)
 
   return (
     <div
-      className="absolute z-30 flex flex-col"
+      className="absolute z-30 flex flex-col max-md:[zoom:1.3] max-md:left-[8px] max-md:!right-[44px] max-md:!w-auto"
       style={{
         top: 14,
         right: 56, // clear of NavigationControl

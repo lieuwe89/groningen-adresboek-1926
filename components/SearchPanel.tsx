@@ -45,13 +45,13 @@ export default function SearchPanel(p: Props) {
 
   return (
     <div
-      className="overflow-hidden flex-shrink-0 border-r border-bp-ink/55 bg-bp-blue"
+      className={`overflow-hidden flex-shrink-0 border-r border-bp-ink/55 bg-bp-blue max-md:absolute max-md:inset-0 max-md:z-20 max-md:border-r-0 max-md:!transition-none ${p.open ? "max-md:!w-full" : ""}`}
       style={{
         width: p.open ? 295 : 0,
         transition: "width 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
       }}
     >
-      <aside id="tour-search-panel" style={{ width: 295 }} className="h-full flex flex-col">
+      <aside id="tour-search-panel" style={{ width: 295 }} className="h-full flex flex-col max-md:!w-full max-md:[zoom:1.3]">
         {/* Header row */}
         <div
           className="flex items-center justify-between border-b border-bp-ink/55"
@@ -88,12 +88,13 @@ export default function SearchPanel(p: Props) {
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
+            {/* Phones: iOS zooms the page when a focused field is under 16px; 12.5px x the 1.3 phone zoom clears that. */}
             <input
               type="text"
               value={p.query}
               onChange={(e) => p.onQuery(e.target.value)}
               placeholder={t('placeholder')}
-              className="flex-1 bg-transparent outline-none text-bp-ink-bright uppercase"
+              className="flex-1 max-md:min-w-0 bg-transparent outline-none text-bp-ink-bright uppercase max-md:!text-[12.5px]"
               style={{ fontSize: 10, letterSpacing: "0.12em", fontWeight: 700 }}
             />
             <span className="bg-bp-amber inline-block" style={{ width: 1.5, height: 13 }} />
@@ -415,7 +416,7 @@ function GlobalResults({
                   <button
                     key={m.id}
                     onClick={() => onSelect?.(m)}
-                    className="w-full text-left flex items-center justify-between"
+                    className="w-full text-left flex items-center justify-between max-md:!py-[10px]"
                     style={{
                       padding: "6px 13px",
                       background: active ? "color-mix(in srgb, var(--color-bp-amber) 10%, transparent)" : "transparent",

@@ -92,7 +92,7 @@ export default function ScanPanel(p: Props) {
 
   return (
     <div
-      className="overflow-hidden border-l border-bp-ink/55 bg-bp-blue"
+      className={`overflow-hidden border-l border-bp-ink/55 bg-bp-blue max-md:absolute max-md:inset-0 max-md:z-10 max-md:border-l-0 max-md:!transition-none ${p.open ? "max-md:!w-full" : ""}`}
       style={{
         width: p.open ? (p.wide ? "100%" : 415) : 0,
         flex: p.wide ? "1 1 auto" : "0 0 auto",
@@ -102,10 +102,10 @@ export default function ScanPanel(p: Props) {
       <aside
         id="tour-scan-panel"
         style={{ width: p.wide ? "100%" : 415 }}
-        className="h-full flex flex-col"
+        className="h-full flex flex-col max-md:!w-full"
       >
         <div
-          className="flex items-center justify-between border-b border-bp-ink/55"
+          className="flex items-center justify-between border-b border-bp-ink/55 max-md:[zoom:1.3]"
           style={{ padding: "5px 13px 4px" }}
         >
           <span
@@ -175,7 +175,7 @@ export default function ScanPanel(p: Props) {
         )}
 
         {!bboxEditMode && (
-        <div className="flex flex-col gap-[4px]" style={{ padding: "9px 13px" }}>
+        <div className="flex flex-col gap-[4px] max-md:[zoom:1.3]" style={{ padding: "9px 13px" }}>
           <span
             className="text-bp-ink-dim"
             style={{ fontSize: 8, fontWeight: 600, letterSpacing: "0.14em" }}
@@ -264,7 +264,7 @@ export default function ScanPanel(p: Props) {
               onSelectEntry={handleSelectEntry}
             />
 
-            <div className="absolute flex flex-col gap-[2px]" style={{ right: 8, bottom: 8, zIndex: 5 }}>
+            <div className="absolute flex flex-col gap-[2px] max-md:[zoom:1.3]" style={{ right: 8, bottom: 8, zIndex: 5 }}>
               <ZoomBtn onClick={() => viewerRef.current?.zoomBy(1.4)} label="+" />
               <ZoomBtn onClick={() => viewerRef.current?.reset()} label="⌖" small />
               <ZoomBtn onClick={() => viewerRef.current?.zoomBy(1 / 1.4)} label="−" />
@@ -273,7 +273,7 @@ export default function ScanPanel(p: Props) {
         )}
 
         <div
-          className="flex items-center justify-between border-t border-bp-ink/55"
+          className="flex items-center justify-between border-t border-bp-ink/55 max-md:[zoom:1.3]"
           style={{ padding: "8px 13px", fontSize: 9.5 }}
         >
           {p.prev ? (

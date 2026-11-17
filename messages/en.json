@@ -16,7 +16,6 @@
     "title": "Welcome to the 1926 Address Book",
     "body1": "This is a hobby project by <name>Lieuwe Jongsma</name> (Groninger Archieven). The goal is to make the 1926 Groningen adresboek searchable and to put it on a map.",
     "disclaimer": "Note: This is a work in progress. The link between addresses and map locations may contain errors or gaps due to historical renumbering or extraction differences.",
-    "mobileNotice": "This website works best on a larger screen",
     "dontShowAgain": "Don't show again",
     "startTour": "Start Tour",
     "skip": "Skip"
@@ -86,6 +85,7 @@
     "pageShort": "Pg {page}"
   },
   "Map": {
+    "map": "Map",
     "search": "Search",
     "scan": "Scan",
     "layers": "Map Layers",

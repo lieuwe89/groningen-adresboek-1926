@@ -2,6 +2,15 @@
 
 All notable changes to this project. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this project uses semver-style `MAJOR.MINOR.PATCH` with a leading `0.` while the data model is still settling.
 
+## [0.28.0] — 2026-11-17
+
+### Added
+- Both books: a phone layout below 768px. One panel at a time, with a bar at the bottom for Search, Map and Scan; a chosen result or a mention in the building card brings the scan to the front. The text blocks are scaled up 1.3x, the header folds into two rows, and the map cards on the info page stack. Wider screens are unchanged: every visible element on the main page and the info page keeps its position, size and type at 1280x800, in both books.
+
+### Changed
+- Phones no longer show "works best on a larger screen" in the welcome window, nor the admin button, the coordinates and the footer (the footer stays on the info page).
+- The tour popup stays within the screen on narrow displays.
+
 ## [0.27.0] — 2026-11-16
 
 ### Added

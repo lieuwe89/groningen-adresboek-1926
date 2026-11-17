@@ -85,9 +85,9 @@ export default function SectionJump({ currentStem, isInfo }: Props) {
   const cur = currentSectionId();
 
   return (
-    <div id="tour-section" className="flex flex-col gap-[1px]">
+    <div id="tour-section" className="flex flex-col gap-[1px] max-md:flex-1">
       <span
-        className="text-bp-ink-dim uppercase"
+        className="text-bp-ink-dim uppercase max-md:hidden"
         style={{ fontSize: 7.5, letterSpacing: "0.18em", fontWeight: 600 }}
       >
         {t('labelSection')}
@@ -97,7 +97,9 @@ export default function SectionJump({ currentStem, isInfo }: Props) {
         onChange={onChange}
         disabled={!sections || !!error}
         title={error ? `Error loading: ${error}` : "Jump to section"}
-        className="text-bp-ink-bright uppercase outline-none cursor-pointer"
+        aria-label={t('labelSection')}
+        // Phones: 12.5px x the 1.3 phone zoom keeps iOS from zooming the page on focus (it does under 16px).
+        className="text-bp-ink-bright uppercase outline-none cursor-pointer max-md:!text-[12.5px] max-md:!py-[5px] max-md:!min-w-0 max-md:w-full"
         style={{
           fontSize: 9,
           letterSpacing: "0.12em",

@@ -12,7 +12,8 @@ import WelcomeModal from "@/components/WelcomeModal";
 import { useTour } from "@/lib/useTour";
 import type { PersonHit, SearchMention, SearchResponse } from "@/lib/searchTypes";
 import type { BuildingDetail } from "@/lib/db";
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { isPhone } from "@/lib/isPhone";
 import { useIsAdminRoute } from "@/lib/AdminContext";
 
 const SEARCH_DEBOUNCE_MS = 220;
@@ -108,6 +109,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const p = new URLSearchParams({ entry: hit.stable_id, q: trimmedQuery });
     const base = isAdmin ? `/${locale}/admin/page` : `/${locale}/page`;
     router.push(`${base}/${hit.stem}?${p.toString()}`);
+    showScanOnPhone();
+  }
+
+  // Phones show one panel at a time: the search panel lies over the scan panel, which lies over the map.
+  // A chosen result must therefore bring the scan to the front; on wider screens all three stay side by side.
+  function showScanOnPhone() {
+    if (!isPhone()) return;
+    setSearchOpen(false);
+    setScanOpen(true);
   }
 
   // Sync local query back to URL (debounced)
@@ -125,6 +135,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [query, pathname, router, searchParams]);
 
   const { startTour } = useTour();
+  const tm = useTranslations('Map');
+  const phoneTab = searchOpen ? "search" : scanOpen ? "scan" : "map";
 
   return (
     <div className="relative flex flex-col w-full h-full overflow-hidden bg-bp-blue text-bp-ink">
@@ -136,7 +148,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           onClose={() => setSearchOpen(false)}
           entries={localEntries}
           activeIdx={activeIdx}
-          onSelect={onSelectLocal}
+          onSelect={(i) => {
+            onSelectLocal(i);
+            showScanOnPhone();
+          }}
           query={query}
           onQuery={setQuery}
           filter={filter as StatusFilter}
@@ -161,8 +176,48 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         />
         {children}
       </main>
-      <Footer />
+      <nav className="md:hidden flex border-t border-bp-ink/55">
+        <PhoneTab label={tm('search')} active={phoneTab === "search"} onClick={() => setSearchOpen(true)} />
+        <PhoneTab
+          label={tm('map')}
+          active={phoneTab === "map"}
+          onClick={() => {
+            setSearchOpen(false);
+            setScanOpen(false);
+          }}
+        />
+        <PhoneTab
+          label={tm('scan')}
+          active={phoneTab === "scan"}
+          onClick={() => {
+            setSearchOpen(false);
+            setScanOpen(true);
+          }}
+        />
+      </nav>
+      <Footer className="max-md:hidden" />
       <WelcomeModal onStartTour={startTour} />
     </div>
+  );
+}
+
+function PhoneTab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className="flex-1 uppercase font-bold"
+      style={{
+        height: 48,
+        fontSize: 12,
+        letterSpacing: "0.18em",
+        color: active ? "var(--color-bp-amber)" : "var(--color-bp-ink-dim)",
+        background: active ? "color-mix(in srgb, var(--color-bp-amber) 8%, transparent)" : "transparent",
+        boxShadow: active ? "inset 0 2px 0 var(--color-bp-amber)" : "none",
+      }}
+    >
+      {label}
+    </button>
   );
 }
