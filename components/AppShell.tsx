@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -52,6 +52,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const searchParams = useSearchParams();
   const fetchSeq = useRef(0);
+
+  // Phones open on the map (both flags start true, which there means the search panel on top).
+  // A link to one entry keeps the scan in front. Layout effect: before the first paint after hydration.
+  useLayoutEffect(() => {
+    if (!isPhone()) return;
+    setSearchOpen(false);
+    setScanOpen(new URLSearchParams(window.location.search).has("entry"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const lastUrlQuery = useRef<string | null>(null);
   useEffect(() => {
